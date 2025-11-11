@@ -741,7 +741,7 @@ git commit -m "hotfix: resolve critical issue description"
 
 # Push and create PR immediately
 git push -u origin hotfix/critical-issue
-gh pr create --title "HOTFIX: Critical issue" --body "Description"
+gh pr create --title "HOTFIX: Critical issue" --body "Description" # Requires GitHub CLI (gh)
 
 # Merge ASAP after review
 # Deploy will auto-trigger from main

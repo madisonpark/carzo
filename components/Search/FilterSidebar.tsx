@@ -1,0 +1,213 @@
+'use client';
+
+import { useRouter, useSearchParams } from 'next/navigation';
+import { X } from 'lucide-react';
+
+interface FilterSidebarProps {
+  makes: string[];
+  bodyStyles: string[];
+  conditions: string[];
+  years: number[];
+  currentFilters: {
+    make?: string;
+    model?: string;
+    condition?: string;
+    minPrice?: string;
+    maxPrice?: string;
+    minYear?: string;
+    maxYear?: string;
+    bodyStyle?: string;
+  };
+}
+
+export default function FilterSidebar({
+  makes,
+  bodyStyles,
+  conditions,
+  years,
+  currentFilters,
+}: FilterSidebarProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const updateFilter = (key: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+    params.delete('page'); // Reset to page 1 when filtering
+    router.push(`/search?${params.toString()}`);
+  };
+
+  const clearFilters = () => {
+    router.push('/search');
+  };
+
+  const hasActiveFilters = Object.keys(currentFilters).length > 0;
+
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 p-6 sticky top-8">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-lg font-bold text-slate-900">Filters</h2>
+        {hasActiveFilters && (
+          <button
+            onClick={clearFilters}
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+          >
+            <X className="w-4 h-4" />
+            Clear
+          </button>
+        )}
+      </div>
+
+      <div className="space-y-6">
+        {/* Make */}
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-2">Make</label>
+          <select
+            value={currentFilters.make || ''}
+            onChange={(e) => updateFilter('make', e.target.value)}
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">All Makes</option>
+            {makes.map((make) => (
+              <option key={make} value={make}>
+                {make}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Condition */}
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-2">Condition</label>
+          <select
+            value={currentFilters.condition || ''}
+            onChange={(e) => updateFilter('condition', e.target.value)}
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">All Conditions</option>
+            {conditions.map((condition) => (
+              <option key={condition} value={condition}>
+                {condition}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Body Style */}
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-2">Body Style</label>
+          <select
+            value={currentFilters.bodyStyle || ''}
+            onChange={(e) => updateFilter('bodyStyle', e.target.value)}
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">All Body Styles</option>
+            {bodyStyles.map((style) => (
+              <option key={style} value={style}>
+                {style}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Year Range */}
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-2">Year</label>
+          <div className="grid grid-cols-2 gap-3">
+            <select
+              value={currentFilters.minYear || ''}
+              onChange={(e) => updateFilter('minYear', e.target.value)}
+              className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            >
+              <option value="">Min</option>
+              {years.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+            <select
+              value={currentFilters.maxYear || ''}
+              onChange={(e) => updateFilter('maxYear', e.target.value)}
+              className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            >
+              <option value="">Max</option>
+              {years.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Price Range */}
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-2">Price</label>
+          <div className="grid grid-cols-2 gap-3">
+            <input
+              type="number"
+              placeholder="Min"
+              value={currentFilters.minPrice || ''}
+              onChange={(e) => updateFilter('minPrice', e.target.value)}
+              className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            />
+            <input
+              type="number"
+              placeholder="Max"
+              value={currentFilters.maxPrice || ''}
+              onChange={(e) => updateFilter('maxPrice', e.target.value)}
+              className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Active Filters */}
+      {hasActiveFilters && (
+        <div className="mt-6 pt-6 border-t border-slate-200">
+          <h3 className="text-sm font-semibold text-slate-700 mb-3">Active Filters</h3>
+          <div className="flex flex-wrap gap-2">
+            {currentFilters.make && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">
+                {currentFilters.make}
+                <button
+                  onClick={() => updateFilter('make', '')}
+                  className="hover:bg-blue-200 rounded-full"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            {currentFilters.condition && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">
+                {currentFilters.condition}
+                <button
+                  onClick={() => updateFilter('condition', '')}
+                  className="hover:bg-blue-200 rounded-full"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            {currentFilters.bodyStyle && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">
+                {currentFilters.bodyStyle}
+                <button
+                  onClick={() => updateFilter('bodyStyle', '')}
+                  className="hover:bg-blue-200 rounded-full"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

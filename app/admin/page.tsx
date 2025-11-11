@@ -1,0 +1,301 @@
+import { supabaseAdmin } from '@/lib/supabase';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import {
+  TrendingUp,
+  DollarSign,
+  MousePointerClick,
+  Users,
+  AlertCircle,
+  CheckCircle,
+} from 'lucide-react';
+
+// Force dynamic rendering (no caching)
+export const dynamic = 'force-dynamic';
+
+interface AnalyticsData {
+  totalClicks: number;
+  billableClicks: number;
+  wastedClicks: number;
+  uniqueUsers: number;
+  revenue: number;
+  topVehicles: Array<{
+    vin: string;
+    year: number;
+    make: string;
+    model: string;
+    clicks: number;
+  }>;
+  recentClicks: Array<{
+    id: string;
+    created_at: string;
+    is_billable: boolean;
+    cta_clicked: string;
+    vehicle_vin: string;
+    dealer_name: string;
+  }>;
+}
+
+async function getAnalytics(): Promise<AnalyticsData> {
+  // Get total clicks
+  const { data: allClicks } = await supabaseAdmin
+    .from('clicks')
+    .select('id, is_billable, user_id');
+
+  const totalClicks = allClicks?.length || 0;
+  const billableClicks = allClicks?.filter((c) => c.is_billable).length || 0;
+  const wastedClicks = totalClicks - billableClicks;
+  const uniqueUsers = new Set(allClicks?.map((c) => c.user_id)).size;
+  const revenue = billableClicks * 0.8;
+
+  // Get top vehicles by click count
+  const { data: vehicleClicks } = await supabaseAdmin
+    .from('clicks')
+    .select('vehicle_id, vehicles(vin, year, make, model)')
+    .order('created_at', { ascending: false })
+    .limit(1000);
+
+  const vehicleClickCount = new Map<string, { count: number; vehicle: any }>();
+  vehicleClicks?.forEach((click: any) => {
+    if (click.vehicles) {
+      const vin = click.vehicles.vin;
+      if (!vehicleClickCount.has(vin)) {
+        vehicleClickCount.set(vin, { count: 0, vehicle: click.vehicles });
+      }
+      vehicleClickCount.get(vin)!.count++;
+    }
+  });
+
+  const topVehicles = Array.from(vehicleClickCount.entries())
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 5)
+    .map(([vin, data]) => ({
+      vin,
+      year: data.vehicle.year,
+      make: data.vehicle.make,
+      model: data.vehicle.model,
+      clicks: data.count,
+    }));
+
+  // Get recent clicks
+  const { data: recentClicksData } = await supabaseAdmin
+    .from('clicks')
+    .select(
+      `
+      id,
+      created_at,
+      is_billable,
+      cta_clicked,
+      vehicles(vin),
+      dealer_id,
+      dealer_name:vehicles(dealer_name)
+    `
+    )
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  const recentClicks =
+    recentClicksData?.map((click: any) => ({
+      id: click.id,
+      created_at: click.created_at,
+      is_billable: click.is_billable,
+      cta_clicked: click.cta_clicked,
+      vehicle_vin: click.vehicles?.vin || 'N/A',
+      dealer_name: click.dealer_name?.[0]?.dealer_name || 'Unknown',
+    })) || [];
+
+  return {
+    totalClicks,
+    billableClicks,
+    wastedClicks,
+    uniqueUsers,
+    revenue,
+    topVehicles,
+    recentClicks,
+  };
+}
+
+export default async function AdminDashboard() {
+  // Check authentication
+  const cookieStore = await cookies();
+  const authCookie = cookieStore.get('carzo_admin_auth');
+
+  if (!authCookie || authCookie.value !== process.env.ADMIN_PASSWORD) {
+    redirect('/admin/login');
+  }
+
+  const analytics = await getAnalytics();
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      {/* Header */}
+      <div className="bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900">Carzo Analytics</h1>
+              <p className="text-slate-600 mt-1">Revenue tracking and performance metrics</p>
+            </div>
+            <a
+              href="/api/admin/logout"
+              className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg transition-colors"
+            >
+              Logout
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Key Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+          {/* Revenue */}
+          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white">
+            <div className="flex items-center justify-between mb-2">
+              <DollarSign className="w-8 h-8" />
+            </div>
+            <p className="text-3xl font-bold">${analytics.revenue.toFixed(2)}</p>
+            <p className="text-green-100 text-sm mt-1">Total Revenue</p>
+          </div>
+
+          {/* Billable Clicks */}
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white">
+            <div className="flex items-center justify-between mb-2">
+              <CheckCircle className="w-8 h-8" />
+            </div>
+            <p className="text-3xl font-bold">{analytics.billableClicks}</p>
+            <p className="text-blue-100 text-sm mt-1">Billable Clicks</p>
+          </div>
+
+          {/* Total Clicks */}
+          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white">
+            <div className="flex items-center justify-between mb-2">
+              <MousePointerClick className="w-8 h-8" />
+            </div>
+            <p className="text-3xl font-bold">{analytics.totalClicks}</p>
+            <p className="text-purple-100 text-sm mt-1">Total Clicks</p>
+          </div>
+
+          {/* Wasted Clicks */}
+          <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white">
+            <div className="flex items-center justify-between mb-2">
+              <AlertCircle className="w-8 h-8" />
+            </div>
+            <p className="text-3xl font-bold">{analytics.wastedClicks}</p>
+            <p className="text-orange-100 text-sm mt-1">Wasted Clicks</p>
+          </div>
+
+          {/* Unique Users */}
+          <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl p-6 text-white">
+            <div className="flex items-center justify-between mb-2">
+              <Users className="w-8 h-8" />
+            </div>
+            <p className="text-3xl font-bold">{analytics.uniqueUsers}</p>
+            <p className="text-indigo-100 text-sm mt-1">Unique Users</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Top Performing Vehicles */}
+          <div className="bg-white rounded-xl border border-slate-200 p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <TrendingUp className="w-6 h-6 text-blue-600" />
+              <h2 className="text-xl font-bold text-slate-900">Top Performing Vehicles</h2>
+            </div>
+            <div className="space-y-4">
+              {analytics.topVehicles.map((vehicle, index) => (
+                <div
+                  key={vehicle.vin}
+                  className="flex items-center justify-between pb-4 border-b border-slate-100 last:border-0"
+                >
+                  <div>
+                    <p className="font-semibold text-slate-900">
+                      {vehicle.year} {vehicle.make} {vehicle.model}
+                    </p>
+                    <p className="text-sm text-slate-500">VIN: {vehicle.vin}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-blue-600">{vehicle.clicks}</p>
+                    <p className="text-xs text-slate-500">clicks</p>
+                  </div>
+                </div>
+              ))}
+              {analytics.topVehicles.length === 0 && (
+                <p className="text-slate-500 text-center py-8">No data yet</p>
+              )}
+            </div>
+          </div>
+
+          {/* Recent Clicks */}
+          <div className="bg-white rounded-xl border border-slate-200 p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <MousePointerClick className="w-6 h-6 text-purple-600" />
+              <h2 className="text-xl font-bold text-slate-900">Recent Clicks</h2>
+            </div>
+            <div className="space-y-3">
+              {analytics.recentClicks.map((click) => (
+                <div
+                  key={click.id}
+                  className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-slate-900">{click.dealer_name}</p>
+                      {click.is_billable ? (
+                        <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded">
+                          Billable
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-semibold rounded">
+                          Duplicate
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-slate-500 mt-1">
+                      VIN: {click.vehicle_vin} • CTA: {click.cta_clicked}
+                    </p>
+                  </div>
+                  <div className="text-right text-xs text-slate-400">
+                    {new Date(click.created_at).toLocaleString()}
+                  </div>
+                </div>
+              ))}
+              {analytics.recentClicks.length === 0 && (
+                <p className="text-slate-500 text-center py-8">No clicks yet</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Performance Insights */}
+        <div className="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-6">
+          <h3 className="text-lg font-bold text-slate-900 mb-4">Performance Insights</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <p className="text-sm text-slate-600 mb-1">Revenue per Click</p>
+              <p className="text-2xl font-bold text-slate-900">
+                ${analytics.totalClicks > 0 ? (analytics.revenue / analytics.totalClicks).toFixed(2) : '0.00'}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-slate-600 mb-1">Billable Rate</p>
+              <p className="text-2xl font-bold text-slate-900">
+                {analytics.totalClicks > 0
+                  ? ((analytics.billableClicks / analytics.totalClicks) * 100).toFixed(1)
+                  : '0'}
+                %
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-slate-600 mb-1">Revenue per User</p>
+              <p className="text-2xl font-bold text-slate-900">
+                ${analytics.uniqueUsers > 0 ? (analytics.revenue / analytics.uniqueUsers).toFixed(2) : '0.00'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

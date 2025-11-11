@@ -1,6 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
+# ============================================
+# Dependencies
+# ============================================
 /node_modules
 /.pnp
 .pnp.*
@@ -10,32 +12,330 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
-/coverage
-
-# next.js
+# ============================================
+# Next.js
+# ============================================
 /.next/
 /out/
+.next
 
-# production
+# Next.js build output
 /build
+/.swc/
 
-# misc
-.DS_Store
-*.pem
+# Turbopack cache
+.turbo
 
-# debug
+# Next.js cache
+.next/cache/
+
+# Static export output
+/dist/
+
+# ============================================
+# Testing
+# ============================================
+/coverage
+*.lcov
+.nyc_output
+
+# Jest
+jest-results.json
+junit.xml
+
+# Playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/
+
+# ============================================
+# Environment Variables (CRITICAL - DO NOT COMMIT)
+# ============================================
+.env
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ⚠️ NEVER commit these files - they contain secrets
+.env.local
+
+# Safe to commit (examples only, no real values)
+!.env.example
+!.env.development.example
+
+# ============================================
+# Supabase
+# ============================================
+.supabase
+supabase/.temp/
+**/supabase/.branches
+**/supabase/.temp
+
+# Local Supabase dev files
+.supabase/
+supabase/functions/.verify/
+
+# ============================================
+# TypeScript
+# ============================================
+*.tsbuildinfo
+next-env.d.ts
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# TypeScript declaration files (generated)
+**/*.d.ts.map
+
+# ============================================
+# Build & Deployment
+# ============================================
+# Vercel
+.vercel
+.vercel.json
+
+# Build artifacts
+/build
+/dist
+*.log
+
+# ============================================
+# Logs & Debugging
+# ============================================
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+lerna-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# Debug logs
+debug.log
+*.log
 
-# vercel
-.vercel
+# ============================================
+# IDE & Editor
+# ============================================
+# VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# WebStorm / IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Vim
+*.swp
+*.swo
+*~
+.*.sw?
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Cursor
+.cursor/
+
+# ============================================
+# Operating System
+# ============================================
+# macOS (Primary Development Environment)
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon must end with two \r
+Icon
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# macOS Finder custom folder attributes
+.metadata_never_index
+
+# macOS Time Machine backups
+*.backupdb
+
+# Xcode (in case you use it for any reason)
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+*.xcworkspace/*
+!*.xcworkspace/contents.xcworkspacedata
+!*.xcworkspace/xcshareddata/
+
+# Windows (for team members on Windows)
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux (for deployment servers)
+*~
+.directory
+.Trash-*
+.nfs*
+
+# ============================================
+# Project-Specific
+# ============================================
+# Feed sync temporary files
+/temp/
+/tmp/
+scripts/*.log
+scripts/feed-data/
+/feed-data/
+
+# Downloaded vehicle feed files
+*.tsv
+*.zip
+/downloads/
+
+# MaxMind GeoIP databases (if downloading locally)
+*.mmdb
+*.dat
+/geoip/
+
+# Reference VDP project (not part of main app)
+/reference_vdp/
+
+# Backup files
+*.backup
+*.bak
+*.old
+
+# Local data exports
+/exports/
+/data/local/
+
+# ============================================
+# Security & Secrets
+# ============================================
+# Certificate files
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx
+
+# SSH keys
+id_rsa
+id_rsa.pub
+*.pub
+
+# API keys and secrets (extra safety)
+secrets.json
+credentials.json
+service-account.json
+SECRETS.md
+
+# ============================================
+# Performance & Monitoring
+# ============================================
+# Lighthouse reports
+lighthouse-report.html
+lighthouse-report.json
+
+# Bundle analyzer
+.next/analyze/
+stats.json
+
+# Size limit
+.size-limit.json
+
+# ============================================
+# Temporary Files
+# ============================================
+*.tmp
+*.temp
+.cache
+.parcel-cache
+
+# ============================================
+# Package Manager Locks (COMMIT ONE, IGNORE OTHERS)
+# ============================================
+# Keep only the lock file for your package manager
+# Uncomment the ones you DON'T use:
+
+# npm - USING THIS ONE (keep package-lock.json)
+# package-lock.json
+
+# yarn - NOT USING (ignore)
+yarn.lock
+
+# pnpm - NOT USING (ignore)
+pnpm-lock.yaml
+
+# ============================================
+# Misc
+# ============================================
+# Sentry
+.sentryclirc
+
+# Storybook
+storybook-static/
+
+# Service worker
+sw.js
+sw.js.map
+workbox-*.js
+workbox-*.js.map
+
+# PWA
+public/sw.js
+public/workbox-*.js
+
+# Sitemap (if generated)
+public/sitemap*.xml
+public/robots.txt.backup
+
+# ============================================
+# AI/ML Model Files (if added in future)
+# ============================================
+*.h5
+*.pkl
+*.pickle
+*.model
+*.onnx
+
+# ============================================
+# Documentation Build Output
+# ============================================
+/.docusaurus
+/docs/.vuepress/dist
+
+# ============================================
+# END
+# ============================================

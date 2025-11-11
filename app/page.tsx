@@ -1,65 +1,262 @@
-import Image from "next/image";
+import { Suspense } from 'react';
+import { supabase } from '@/lib/supabase';
+import { Vehicle } from '@/lib/supabase';
+import { diversifyByDealer } from '@/lib/dealer-diversity';
+import Link from 'next/link';
+import Image from 'next/image';
+import { TrendingUp, Shield, Zap, ArrowRight } from 'lucide-react';
+import VehicleCard from '@/components/Search/VehicleCard';
+import HeroSearch from '@/components/Home/HeroSearch';
 
-export default function Home() {
+// Get featured vehicles (dealer-diversified)
+async function getFeaturedVehicles(): Promise<Vehicle[]> {
+  const { data: vehicles } = await supabase
+    .from('vehicles')
+    .select('*')
+    .eq('is_active', true)
+    .order('created_at', { ascending: false })
+    .limit(50); // Get more than needed for diversification
+
+  // Apply dealer diversification
+  return vehicles ? diversifyByDealer(vehicles, 12) : [];
+}
+
+// Get popular makes
+async function getPopularMakes() {
+  const { data: vehicles } = await supabase
+    .from('vehicles')
+    .select('make')
+    .eq('is_active', true);
+
+  const makeCounts = new Map<string, number>();
+  vehicles?.forEach((v) => {
+    if (v.make) {
+      makeCounts.set(v.make, (makeCounts.get(v.make) || 0) + 1);
+    }
+  });
+
+  return Array.from(makeCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([make]) => make);
+}
+
+// Get body styles
+async function getBodyStyles() {
+  const { data: vehicles } = await supabase
+    .from('vehicles')
+    .select('body_style')
+    .eq('is_active', true);
+
+  const styles = [...new Set(vehicles?.map((v) => v.body_style).filter(Boolean))];
+  return styles.slice(0, 6);
+}
+
+export default async function HomePage() {
+  const [featuredVehicles, popularMakes, bodyStyles] = await Promise.all([
+    getFeaturedVehicles(),
+    getPopularMakes(),
+    getBodyStyles(),
+  ]);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="min-h-screen bg-white">
+      {/* Hero Section */}
+      <div className="relative bg-gradient-to-br from-slate-900 to-slate-800 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
+          <div className="text-center">
+            {/* Logo */}
+            <div className="mb-8 flex justify-center">
+              <Image
+                src="/carzo-logo.png"
+                alt="Carzo"
+                width={200}
+                height={60}
+                priority
+                className="h-auto"
+              />
+            </div>
+
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6">
+              Find Your Perfect Vehicle
+            </h1>
+            <p className="text-xl sm:text-2xl text-slate-300 mb-12 max-w-3xl mx-auto">
+              Browse thousands of quality vehicles from trusted dealerships across the country
+            </p>
+
+            {/* Search Bar */}
+            <Suspense fallback={<div className="h-20" />}>
+              <HeroSearch />
+            </Suspense>
+          </div>
+        </div>
+      </div>
+
+      {/* Features */}
+      <div className="bg-slate-50 border-y border-slate-200 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="flex items-start gap-4">
+              <div className="bg-blue-100 p-3 rounded-lg">
+                <TrendingUp className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 mb-1">Wide Selection</h3>
+                <p className="text-slate-600 text-sm">
+                  Thousands of vehicles from dealerships nationwide
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="bg-green-100 p-3 rounded-lg">
+                <Shield className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 mb-1">Verified Listings</h3>
+                <p className="text-slate-600 text-sm">
+                  All vehicles from certified dealerships
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4">
+              <div className="bg-purple-100 p-3 rounded-lg">
+                <Zap className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 mb-1">Fast & Easy</h3>
+                <p className="text-slate-600 text-sm">Find and contact dealers instantly</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Shop by Make */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-8">Shop by Make</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+          {popularMakes.map((make) => (
+            <Link
+              key={make}
+              href={`/search?make=${encodeURIComponent(make)}`}
+              className="bg-white border-2 border-slate-200 hover:border-blue-500 rounded-xl p-6 text-center transition-all duration-300 hover:shadow-lg group"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+              <p className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                {make}
+              </p>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Shop by Body Style */}
+      {bodyStyles.length > 0 && (
+        <div className="bg-slate-50 py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-8">
+              Shop by Body Style
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {bodyStyles.map((style) => (
+                <Link
+                  key={style}
+                  href={`/search?bodyStyle=${encodeURIComponent(style)}`}
+                  className="bg-white border-2 border-slate-200 hover:border-blue-500 rounded-xl p-6 text-center transition-all duration-300 hover:shadow-lg group"
+                >
+                  <p className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                    {style}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Featured Vehicles */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">Featured Vehicles</h2>
+          <Link
+            href="/search"
+            className="text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-2"
+          >
+            View All
+            <ArrowRight className="w-5 h-5" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {featuredVehicles.map((vehicle) => (
+            <VehicleCard key={vehicle.id} vehicle={vehicle} />
+          ))}
+        </div>
+      </div>
+
+      {/* CTA Section */}
+      <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white py-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4">Ready to Find Your Next Vehicle?</h2>
+          <p className="text-xl text-blue-100 mb-8">
+            Browse our complete inventory and connect with dealers instantly
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/search"
+            className="inline-flex items-center gap-3 bg-white text-blue-600 px-8 py-4 rounded-xl font-bold text-lg hover:shadow-2xl transition-all duration-300 hover:scale-105"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            Start Searching
+            <ArrowRight className="w-6 h-6" />
+          </Link>
         </div>
-      </main>
+      </div>
+
+      {/* Footer */}
+      <footer className="bg-slate-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <div className="mb-4">
+                <Image
+                  src="/carzo-logo.png"
+                  alt="Carzo"
+                  width={150}
+                  height={45}
+                  className="h-auto brightness-0 invert"
+                />
+              </div>
+              <p className="text-slate-400 text-sm">
+                Your trusted source for finding quality vehicles from dealerships nationwide.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-bold mb-4">Quick Links</h4>
+              <ul className="space-y-2 text-sm text-slate-400">
+                <li>
+                  <Link href="/search" className="hover:text-white transition-colors">
+                    Search Vehicles
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/admin" className="hover:text-white transition-colors">
+                    Admin
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-bold mb-4">Legal</h4>
+              <p className="text-xs text-slate-400">
+                © 2025 Carzo. All rights reserved. Vehicle information subject to change. When you
+                click on links to vehicles on this site, contact sellers, or make a purchase, it
+                can result in us earning a commission.
+              </p>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
+
+// Enable ISR: Revalidate every 1 hour
+export const revalidate = 3600;

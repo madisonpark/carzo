@@ -1,36 +1,87 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Carzo - Vehicle Marketplace
 
-## Getting Started
+**Domain:** [carzo.net](https://carzo.net)
 
-First, run the development server:
+A high-conversion vehicle marketplace platform optimized for paid traffic. Built with Next.js 16 and Supabase.
+
+## Business Model
+
+- **Revenue:** $0.80 per UNIQUE DEALER click per user per 30 days
+- **Traffic:** Facebook Ads, Google Display Network → VDP Bridge Pages → Dealer Sites
+- **Inventory:** 72,000+ vehicles updated 4x daily from LotLinx feed
+
+## Tech Stack
+
+- **Framework:** Next.js 16 (with Turbopack)
+- **Database:** Supabase (PostgreSQL)
+- **Styling:** Tailwind CSS
+- **Deployment:** Vercel
+- **Images:** Sharp (blur generation)
+- **Tracking:** Cookie-based anonymous user IDs
+
+## Quick Start
+
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Set Up Supabase
+
+1. Create a new Supabase project at [supabase.com](https://supabase.com)
+2. Run the schema migration:
+   - Go to SQL Editor in Supabase dashboard
+   - Copy contents of `supabase-schema.sql`
+   - Execute the SQL
+
+### 3. Configure Environment Variables
+
+Copy `.env.example` to `.env.local`:
+
+```bash
+cp .env.example .env.local
+```
+
+Fill in your credentials from Supabase dashboard and the lotlinx project.
+
+### 4. Run Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Key Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Dealer Diversification (Revenue Optimization)
+Automatically rotates dealers in search results to maximize billable clicks. Business rule: $0.80 per unique dealer per user per 30 days.
 
-## Learn More
+### Click Tracking with Deduplication
+Tracks which dealers each user has clicked in a 30-day window. Only first click to each dealer is billable.
 
-To learn more about Next.js, take a look at the following resources:
+### VDP Bridge Page (Conversion Optimized)
+"Confirm, Tempt, Convert" strategy with verified listing badge, blurred photo tease, and multiple CTAs. All links open in new tab.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Anonymous User Tracking
+Simple cookie-based approach (no JWT needed). Persistent UUID stored for 1 year.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Status
 
-## Deploy on Vercel
+**Phase 1 Complete:**
+- ✅ Next.js 16 project initialized
+- ✅ Supabase schema created
+- ✅ User tracking system (cookies)
+- ✅ Dealer diversification algorithm
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**Next Steps:**
+- Feed sync script
+- VDP bridge page
+- Click tracking API
+- Search results page
+- Homepage
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Documentation
+
+See `../lotlinx/CLAUDE.md` for project context and `supabase-schema.sql` for database schema.

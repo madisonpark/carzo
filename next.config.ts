@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Fix workspace root warning - specify the correct project root
+  outputFileTracingRoot: '/Users/steven/dev/carzo',
 };
 
 export default nextConfig;

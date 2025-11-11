@@ -719,7 +719,7 @@ git push -u origin feature/my-feature
 git checkout main
 git pull origin main
 git checkout feature/my-feature
-git rebase main  # or: git merge main
+git rebase main  # Recommended to keep history clean and linear
 ```
 
 ### Emergency Hotfix Process

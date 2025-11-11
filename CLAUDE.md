@@ -569,6 +569,202 @@ MAXMIND_LICENSE_KEY=your_license_key
 - `20251111000002_add_location_columns.sql`
 - `20251111000003_add_radius_column.sql`
 
+## Git Workflow & Best Practices
+
+**⚠️ CRITICAL: Never work directly on `main` branch**
+
+### Branch-Based Development
+
+**ALWAYS work on feature/bug fix branches, never on main:**
+
+1. **Before Starting Any Work:**
+   ```bash
+   # Check current branch
+   git branch --show-current
+
+   # If on main, STOP and create a feature branch
+   git checkout -b feature/your-feature-name
+   # or
+   git checkout -b fix/bug-description
+   ```
+
+2. **Branch Naming Conventions:**
+   - Features: `feature/description` (e.g., `feature/vdp-photo-gallery`)
+   - Bug fixes: `fix/description` (e.g., `fix/search-filter-crash`)
+   - Documentation: `docs/description` (e.g., `docs/update-readme`)
+   - Refactoring: `refactor/description` (e.g., `refactor/dealer-diversity`)
+   - Hotfixes: `hotfix/description` (e.g., `hotfix/critical-security-patch`)
+
+3. **Daily Workflow:**
+   ```bash
+   # Start of day: Pull latest main
+   git checkout main
+   git pull origin main
+
+   # Create new feature branch
+   git checkout -b feature/new-feature
+
+   # Do your work, commit frequently
+   git add <file1> <file2>... # Or use 'git add -p' to review changes before staging
+   git commit -m "Descriptive commit message"
+
+   # Push branch to GitHub
+   git push -u origin feature/new-feature
+   ```
+
+4. **Merging to Main:**
+   - **NEVER** merge directly to main locally
+   - **ALWAYS** create a Pull Request on GitHub
+   - Get code review (even self-review is better than nothing)
+   - Merge via GitHub UI
+   - Delete branch after merge
+
+### Commit Message Guidelines
+
+**Format:**
+```
+<type>: <short description>
+
+<optional detailed description>
+
+<optional footer>
+```
+
+**Types:**
+- `feat:` New feature
+- `fix:` Bug fix
+- `docs:` Documentation changes
+- `refactor:` Code refactoring (no functionality change)
+- `perf:` Performance improvements
+- `test:` Adding or updating tests
+- `chore:` Maintenance tasks (deps, config)
+
+**Examples:**
+```bash
+git commit -m "feat: add photo gallery teaser to VDP"
+git commit -m "fix: resolve dealer diversification algorithm edge case"
+git commit -m "docs: update Next.js 16 patterns documentation"
+git commit -m "refactor: extract dealer click tracking to separate module"
+```
+
+### Pre-Commit Checklist
+
+Before committing, verify:
+- ✅ You're on a feature/fix branch (NOT main)
+- ✅ Code builds successfully (`npm run build`)
+- ✅ No TypeScript errors (`npm run type-check` if available)
+- ✅ No secrets in code (check CLAUDE.md, use SECRETS.md)
+- ✅ Commit message is descriptive
+
+### Pull Request Guidelines
+
+**Before Creating PR:**
+1. Review your own changes first
+2. Update CLAUDE.md if needed (architecture changes, new features)
+3. Test locally (`npm run build && npm start`)
+4. Rebase on latest main if needed
+
+**PR Template:**
+```markdown
+## Summary
+Brief description of changes
+
+## Changes
+- Bullet list of specific changes
+
+## Testing
+- How to test these changes
+- Any new test cases added
+
+## Screenshots (if UI changes)
+[Add screenshots]
+
+## Checklist
+- [ ] Code builds successfully
+- [ ] No TypeScript errors
+- [ ] CLAUDE.md updated (if needed)
+- [ ] No secrets committed
+```
+
+### Protected Branches
+
+**Main Branch Rules:**
+- Direct commits: ❌ NEVER
+- Force push: ❌ NEVER
+- Merging: ✅ Only via approved PRs
+- Deployment: ✅ Vercel auto-deploys from main
+
+### Quick Reference
+
+```bash
+# Check which branch you're on (DO THIS FIRST!)
+git branch --show-current
+
+# Create and switch to new branch
+git checkout -b feature/my-feature
+
+# See all branches
+git branch -a
+
+# Switch branches
+git checkout branch-name
+
+# Delete local branch (after merge)
+git branch -d feature/my-feature
+
+# Delete remote branch (after merge)
+git push origin --delete feature/my-feature
+
+# Push branch to GitHub
+git push -u origin feature/my-feature
+
+# Update your branch with latest main
+git checkout main
+git pull origin main
+git checkout feature/my-feature
+git rebase main  # Recommended to keep history clean and linear
+```
+
+### Emergency Hotfix Process
+
+For critical production bugs:
+
+```bash
+# Create hotfix branch from main
+git checkout main
+git pull origin main
+git checkout -b hotfix/critical-issue
+
+# Make fix, commit
+git add .
+git commit -m "hotfix: resolve critical issue description"
+
+# Push and create PR immediately
+git push -u origin hotfix/critical-issue
+gh pr create --title "HOTFIX: Critical issue" --body "Description" # Requires GitHub CLI (gh)
+
+# Merge ASAP after review
+# Deploy will auto-trigger from main
+```
+
+### Common Mistakes to Avoid
+
+❌ **DON'T:**
+- Work on main branch
+- Commit secrets (use SECRETS.md)
+- Force push to main
+- Merge without PR
+- Use vague commit messages ("fix stuff", "updates")
+- Leave branches unmerged for weeks
+
+✅ **DO:**
+- Always create a branch before starting work
+- Write descriptive commit messages
+- Create PRs for all changes
+- Keep branches focused and short-lived
+- Delete merged branches
+- Pull main regularly to stay updated
+
 ## Current Status
 
 **All Core Features Complete:**

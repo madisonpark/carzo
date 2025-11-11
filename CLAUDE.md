@@ -712,6 +712,9 @@ git checkout branch-name
 # Delete local branch (after merge)
 git branch -d feature/my-feature
 
+# Delete remote branch (after merge)
+git push origin --delete feature/my-feature
+
 # Push branch to GitHub
 git push -u origin feature/my-feature
 

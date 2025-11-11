@@ -605,7 +605,7 @@ MAXMIND_LICENSE_KEY=your_license_key
    git checkout -b feature/new-feature
 
    # Do your work, commit frequently
-   git add .
+   git add <file1> <file2>... # Or use 'git add -p' to review changes before staging
    git commit -m "Descriptive commit message"
 
    # Push branch to GitHub

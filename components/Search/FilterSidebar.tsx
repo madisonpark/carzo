@@ -122,12 +122,10 @@ export default function FilterSidebar({
   useEffect(() => {
     if (isMobileDrawerOpen) {
       document.body.classList.add('overflow-hidden');
-    } else {
-      document.body.classList.remove('overflow-hidden');
+      return () => {
+        document.body.classList.remove('overflow-hidden');
+      };
     }
-    return () => {
-      document.body.classList.remove('overflow-hidden');
-    };
   }, [isMobileDrawerOpen]);
 
   const FilterContent = () => (
@@ -336,7 +334,7 @@ export default function FilterSidebar({
             <X className="w-5 h-5" />
           </Button>
         </div>
-        <div className="p-6 pb-24">
+        <div className="p-6">
           <FilterContent />
         </div>
       </div>

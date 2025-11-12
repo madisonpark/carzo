@@ -59,6 +59,10 @@ export async function getLocationFromIP(ipAddress: string): Promise<UserLocation
 /**
  * Calculate distance between two coordinates (in miles)
  * Uses Haversine formula
+ *
+ * @deprecated This function is no longer used in production code.
+ * Location-based search now uses PostGIS ST_Distance for better performance.
+ * Kept for backward compatibility and testing purposes.
  */
 export function calculateDistance(
   lat1: number,
@@ -86,6 +90,8 @@ function toRad(degrees: number): number {
 
 /**
  * Get distance label for display
+ *
+ * @deprecated Not currently used. Kept for potential future use.
  */
 export function getDistanceLabel(miles: number): string {
   if (miles < 1) {

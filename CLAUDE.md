@@ -1457,3 +1457,4 @@ gh pr create --title "HOTFIX: Critical issue" --body "Description" # Requires Gi
 
 **Last Updated**: 2025-11-12
 **Project Started**: 2025-11-11
+- after considering and addressing feedback on PRs in github from gemini-code-assist, remember to add comment to PR and tag gemini-code-assist noting what you did or did not do and why

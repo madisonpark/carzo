@@ -121,12 +121,12 @@ export default function FilterSidebar({
   // Lock body scroll when mobile drawer is open
   useEffect(() => {
     if (isMobileDrawerOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.classList.add('overflow-hidden');
     } else {
-      document.body.style.overflow = '';
+      document.body.classList.remove('overflow-hidden');
     }
     return () => {
-      document.body.style.overflow = '';
+      document.body.classList.remove('overflow-hidden');
     };
   }, [isMobileDrawerOpen]);
 
@@ -312,7 +312,7 @@ export default function FilterSidebar({
       {/* Mobile Drawer Overlay */}
       {isMobileDrawerOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-50 animate-in fade-in duration-200"
+          className="lg:hidden fixed inset-0 bg-black/50 z-50 animate-fade-in"
           onClick={() => setIsMobileDrawerOpen(false)}
           aria-hidden="true"
         />
@@ -321,7 +321,7 @@ export default function FilterSidebar({
       {/* Mobile Drawer */}
       <div
         className={cn(
-          'lg:hidden fixed top-0 left-0 bottom-0 w-full max-w-sm bg-white z-50 overflow-y-auto transform transition-transform duration-300 ease-in-out',
+          'lg:hidden fixed top-0 left-0 bottom-0 w-full max-w-sm bg-white z-[60] overflow-y-auto transform transition-transform duration-300 ease-in-out shadow-2xl',
           isMobileDrawerOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >

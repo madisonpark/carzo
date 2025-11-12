@@ -122,6 +122,24 @@ Dark mode will be activated via `prefers-color-scheme: dark` media query. All br
 - **Spacing**: Use Tailwind defaults (`p-4`, `p-6`, `p-8`, etc.)
 - **Shadows**: `shadow-lg` (cards), `shadow-2xl` (CTAs)
 
+### Custom Utilities
+
+**Gradient Utility** (for primary CTAs):
+```tsx
+<Button className="bg-primary-gradient">
+  // Applies linear-gradient from primary → primary-hover
+</Button>
+```
+
+**Accessibility Focus States** (always use `focus-visible:`):
+```tsx
+// ✅ CORRECT (WCAG 2.1 compliant):
+<input className="outline-none focus-visible:ring-2 focus-visible:ring-brand" />
+
+// ❌ WRONG (shows focus on mouse clicks):
+<input className="focus:outline-none focus:ring-2 focus:ring-brand" />
+```
+
 ### Important Rules
 
 1. **Always use semantic colors** (`bg-primary`, `bg-brand`) instead of hard-coded values (`bg-red-600`, `bg-blue-500`)
@@ -129,6 +147,8 @@ Dark mode will be activated via `prefers-color-scheme: dark` media query. All br
 3. **Preserve semantic colors** - Red for errors, green for success (don't change these)
 4. **All CTAs use primary color** (red) for maximum conversion
 5. **Brand accents use brand color** (blue) for consistency
+6. **Use `focus-visible:` instead of `focus:`** for accessibility (WCAG 2.1) - focus rings only on keyboard nav, not mouse clicks
+7. **Use Button component** from `@/components/ui` instead of raw `<button>` elements for consistency
 
 ## UI Component Library
 

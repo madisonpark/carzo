@@ -283,6 +283,10 @@ stats.json
 .cache
 .parcel-cache
 
+# Chrome DevTools MCP Server temp files
+chrome-devtools-mcp-*/
+**/chrome-devtools-mcp-*/
+
 # ============================================
 # Package Manager Locks (COMMIT ONE, IGNORE OTHERS)
 # ============================================

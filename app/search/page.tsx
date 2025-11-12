@@ -238,6 +238,14 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      {/* Skip to main content link for accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded-lg"
+      >
+        Skip to main content
+      </a>
+
       {/* Header */}
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -266,7 +274,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filter Sidebar */}
           <aside className="lg:w-64 flex-shrink-0">
@@ -282,7 +290,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           </aside>
 
           {/* Results */}
-          <main className="flex-1">
+          <section className="flex-1">
             <Suspense fallback={<div>Loading...</div>}>
               <SearchResults
                 vehicles={searchResults.vehicles}
@@ -292,9 +300,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 currentFilters={params}
               />
             </Suspense>
-          </main>
+          </section>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

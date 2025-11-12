@@ -60,6 +60,7 @@ export default function FilterSidebar({
         {hasActiveFilters && (
           <button
             onClick={clearFilters}
+            aria-label="Clear all filters"
             className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
           >
             <X className="w-4 h-4" />
@@ -127,6 +128,7 @@ export default function FilterSidebar({
             <select
               value={currentFilters.minYear || ''}
               onChange={(e) => updateFilter('minYear', e.target.value)}
+              aria-label="Minimum year"
               className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             >
               <option value="">Min</option>
@@ -139,6 +141,7 @@ export default function FilterSidebar({
             <select
               value={currentFilters.maxYear || ''}
               onChange={(e) => updateFilter('maxYear', e.target.value)}
+              aria-label="Maximum year"
               className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             >
               <option value="">Max</option>
@@ -160,6 +163,7 @@ export default function FilterSidebar({
               placeholder="Min"
               value={currentFilters.minPrice || ''}
               onChange={(e) => updateFilter('minPrice', e.target.value)}
+              aria-label="Minimum price"
               className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             />
             <input
@@ -167,6 +171,7 @@ export default function FilterSidebar({
               placeholder="Max"
               value={currentFilters.maxPrice || ''}
               onChange={(e) => updateFilter('maxPrice', e.target.value)}
+              aria-label="Maximum price"
               className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             />
           </div>

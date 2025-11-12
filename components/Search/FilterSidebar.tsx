@@ -33,19 +33,7 @@ export default function FilterSidebar({
   const [maxPrice, setMaxPrice] = useState(currentFilters.maxPrice || '');
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Debounced update function
-  const debouncedUpdateFilter = useCallback(
-    (key: string, value: string) => {
-      const timer = setTimeout(() => {
-        updateFilter(key, value);
-        setIsUpdating(false);
-      }, 800); // 800ms debounce
-      return () => clearTimeout(timer);
-    },
-    []
-  );
-
-  const updateFilter = (key: string, value: string) => {
+  const updateFilter = useCallback((key: string, value: string) => {
     const params = new URLSearchParams();
     // Build params from currentFilters
     Object.entries(currentFilters).forEach(([filterKey, filterValue]) => {
@@ -61,19 +49,39 @@ export default function FilterSidebar({
     }
     params.delete('page'); // Reset to page 1 when filtering
     router.push(`/search?${params.toString()}`);
-  };
+  }, [currentFilters, router]);
 
-  // Handle price input changes with debouncing
+  // Debounce minPrice updates
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (minPrice !== (currentFilters.minPrice || '')) {
+        updateFilter('minPrice', minPrice);
+        setIsUpdating(false);
+      }
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [minPrice, currentFilters.minPrice, updateFilter]);
+
+  // Debounce maxPrice updates
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (maxPrice !== (currentFilters.maxPrice || '')) {
+        updateFilter('maxPrice', maxPrice);
+        setIsUpdating(false);
+      }
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [maxPrice, currentFilters.maxPrice, updateFilter]);
+
+  // Handle price input changes
   const handleMinPriceChange = (value: string) => {
     setMinPrice(value);
     setIsUpdating(true);
-    debouncedUpdateFilter('minPrice', value);
   };
 
   const handleMaxPriceChange = (value: string) => {
     setMaxPrice(value);
     setIsUpdating(true);
-    debouncedUpdateFilter('maxPrice', value);
   };
 
   const clearFilters = () => {

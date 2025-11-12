@@ -76,43 +76,56 @@ async function getFilterOptions(params?: {
   }
 
   // LOCATION-BASED FILTERING: Use PostGIS spatial function (100x faster)
-  // Calls get_filter_options_by_location() stored procedure
+  // Calls get_filter_options_by_location() stored procedure via rate-limited API proxy
   // Uses ST_DWithin with GIST spatial index for fast radius queries
   //
   // DESIGN DECISION: No fallback for sparse areas
   // Previous implementation showed 5K closest vehicles when radius search returned nothing.
   // Removed for paid ad traffic use case - users expect local results, not vehicles 500+ miles away.
   // Better UX to show "no results" than irrelevant distant vehicles.
-  const { data, error } = await supabase.rpc('get_filter_options_by_location', {
-    user_lat: userLat,
-    user_lon: userLon,
-    p_make: params?.make || null,
-    p_model: params?.model || null,
-    p_condition: params?.condition || null,
-    p_body_style: params?.bodyStyle || null,
-    p_min_price: params?.minPrice ? parseFloat(params.minPrice) : null,
-    p_max_price: params?.maxPrice ? parseFloat(params.maxPrice) : null,
-    p_min_year: params?.minYear ? parseInt(params.minYear) : null,
-    p_max_year: params?.maxYear ? parseInt(params.maxYear) : null,
-  });
+  //
+  // SECURITY: Rate-limited API proxy prevents DoS and scraping attacks
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/filter-options`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_lat: userLat,
+        user_lon: userLon,
+        make: params?.make || null,
+        model: params?.model || null,
+        condition: params?.condition || null,
+        body_style: params?.bodyStyle || null,
+        min_price: params?.minPrice ? parseFloat(params.minPrice) : null,
+        max_price: params?.maxPrice ? parseFloat(params.maxPrice) : null,
+        min_year: params?.minYear ? parseInt(params.minYear) : null,
+        max_year: params?.maxYear ? parseInt(params.maxYear) : null,
+      }),
+    });
 
-  if (error) {
-    console.error('Error calling get_filter_options_by_location:', error);
+    if (!response.ok) {
+      console.error('Error calling filter-options API:', response.statusText);
+      return { makes: [], bodyStyles: [], conditions: [], years: [] };
+    }
+
+    const { data } = await response.json();
+
+    if (!data || data.length === 0) {
+      return { makes: [], bodyStyles: [], conditions: [], years: [] };
+    }
+
+    // PostGIS function returns single row with arrays
+    const result = data[0];
+    return {
+      makes: result.makes || [],
+      bodyStyles: result.body_styles || [],
+      conditions: result.conditions || [],
+      years: result.years || [],
+    };
+  } catch (error) {
+    console.error('Error fetching filter options:', error);
     return { makes: [], bodyStyles: [], conditions: [], years: [] };
   }
-
-  if (!data || data.length === 0) {
-    return { makes: [], bodyStyles: [], conditions: [], years: [] };
-  }
-
-  // PostGIS function returns single row with arrays
-  const result = data[0];
-  return {
-    makes: result.makes || [],
-    bodyStyles: result.body_styles || [],
-    conditions: result.conditions || [],
-    years: result.years || [],
-  };
 }
 
 // Search vehicles with filters
@@ -141,30 +154,51 @@ async function searchVehicles(params: {
   // Two-path approach: PostGIS for location-based, regular query for non-location
   if (userLat && userLon) {
     // LOCATION-BASED SEARCH: Use PostGIS spatial function (100x faster)
-    // Calls search_vehicles_by_location() stored procedure
+    // Calls search_vehicles_by_location() stored procedure via rate-limited API proxy
     // Uses ST_DWithin with GIST spatial index for fast radius queries
     //
     // PAGINATION STRATEGY: Fetch all results (limited by 100-mile radius cap)
     // and perform dealer diversification in memory before slicing for current page.
     // This prevents pagination duplicates that occur when diversifying overlapping windows.
     // With 100-mile cap, result sets are typically small enough for memory (< 5K vehicles).
-    const { data: spatialVehicles, error: spatialError } = await supabase.rpc('search_vehicles_by_location', {
-      user_lat: userLat,
-      user_lon: userLon,
-      p_make: params.make || null,
-      p_model: params.model || null,
-      p_condition: params.condition || null,
-      p_body_style: params.bodyStyle || null,
-      p_min_price: params.minPrice ? parseFloat(params.minPrice) : null,
-      p_max_price: params.maxPrice ? parseFloat(params.maxPrice) : null,
-      p_min_year: params.minYear ? parseInt(params.minYear) : null,
-      p_max_year: params.maxYear ? parseInt(params.maxYear) : null,
-      p_limit: 10000, // Fetch all results within 100-mile radius (typically < 5K)
-      p_offset: 0,
-    });
+    //
+    // SECURITY: Rate-limited API proxy prevents DoS and scraping attacks
+    let spatialVehicles;
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/search-vehicles`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_lat: userLat,
+          user_lon: userLon,
+          make: params.make || null,
+          model: params.model || null,
+          condition: params.condition || null,
+          body_style: params.bodyStyle || null,
+          min_price: params.minPrice ? parseFloat(params.minPrice) : null,
+          max_price: params.maxPrice ? parseFloat(params.maxPrice) : null,
+          min_year: params.minYear ? parseInt(params.minYear) : null,
+          max_year: params.maxYear ? parseInt(params.maxYear) : null,
+          limit: 10000, // Fetch all results within 100-mile radius (typically < 5K)
+          offset: 0,
+        }),
+      });
 
-    if (spatialError) {
-      console.error('Error calling search_vehicles_by_location:', spatialError);
+      if (!response.ok) {
+        console.error('Error calling search-vehicles API:', response.statusText);
+        return {
+          vehicles: [],
+          total: 0,
+          page,
+          totalPages: 0,
+          userLocation: { lat: userLat, lon: userLon },
+        };
+      }
+
+      const { data } = await response.json();
+      spatialVehicles = data;
+    } catch (error) {
+      console.error('Error fetching vehicles:', error);
       return {
         vehicles: [],
         total: 0,

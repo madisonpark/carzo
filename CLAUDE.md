@@ -321,6 +321,10 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000 # Production: https://carzo.net
 
 # Admin Dashboard
 ADMIN_PASSWORD=your_admin_password
+
+# MaxMind GeoIP2 (for IP-based location detection)
+MAXMIND_ACCOUNT_ID=your_maxmind_account_id
+MAXMIND_LICENSE_KEY=your_maxmind_license_key
 ```
 
 ## File Structure
@@ -510,6 +514,145 @@ carzo/
 - **LotLinx Integration**: See `../lotlinx/docs/` for LotLinx API docs
 - **Feed Structure**: See `../lotlinx/docs/lotlinx-publisher-feed.md`
 - **Database Schema**: See `supabase-schema.sql` in this project
+
+## Rate Limiting
+
+### Architecture
+
+Carzo implements **PostgreSQL-based rate limiting** to protect PostgREST RPC endpoints from DoS attacks and scraping without requiring external services like Redis.
+
+**Why PostgreSQL over Redis:**
+- No external dependencies (everything stays in Supabase)
+- No additional API keys to manage
+- Unlogged tables provide ~3x faster writes than regular tables
+- Sufficient performance for our use case
+- Zero additional cost
+
+**Implementation:**
+- Unlogged tables (skip Write-Ahead Log for performance)
+- Advisory locks prevent race conditions
+- Automatic cleanup of old records
+- Rate limit checks run server-side in PostgreSQL functions
+
+### Rate Limit Configuration
+
+```typescript
+// lib/rate-limit.ts
+export const RATE_LIMITS = {
+  SEARCH_VEHICLES: { limit: 100, windowSeconds: 60 },   // 100/min
+  FILTER_OPTIONS: { limit: 50, windowSeconds: 60 },     // 50/min
+  BURST: { limit: 10, windowSeconds: 1 },               // 10/sec
+  SESSION: { limit: 500, windowSeconds: 3600 },         // 500/hour
+};
+```
+
+### Database Schema
+
+```sql
+-- Unlogged table for rate limit counters (fast writes)
+CREATE UNLOGGED TABLE rate_limits (
+  id BIGSERIAL PRIMARY KEY,
+  identifier TEXT NOT NULL,           -- IP or user ID
+  endpoint TEXT NOT NULL,              -- API endpoint
+  window_start TIMESTAMPTZ NOT NULL,   -- Window start time
+  request_count INTEGER NOT NULL DEFAULT 1,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(identifier, endpoint, window_start)
+);
+
+-- Function: Check and increment rate limit atomically
+CREATE FUNCTION check_rate_limit(
+  p_identifier TEXT,
+  p_endpoint TEXT,
+  p_limit INTEGER,
+  p_window_seconds INTEGER
+) RETURNS TABLE (
+  allowed BOOLEAN,
+  current_count INTEGER,
+  limit_value INTEGER,
+  window_reset TIMESTAMPTZ
+);
+```
+
+### API Proxy Pattern
+
+All PostGIS RPC calls go through rate-limited Next.js API routes:
+
+```
+Client → /api/search-vehicles → Rate Limit Check → Supabase RPC → Return
+       ↳ /api/filter-options → Rate Limit Check → Supabase RPC → Return
+```
+
+**Benefits:**
+1. Centralized rate limiting enforcement
+2. Rate limit headers in responses (`X-RateLimit-*`)
+3. Clean separation of concerns
+4. Easy to monitor and adjust limits
+
+### Usage Example
+
+```typescript
+// app/api/search-vehicles/route.ts
+import { getClientIdentifier, checkMultipleRateLimits, RATE_LIMITS } from '@/lib/rate-limit';
+
+export async function POST(request: NextRequest) {
+  const identifier = getClientIdentifier(request);
+
+  // Check both per-minute and burst limits
+  const rateLimitResult = await checkMultipleRateLimits(identifier, [
+    { endpoint: 'search_vehicles', ...RATE_LIMITS.SEARCH_VEHICLES },
+    { endpoint: 'search_vehicles_burst', ...RATE_LIMITS.BURST },
+  ]);
+
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
+  }
+
+  // Proceed with request...
+}
+```
+
+### Maintenance
+
+**Cleanup old records** (prevents table bloat):
+```sql
+-- Manually via SQL
+SELECT cleanup_rate_limits();
+
+-- Or add to Vercel cron (vercel.json)
+{
+  "crons": [{
+    "path": "/api/cron/cleanup-rate-limits",
+    "schedule": "0 * * * *"  // Every hour
+  }]
+}
+```
+
+### Monitoring
+
+Check rate limit status via response headers:
+- `X-RateLimit-Limit`: Maximum requests per window
+- `X-RateLimit-Remaining`: Requests remaining in current window
+- `X-RateLimit-Reset`: ISO 8601 timestamp when window resets
+
+### Deployment Checklist
+
+- ✅ Run migration: `20251112000005_create_rate_limiting_tables.sql`
+- ✅ Test rate limits work (see Testing section below)
+- ✅ Monitor for false positives (shared IPs, proxies)
+- ✅ Set up cron job for cleanup
+
+### Testing Rate Limits
+
+```bash
+# Test with Apache Bench (100 requests, 10 concurrent)
+ab -n 100 -c 10 -H "Content-Type: application/json" \
+   -p payload.json \
+   https://your-site.com/api/search-vehicles
+
+# Should see HTTP 429 responses after hitting limit
+```
 
 ## Location-Based Search with PostGIS
 

@@ -115,6 +115,7 @@ async function searchVehicles(params: {
   page?: string;
   lat?: string;
   lon?: string;
+  sortBy?: string;
 }) {
   const RESULTS_PER_PAGE = 24;
   const page = parseInt(params.page || '1');
@@ -183,8 +184,8 @@ async function searchVehicles(params: {
         return v.distance <= radius;
       });
 
-    // Sort by distance (nearest first) within the radius
-    vehiclesWithDistance.sort((a, b) => a.distance - b.distance);
+    // Sort by distance (nearest first) within the radius OR by user-selected sort
+    applySorting(vehiclesWithDistance, params.sortBy || 'distance');
 
     // If no vehicles found within radius, fall back to showing closest vehicles
     if (vehiclesWithDistance.length === 0 && allVehicles.length > 0) {
@@ -194,12 +195,48 @@ async function searchVehicles(params: {
           distance: v.latitude && v.longitude
             ? calculateDistance(userLat, userLon, v.latitude, v.longitude)
             : Infinity,
-        }))
-        .sort((a, b) => a.distance - b.distance);
+        }));
+      applySorting(vehiclesWithDistance, params.sortBy || 'distance');
     }
-  } else if (!userLat && !userLon && allVehicles) {
-    // Sort by year if no location
-    vehiclesWithDistance = allVehicles.sort((a, b) => b.year - a.year);
+  } else if (allVehicles) {
+    // Apply user-selected sorting or default
+    vehiclesWithDistance = [...allVehicles];
+    applySorting(vehiclesWithDistance, params.sortBy || 'year_desc');
+  }
+
+  // Sorting helper function
+  function applySorting(vehicles: any[], sortBy: string) {
+    switch (sortBy) {
+      case 'price_asc':
+        vehicles.sort((a, b) => a.price - b.price);
+        break;
+      case 'price_desc':
+        vehicles.sort((a, b) => b.price - a.price);
+        break;
+      case 'year_asc':
+        vehicles.sort((a, b) => a.year - b.year);
+        break;
+      case 'year_desc':
+        vehicles.sort((a, b) => b.year - a.year);
+        break;
+      case 'mileage_asc':
+        vehicles.sort((a, b) => (a.miles || 999999) - (b.miles || 999999));
+        break;
+      case 'mileage_desc':
+        vehicles.sort((a, b) => (b.miles || 0) - (a.miles || 0));
+        break;
+      case 'distance':
+        vehicles.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity));
+        break;
+      case 'relevance':
+      default:
+        // Relevance = distance if available, otherwise year
+        if (userLat && userLon) {
+          vehicles.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity));
+        } else {
+          vehicles.sort((a, b) => b.year - a.year);
+        }
+    }
   }
 
   // For location-based search, apply pagination AFTER sorting by distance

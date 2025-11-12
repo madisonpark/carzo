@@ -34,6 +34,19 @@ export default function SearchResults({
     router.push(`/search?${params.toString()}`);
   };
 
+  const updateSort = (sortBy: string) => {
+    const params = new URLSearchParams();
+    // Build params from currentFilters
+    Object.entries(currentFilters).forEach(([key, value]) => {
+      if (value && key !== 'page' && key !== 'sortBy') {
+        params.set(key, value);
+      }
+    });
+    params.set('sortBy', sortBy);
+    params.delete('page'); // Reset to page 1 when sorting
+    router.push(`/search?${params.toString()}`);
+  };
+
   if (vehicles.length === 0) {
     return (
       <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
@@ -43,8 +56,37 @@ export default function SearchResults({
     );
   }
 
+  const currentSort = currentFilters.sortBy || 'relevance';
+
   return (
     <div>
+      {/* Sort Controls */}
+      <div className="flex items-center justify-between mb-6">
+        <p className="text-sm text-slate-600">
+          Showing <span className="font-semibold">{vehicles.length}</span> of{' '}
+          <span className="font-semibold">{total.toLocaleString()}</span> vehicles
+        </p>
+        <div className="flex items-center gap-2">
+          <label htmlFor="sort-select" className="text-sm font-medium text-slate-700">
+            Sort by:
+          </label>
+          <select
+            id="sort-select"
+            value={currentSort}
+            onChange={(e) => updateSort(e.target.value)}
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="relevance">Relevance</option>
+            <option value="price_asc">Price: Low to High</option>
+            <option value="price_desc">Price: High to Low</option>
+            <option value="year_desc">Year: Newest First</option>
+            <option value="year_asc">Year: Oldest First</option>
+            <option value="mileage_asc">Mileage: Low to High</option>
+            <option value="mileage_desc">Mileage: High to Low</option>
+          </select>
+        </div>
+      </div>
+
       {/* Results Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {vehicles.map((vehicle) => (

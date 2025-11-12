@@ -2,14 +2,22 @@
 
 import { Vehicle } from '@/lib/supabase';
 import Link from 'next/link';
-import { Camera, MapPin, ChevronRight } from 'lucide-react';
+import { Camera, MapPin, ChevronRight, ExternalLink } from 'lucide-react';
 import { Button, Badge } from '@/components/ui';
+import { useEffect, useState } from 'react';
+import { getFlowFromUrl, preserveFlowParam, isDirectFlow, UserFlow } from '@/lib/flow-detection';
+import { getUserId, getSessionId } from '@/lib/user-tracking';
 
 interface VehicleCardProps {
   vehicle: Vehicle & { distance_miles?: number };
 }
 
 export default function VehicleCard({ vehicle }: VehicleCardProps) {
+  const [flow, setFlow] = useState<UserFlow>('full');
+
+  useEffect(() => {
+    setFlow(getFlowFromUrl());
+  }, []);
   const formattedPrice = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -21,9 +29,41 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
     ? new Intl.NumberFormat('en-US').format(vehicle.miles)
     : null;
 
+  // Determine link destination based on flow
+  const isDirect = isDirectFlow(flow);
+  const linkHref = isDirect
+    ? vehicle.dealer_vdp_url // Flow A: Direct to dealer
+    : preserveFlowParam(`/vehicles/${vehicle.vin}`); // Flow C: To VDP
+
+  const linkTarget = isDirect ? '_blank' : '_self';
+  const linkRel = isDirect ? 'noopener noreferrer' : undefined;
+
+  // Track click for Flow A (direct to dealer)
+  const handleClick = () => {
+    if (isDirect) {
+      // Track click with keepalive for reliable tracking when opening new tab
+      fetch('/api/track-click', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          vehicleId: vehicle.id,
+          dealerId: vehicle.dealer_id,
+          userId: getUserId(),
+          sessionId: getSessionId(),
+          ctaClicked: 'serp_direct',
+          flow: 'direct',
+        }),
+        keepalive: true,
+      }).catch((err) => console.error('Failed to track click:', err));
+    }
+  };
+
   return (
     <Link
-      href={`/vehicles/${vehicle.vin}`}
+      href={linkHref}
+      target={linkTarget}
+      rel={linkRel}
+      onClick={handleClick}
       className="group bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-xl transition-all duration-200 flex flex-col h-full"
     >
       {/* Image - Fixed height */}
@@ -93,9 +133,19 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
           variant="primary"
           className="w-full hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] gap-2"
         >
-          <Camera className="w-4 h-4" />
-          See Full Photo Gallery
-          <ChevronRight className="w-5 h-5" />
+          {isDirect ? (
+            <>
+              <ExternalLink className="w-4 h-4" />
+              View at Dealer
+              <ChevronRight className="w-5 h-5" />
+            </>
+          ) : (
+            <>
+              <Camera className="w-4 h-4" />
+              See Full Photo Gallery
+              <ChevronRight className="w-5 h-5" />
+            </>
+          )}
         </Button>
       </div>
     </Link>

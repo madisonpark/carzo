@@ -6,6 +6,7 @@ import VehicleBridgePage from '@/components/VDP/VehicleBridgePage';
 
 interface PageProps {
   params: Promise<{ vin: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 // Generate metadata for SEO
@@ -58,8 +59,11 @@ async function getVehicle(vin: string): Promise<Vehicle | null> {
 }
 
 // Main page component
-export default async function VehicleDetailPage({ params }: PageProps) {
+export default async function VehicleDetailPage({ params, searchParams }: PageProps) {
   const { vin } = await params;
+  const sp = await searchParams;
+  const flow = (sp?.flow as string) || 'full';
+
   const vehicle = await getVehicle(vin);
 
   if (!vehicle) {
@@ -122,7 +126,7 @@ export default async function VehicleDetailPage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
-      <VehicleBridgePage vehicle={vehicle} />
+      <VehicleBridgePage vehicle={vehicle} flow={flow} />
     </>
   );
 }

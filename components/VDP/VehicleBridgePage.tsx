@@ -1,16 +1,23 @@
 'use client';
 
-import { ArrowRight, MapPin, Camera, Shield, Star, Calculator } from 'lucide-react';
+import { ArrowRight, MapPin, Camera, Shield, Star, Calculator, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Vehicle } from '@/lib/supabase';
 import { useClickTracking } from '@/hooks/useClickTracking';
 import { Badge } from '@/components/ui';
+import { isVDPOnlyFlow, UserFlow } from '@/lib/flow-detection';
+import { getUserId, getSessionId } from '@/lib/user-tracking';
 
 interface VehicleBridgePageProps {
   vehicle: Vehicle;
+  flow?: string;
 }
 
-export default function VehicleBridgePage({ vehicle }: VehicleBridgePageProps) {
+export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBridgePageProps) {
+  // Flow B: Auto-redirect to dealer
+  if (isVDPOnlyFlow(flow as UserFlow)) {
+    return <VDPRedirect vehicle={vehicle} />;
+  }
   const [showStickyBar, setShowStickyBar] = useState(false);
   const { createClickHandler } = useClickTracking();
 
@@ -419,6 +426,70 @@ export default function VehicleBridgePage({ vehicle }: VehicleBridgePageProps) {
           </p>
         </div>
       </footer>
+    </div>
+  );
+}
+
+/**
+ * VDPRedirect Component - Flow B: Auto-redirect to dealer
+ * Shows a loading message for 1.5s while tracking, then redirects
+ */
+function VDPRedirect({ vehicle }: { vehicle: Vehicle }) {
+  useEffect(() => {
+    // Track impression
+    fetch('/api/track-impression', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        vehicleId: vehicle.id,
+        pageType: 'vdp',
+        flow: 'vdp-only',
+      }),
+      keepalive: true,
+    }).catch((err) => console.error('Failed to track impression:', err));
+
+    // Track click
+    fetch('/api/track-click', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        vehicleId: vehicle.id,
+        dealerId: vehicle.dealer_id,
+        userId: getUserId(),
+        sessionId: getSessionId(),
+        ctaClicked: 'vdp_redirect',
+        flow: 'vdp-only',
+      }),
+      keepalive: true,
+    }).catch((err) => console.error('Failed to track click:', err));
+
+    // Redirect after delay
+    const timer = setTimeout(() => {
+      window.open(vehicle.dealer_vdp_url, '_blank');
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [vehicle]);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="text-center space-y-6 px-4">
+        <Loader2 className="w-16 h-16 text-brand animate-spin mx-auto" />
+        <div className="space-y-2">
+          <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">
+            Redirecting to {vehicle.year} {vehicle.make} {vehicle.model}
+          </h1>
+          <p className="text-lg text-slate-600">
+            Taking you to the dealer site...
+          </p>
+        </div>
+        <div className="flex items-center justify-center gap-2 text-sm text-slate-500">
+          <MapPin className="w-4 h-4" />
+          <span>
+            {vehicle.dealer_name} • {vehicle.dealer_city}, {vehicle.dealer_state}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }

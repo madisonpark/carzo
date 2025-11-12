@@ -12,7 +12,20 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Reference implementation (not part of main codebase)
+    "reference_vdp/**",
+    // Test files
+    "test-db.ts",
+    // Scripts (run directly, not part of build)
+    "scripts/**",
   ]),
+  // Rules customization
+  {
+    rules: {
+      // Allow <img> tags for external CDN images (LotLinx)
+      "@next/next/no-img-element": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

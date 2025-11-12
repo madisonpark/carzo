@@ -7,8 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as https from 'https';
-import * as zlib from 'zlib';
-import { pipeline } from 'stream/promises';
+import { execSync } from 'child_process';
 import { createReadStream, createWriteStream } from 'fs';
 import { parse } from 'csv-parse';
 
@@ -58,6 +57,44 @@ interface FeedSyncResult {
   removed: number;
   errors: string[];
   duration: number;
+}
+
+interface DbVehicle {
+  vin: string;
+  year: number | null;
+  make: string | null;
+  model: string | null;
+  trim: string | null;
+  price: number;
+  miles: number | null;
+  condition: string | null;
+  body_style: string | null;
+  primary_image_url: string;
+  transmission: string | null;
+  fuel_type: string | null;
+  drive_type: string | null;
+  exterior_color: string | null;
+  interior_color: string | null;
+  mpg_city: null;
+  mpg_highway: null;
+  doors: number | null;
+  cylinders: number | null;
+  description: string | null;
+  features: null;
+  options: string | null;
+  dealer_id: string;
+  dealer_name: string;
+  dealer_address: string | null;
+  dealer_city: string | null;
+  dealer_state: string | null;
+  dealer_zip: string | null;
+  dealer_vdp_url: string;
+  total_photos: number;
+  latitude: number | null;
+  longitude: number | null;
+  targeting_radius: number;
+  is_active: boolean;
+  last_sync: string;
 }
 
 export class FeedSyncService {
@@ -197,7 +234,6 @@ export class FeedSyncService {
     const tsvPath = zipPath.replace('.zip', '.tsv');
 
     // Use unzip command (macOS/Linux)
-    const { execSync } = require('child_process');
     const tempDir = path.dirname(zipPath);
 
     // Extract to temp directory
@@ -322,7 +358,7 @@ export class FeedSyncService {
   /**
    * Map LotLinx vehicle to database schema
    */
-  private mapVehicleToDb(vehicle: LotLinxVehicle): any {
+  private mapVehicleToDb(vehicle: LotLinxVehicle): DbVehicle {
     // Extract primary image URL from ImageUrls (comma-separated)
     const getFirstImageUrl = (imageUrls: string): string => {
       if (!imageUrls) return '';

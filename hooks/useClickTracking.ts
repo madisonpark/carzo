@@ -79,7 +79,7 @@ export function useClickTracking() {
    * Note: For new tab links, we track immediately without waiting
    */
   const createClickHandler = (options: TrackClickOptions) => {
-    return (e: React.MouseEvent<HTMLAnchorElement>) => {
+    return () => {
       // Don't prevent default - let the link open in new tab
       // Track asynchronously (fire and forget)
       trackClick(options).catch(console.error);

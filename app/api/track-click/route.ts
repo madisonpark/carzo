@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const { data: clickHistory, error: historyError } = await supabaseAdmin
+    const { data: clickHistory } = await supabaseAdmin
       .from('dealer_click_history')
       .select('*')
       .eq('user_id', userId)

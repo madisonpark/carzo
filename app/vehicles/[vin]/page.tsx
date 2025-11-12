@@ -66,7 +66,65 @@ export default async function VehicleDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  return <VehicleBridgePage vehicle={vehicle} />;
+  // Generate Schema.org/Vehicle structured data for Rich Snippets
+  const structuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'Car',
+    name: `${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim || ''}`.trim(),
+    description: vehicle.description || `${vehicle.condition || 'Used'} ${vehicle.year} ${vehicle.make} ${vehicle.model} for sale`,
+    brand: {
+      '@type': 'Brand',
+      name: vehicle.make,
+    },
+    model: vehicle.model,
+    vehicleIdentificationNumber: vehicle.vin,
+    vehicleModelDate: vehicle.year?.toString(),
+    vehicleConfiguration: vehicle.trim || undefined,
+    bodyType: vehicle.body_style || undefined,
+    vehicleTransmission: vehicle.transmission || undefined,
+    driveWheelConfiguration: vehicle.drive_type || undefined,
+    fuelType: vehicle.fuel_type || undefined,
+    color: vehicle.exterior_color || undefined,
+    mileageFromOdometer: vehicle.miles
+      ? {
+          '@type': 'QuantitativeValue',
+          value: vehicle.miles,
+          unitCode: 'SMI', // Statute mile
+        }
+      : undefined,
+    itemCondition: vehicle.condition === 'New'
+      ? 'https://schema.org/NewCondition'
+      : 'https://schema.org/UsedCondition',
+    offers: {
+      '@type': 'Offer',
+      price: vehicle.price,
+      priceCurrency: 'USD',
+      availability: 'https://schema.org/InStock',
+      url: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://carzo.net'}/vehicles/${vehicle.vin}`,
+      seller: {
+        '@type': 'AutoDealer',
+        name: vehicle.dealer_name,
+        address: {
+          '@type': 'PostalAddress',
+          addressLocality: vehicle.dealer_city,
+          addressRegion: vehicle.dealer_state,
+          postalCode: vehicle.dealer_zip || undefined,
+        },
+      },
+    },
+    image: vehicle.primary_image_url || undefined,
+  };
+
+  return (
+    <>
+      {/* Schema.org structured data for Rich Snippets */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      <VehicleBridgePage vehicle={vehicle} />
+    </>
+  );
 }
 
 // Enable ISR: Generate on-demand, revalidate every 6 hours

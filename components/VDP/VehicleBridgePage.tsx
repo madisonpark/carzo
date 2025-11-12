@@ -90,9 +90,12 @@ export default function VehicleBridgePage({ vehicle }: VehicleBridgePageProps) {
           <div>
             <div className="relative rounded-xl overflow-hidden shadow-2xl border border-slate-200 mb-4">
               <img
-                src={vehicle.primary_image_url}
+                src={(vehicle.primary_image_url && vehicle.primary_image_url.trim()) || '/placeholder-vehicle.svg'}
                 alt={`${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim || ''}`}
                 className="w-full h-auto"
+                onError={(e) => {
+                  e.currentTarget.src = '/placeholder-vehicle.svg';
+                }}
               />
             </div>
 
@@ -100,18 +103,24 @@ export default function VehicleBridgePage({ vehicle }: VehicleBridgePageProps) {
             <div className="grid grid-cols-3 gap-3">
               <div className="relative aspect-video bg-slate-200 rounded-lg overflow-hidden">
                 <img
-                  src={vehicle.primary_image_url}
+                  src={(vehicle.primary_image_url && vehicle.primary_image_url.trim()) || '/placeholder-vehicle.svg'}
                   alt="Thumbnail"
                   className="w-full h-full object-cover blur-sm opacity-60"
                   style={{ filter: 'blur(8px)' }}
+                  onError={(e) => {
+                    e.currentTarget.src = '/placeholder-vehicle.svg';
+                  }}
                 />
               </div>
               <div className="relative aspect-video bg-slate-200 rounded-lg overflow-hidden">
                 <img
-                  src={vehicle.primary_image_url}
+                  src={(vehicle.primary_image_url && vehicle.primary_image_url.trim()) || '/placeholder-vehicle.svg'}
                   alt="Thumbnail"
                   className="w-full h-full object-cover blur-sm opacity-60 scale-x-[-1]"
                   style={{ filter: 'blur(8px)' }}
+                  onError={(e) => {
+                    e.currentTarget.src = '/placeholder-vehicle.svg';
+                  }}
                 />
               </div>
               <a

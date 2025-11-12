@@ -1,6 +1,7 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 
 interface FilterSidebarProps {
@@ -28,10 +29,19 @@ export default function FilterSidebar({
   currentFilters,
 }: FilterSidebarProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const [minPrice, setMinPrice] = useState(currentFilters.minPrice || '');
+  const [maxPrice, setMaxPrice] = useState(currentFilters.maxPrice || '');
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  const updateFilter = (key: string, value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
+  const updateFilter = useCallback((key: string, value: string) => {
+    const params = new URLSearchParams();
+    // Build params from currentFilters
+    Object.entries(currentFilters).forEach(([filterKey, filterValue]) => {
+      if (filterValue && filterKey !== 'page') {
+        params.set(filterKey, filterValue);
+      }
+    });
+    // Update or delete the changed filter
     if (value) {
       params.set(key, value);
     } else {
@@ -39,6 +49,39 @@ export default function FilterSidebar({
     }
     params.delete('page'); // Reset to page 1 when filtering
     router.push(`/search?${params.toString()}`);
+  }, [currentFilters, router]);
+
+  // Debounce minPrice updates
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (minPrice !== (currentFilters.minPrice || '')) {
+        updateFilter('minPrice', minPrice);
+        setIsUpdating(false);
+      }
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [minPrice, currentFilters.minPrice, updateFilter]);
+
+  // Debounce maxPrice updates
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (maxPrice !== (currentFilters.maxPrice || '')) {
+        updateFilter('maxPrice', maxPrice);
+        setIsUpdating(false);
+      }
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [maxPrice, currentFilters.maxPrice, updateFilter]);
+
+  // Handle price input changes
+  const handleMinPriceChange = (value: string) => {
+    setMinPrice(value);
+    setIsUpdating(true);
+  };
+
+  const handleMaxPriceChange = (value: string) => {
+    setMaxPrice(value);
+    setIsUpdating(true);
   };
 
   const clearFilters = () => {
@@ -50,10 +93,16 @@ export default function FilterSidebar({
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-6 sticky top-8">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-bold text-slate-900">Filters</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-bold text-slate-900">Filters</h2>
+          {isUpdating && (
+            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          )}
+        </div>
         {hasActiveFilters && (
           <button
             onClick={clearFilters}
+            aria-label="Clear all filters"
             className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
           >
             <X className="w-4 h-4" />
@@ -121,6 +170,7 @@ export default function FilterSidebar({
             <select
               value={currentFilters.minYear || ''}
               onChange={(e) => updateFilter('minYear', e.target.value)}
+              aria-label="Minimum year"
               className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             >
               <option value="">Min</option>
@@ -133,6 +183,7 @@ export default function FilterSidebar({
             <select
               value={currentFilters.maxYear || ''}
               onChange={(e) => updateFilter('maxYear', e.target.value)}
+              aria-label="Maximum year"
               className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             >
               <option value="">Max</option>
@@ -152,15 +203,17 @@ export default function FilterSidebar({
             <input
               type="number"
               placeholder="Min"
-              value={currentFilters.minPrice || ''}
-              onChange={(e) => updateFilter('minPrice', e.target.value)}
+              value={minPrice}
+              onChange={(e) => handleMinPriceChange(e.target.value)}
+              aria-label="Minimum price"
               className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             />
             <input
               type="number"
               placeholder="Max"
-              value={currentFilters.maxPrice || ''}
-              onChange={(e) => updateFilter('maxPrice', e.target.value)}
+              value={maxPrice}
+              onChange={(e) => handleMaxPriceChange(e.target.value)}
+              aria-label="Maximum price"
               className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             />
           </div>

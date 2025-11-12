@@ -55,12 +55,25 @@ async function getAnalytics(): Promise<AnalyticsData> {
     .order('created_at', { ascending: false })
     .limit(1000);
 
-  const vehicleClickCount = new Map<string, { count: number; vehicle: any }>();
-  vehicleClicks?.forEach((click: any) => {
-    if (click.vehicles) {
-      const vin = click.vehicles.vin;
+  interface VehicleInfo {
+    vin: string;
+    year: number;
+    make: string;
+    model: string;
+  }
+
+  interface ClickWithVehicle {
+    vehicle_id: string;
+    vehicles: VehicleInfo[] | null;
+  }
+
+  const vehicleClickCount = new Map<string, { count: number; vehicle: VehicleInfo }>();
+  vehicleClicks?.forEach((click: ClickWithVehicle) => {
+    if (click.vehicles && click.vehicles.length > 0) {
+      const vehicle = click.vehicles[0]; // Supabase returns array for relationships
+      const vin = vehicle.vin;
       if (!vehicleClickCount.has(vin)) {
-        vehicleClickCount.set(vin, { count: 0, vehicle: click.vehicles });
+        vehicleClickCount.set(vin, { count: 0, vehicle });
       }
       vehicleClickCount.get(vin)!.count++;
     }
@@ -94,13 +107,23 @@ async function getAnalytics(): Promise<AnalyticsData> {
     .order('created_at', { ascending: false })
     .limit(10);
 
+  interface RecentClickData {
+    id: string;
+    created_at: string;
+    is_billable: boolean;
+    cta_clicked: string;
+    vehicles: Array<{ vin: string }> | null;
+    dealer_id: string;
+    dealer_name: Array<{ dealer_name: string }> | null;
+  }
+
   const recentClicks =
-    recentClicksData?.map((click: any) => ({
+    recentClicksData?.map((click: RecentClickData) => ({
       id: click.id,
       created_at: click.created_at,
       is_billable: click.is_billable,
       cta_clicked: click.cta_clicked,
-      vehicle_vin: click.vehicles?.vin || 'N/A',
+      vehicle_vin: click.vehicles?.[0]?.vin || 'N/A',
       dealer_name: click.dealer_name?.[0]?.dealer_name || 'Unknown',
     })) || [];
 
@@ -204,7 +227,7 @@ export default async function AdminDashboard() {
               <h2 className="text-xl font-bold text-slate-900">Top Performing Vehicles</h2>
             </div>
             <div className="space-y-4">
-              {analytics.topVehicles.map((vehicle, index) => (
+              {analytics.topVehicles.map((vehicle) => (
                 <div
                   key={vehicle.vin}
                   className="flex items-center justify-between pb-4 border-b border-slate-100 last:border-0"

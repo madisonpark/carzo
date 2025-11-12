@@ -27,13 +27,15 @@ interface FilterSidebarProps {
 const ActiveFilterBadge = ({ label, onRemove }: { label: string; onRemove: () => void }) => (
   <Badge variant="secondary" className="gap-1 rounded-full text-brand">
     {label}
-    <button
+    <Button
       onClick={onRemove}
+      variant="ghost"
+      size="icon"
       className="hover:bg-slate-300 rounded-full"
       aria-label={`Remove ${label} filter`}
     >
       <X className="w-3 h-3" />
-    </button>
+    </Button>
   </Badge>
 );
 
@@ -121,7 +123,6 @@ export default function FilterSidebar({
             variant="ghost"
             size="sm"
             aria-label="Clear all filters"
-            className="text-brand hover:text-brand-hover gap-1"
           >
             <X className="w-4 h-4" />
             Clear

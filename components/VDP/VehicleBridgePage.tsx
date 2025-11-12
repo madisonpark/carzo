@@ -4,7 +4,7 @@ import { ArrowRight, MapPin, Camera, Shield, Star, Calculator } from 'lucide-rea
 import { useState, useEffect } from 'react';
 import { Vehicle } from '@/lib/supabase';
 import { useClickTracking } from '@/hooks/useClickTracking';
-import { Button, Badge } from '@/components/ui';
+import { Badge } from '@/components/ui';
 
 interface VehicleBridgePageProps {
   vehicle: Vehicle;

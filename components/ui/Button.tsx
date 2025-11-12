@@ -1,15 +1,18 @@
 import * as React from 'react';
+import { Slot } from '@radix-ui/react-slot';
 import { cn } from '@/lib/utils';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  asChild?: boolean;
   variant?: 'primary' | 'brand' | 'dealer' | 'secondary' | 'outline' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'icon';
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', size = 'md', ...props }, ref) => {
+  ({ className, variant = 'primary', size = 'md', asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : 'button';
     return (
-      <button
+      <Comp
         className={cn(
           // Base styles
           'inline-flex items-center justify-center rounded-lg font-semibold transition-all duration-300',
@@ -38,6 +41,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             'px-3 py-1.5 text-sm': size === 'sm',
             'px-6 py-3 text-base': size === 'md',
             'px-8 py-4 text-lg': size === 'lg',
+            'h-6 w-6 p-0': size === 'icon',
           },
           className
         )}

@@ -24,17 +24,80 @@ interface SearchPageProps {
   }>;
 }
 
-// Get unique filter options
-async function getFilterOptions() {
-  const { data: vehicles } = await supabase
+// Get unique filter options based on current filters and location
+async function getFilterOptions(params?: {
+  make?: string;
+  model?: string;
+  condition?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  minYear?: string;
+  maxYear?: string;
+  bodyStyle?: string;
+  lat?: string;
+  lon?: string;
+}) {
+  // Parse user location if provided
+  const userLat = params?.lat ? parseFloat(params.lat) : null;
+  const userLon = params?.lon ? parseFloat(params.lon) : null;
+
+  // Build query with current filters applied
+  let query = supabase
     .from('vehicles')
-    .select('make, model, body_style, condition, year')
+    .select('make, model, body_style, condition, year, latitude, longitude, targeting_radius')
     .eq('is_active', true);
 
-  const makes = [...new Set(vehicles?.map(v => v.make).filter(Boolean))].sort();
-  const bodyStyles = [...new Set(vehicles?.map(v => v.body_style).filter(Boolean))].sort();
-  const conditions = [...new Set(vehicles?.map(v => v.condition).filter(Boolean))].sort();
-  const years = [...new Set(vehicles?.map(v => v.year).filter(Boolean))].sort((a, b) => b - a);
+  // Apply current filters to get dynamic options
+  if (params?.make) query = query.eq('make', params.make);
+  if (params?.model) query = query.eq('model', params.model);
+  if (params?.condition) query = query.eq('condition', params.condition);
+  if (params?.bodyStyle) query = query.eq('body_style', params.bodyStyle);
+  if (params?.minPrice) query = query.gte('price', parseFloat(params.minPrice));
+  if (params?.maxPrice) query = query.lte('price', parseFloat(params.maxPrice));
+  if (params?.minYear) query = query.gte('year', parseInt(params.minYear));
+  if (params?.maxYear) query = query.lte('year', parseInt(params.maxYear));
+
+  // Fetch up to 10,000 vehicles for filter options
+  const { data: vehicles } = await query.limit(10000);
+
+  if (!vehicles || vehicles.length === 0) {
+    return { makes: [], bodyStyles: [], conditions: [], years: [] };
+  }
+
+  // If location is provided, filter by distance
+  let filteredVehicles = vehicles;
+  if (userLat && userLon) {
+    filteredVehicles = vehicles
+      .map(v => ({
+        ...v,
+        distance: v.latitude && v.longitude
+          ? calculateDistance(userLat, userLon, v.latitude, v.longitude)
+          : Infinity,
+      }))
+      .filter(v => {
+        const radius = v.targeting_radius || 30;
+        return v.distance <= radius;
+      });
+
+    // If no vehicles within radius, show closest vehicles
+    if (filteredVehicles.length === 0) {
+      filteredVehicles = vehicles
+        .map(v => ({
+          ...v,
+          distance: v.latitude && v.longitude
+            ? calculateDistance(userLat, userLon, v.latitude, v.longitude)
+            : Infinity,
+        }))
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, 5000); // Take closest 5000
+    }
+  }
+
+  // Extract unique values from filtered results
+  const makes = [...new Set(filteredVehicles?.map(v => v.make).filter(Boolean))].sort();
+  const bodyStyles = [...new Set(filteredVehicles?.map(v => v.body_style).filter(Boolean))].sort();
+  const conditions = [...new Set(filteredVehicles?.map(v => v.condition).filter(Boolean))].sort();
+  const years = [...new Set(filteredVehicles?.map(v => v.year).filter(Boolean))].sort((a, b) => b - a);
 
   return { makes, bodyStyles, conditions, years };
 }
@@ -77,15 +140,32 @@ async function searchVehicles(params: {
   if (params.minYear) query = query.gte('year', parseInt(params.minYear));
   if (params.maxYear) query = query.lte('year', parseInt(params.maxYear));
 
-  // Order by newest first (default)
-  query = query.order('year', { ascending: false });
+  // Order by newest first (default) unless location filtering is active
+  if (userLat && userLon) {
+    // Don't order yet - we'll sort by distance after filtering
+    // For location-based search, fetch a large sample to find nearby vehicles
+    // Note: Ideally we'd use PostGIS for database-level distance filtering
+  } else {
+    query = query.order('year', { ascending: false });
+  }
 
-  // Get total count
-  const { count } = await query;
+  // Execute query with count and data
+  let allVehicles;
+  let count;
 
-  // Get more results than needed for dealer diversification
-  const fetchLimit = RESULTS_PER_PAGE * 3; // Fetch 3x to ensure diversity
-  const { data: allVehicles } = await query.range(offset, offset + fetchLimit - 1);
+  if (userLat && userLon) {
+    // For location filtering, fetch up to 10,000 vehicles to find nearby ones
+    // This is a workaround until we implement PostGIS
+    const { data, count: total } = await query.limit(10000);
+    allVehicles = data;
+    count = total;
+  } else {
+    // Normal pagination - fetch 3x the results for dealer diversification
+    const fetchLimit = RESULTS_PER_PAGE * 3;
+    const { data, count: total } = await query.range(offset, offset + fetchLimit - 1);
+    allVehicles = data;
+    count = total;
+  }
 
   // Calculate distances and filter by targeting radius if user location provided
   let vehiclesWithDistance = allVehicles || [];
@@ -105,18 +185,46 @@ async function searchVehicles(params: {
 
     // Sort by distance (nearest first) within the radius
     vehiclesWithDistance.sort((a, b) => a.distance - b.distance);
+
+    // If no vehicles found within radius, fall back to showing closest vehicles
+    if (vehiclesWithDistance.length === 0 && allVehicles.length > 0) {
+      vehiclesWithDistance = allVehicles
+        .map(v => ({
+          ...v,
+          distance: v.latitude && v.longitude
+            ? calculateDistance(userLat, userLon, v.latitude, v.longitude)
+            : Infinity,
+        }))
+        .sort((a, b) => a.distance - b.distance);
+    }
+  } else if (!userLat && !userLon && allVehicles) {
+    // Sort by year if no location
+    vehiclesWithDistance = allVehicles.sort((a, b) => b.year - a.year);
+  }
+
+  // For location-based search, apply pagination AFTER sorting by distance
+  let paginatedVehicles = vehiclesWithDistance;
+  let totalResults = count || 0;
+
+  if (userLat && userLon && vehiclesWithDistance.length > 0) {
+    // Use filtered results count for pagination
+    totalResults = vehiclesWithDistance.length;
+    // Apply pagination manually
+    const startIdx = (page - 1) * RESULTS_PER_PAGE;
+    const endIdx = startIdx + (RESULTS_PER_PAGE * 3); // Fetch extra for diversification
+    paginatedVehicles = vehiclesWithDistance.slice(startIdx, endIdx);
   }
 
   // Apply dealer diversification
-  const vehicles = vehiclesWithDistance.length > 0
-    ? diversifyByDealer(vehiclesWithDistance, RESULTS_PER_PAGE)
+  const vehicles = paginatedVehicles.length > 0
+    ? diversifyByDealer(paginatedVehicles, RESULTS_PER_PAGE)
     : [];
 
   return {
     vehicles: vehicles as Vehicle[],
-    total: count || 0,
+    total: totalResults,
     page,
-    totalPages: Math.ceil((count || 0) / RESULTS_PER_PAGE),
+    totalPages: Math.ceil(totalResults / RESULTS_PER_PAGE),
     userLocation: userLat && userLon ? { lat: userLat, lon: userLon } : null,
   };
 }
@@ -125,7 +233,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
   const [searchResults, filterOptions] = await Promise.all([
     searchVehicles(params),
-    getFilterOptions(),
+    getFilterOptions(params), // Pass current filters to get dynamic options
   ]);
 
   return (

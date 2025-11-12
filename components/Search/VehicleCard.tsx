@@ -23,69 +23,75 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
   return (
     <Link
       href={`/vehicles/${vehicle.vin}`}
-      className="group bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg transition-all duration-300"
+      className="group bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-xl transition-all duration-200 flex flex-col h-full"
     >
-      {/* Image */}
-      <div className="relative aspect-video bg-slate-200 overflow-hidden">
+      {/* Image - Fixed height */}
+      <div className="relative h-48 bg-slate-200 overflow-hidden flex-shrink-0">
         <img
-          src={vehicle.primary_image_url}
+          src={(vehicle.primary_image_url && vehicle.primary_image_url.trim()) || '/placeholder-vehicle.svg'}
           alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          onError={(e) => {
+            e.currentTarget.src = '/placeholder-vehicle.svg';
+          }}
         />
         {vehicle.condition && (
-          <span className="absolute top-3 left-3 px-3 py-1 bg-blue-500 text-white text-xs font-bold rounded-full">
+          <span className="absolute top-2 left-2 px-2.5 py-0.5 bg-blue-600 text-white text-xs font-semibold rounded">
             {vehicle.condition}
           </span>
         )}
         {vehicle.total_photos && (
-          <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 bg-black/70 text-white text-xs rounded">
+          <div className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 bg-black/75 text-white text-xs font-medium rounded">
             <Camera className="w-3 h-3" />
             {vehicle.total_photos}
           </div>
         )}
       </div>
 
-      {/* Content */}
-      <div className="p-4">
-        {/* Title */}
-        <h3 className="text-lg font-bold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">
-          {vehicle.year} {vehicle.make} {vehicle.model}
-        </h3>
-        {vehicle.trim && <p className="text-sm text-slate-600 mb-3">{vehicle.trim}</p>}
-
-        {/* Price */}
-        <p className="text-2xl font-bold text-blue-600 mb-3">{formattedPrice}</p>
-
-        {/* Details */}
-        <div className="flex items-center justify-between text-sm text-slate-600 mb-3">
-          {formattedMileage && (
-            <span className="flex items-center gap-1">
-              {formattedMileage} miles
-            </span>
-          )}
-          {vehicle.transmission && (
-            <span>{vehicle.transmission}</span>
+      {/* Content - Flex grow to fill remaining space */}
+      <div className="p-4 flex flex-col flex-grow">
+        {/* Title - Fixed height with line clamp */}
+        <div className="mb-2 min-h-[3rem]">
+          <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+            {vehicle.year} {vehicle.make} {vehicle.model}
+          </h3>
+          {vehicle.trim && (
+            <p className="text-sm text-slate-600 line-clamp-1">{vehicle.trim}</p>
           )}
         </div>
 
+        {/* Price */}
+        <p className="text-xl font-bold text-slate-900 mb-3">{formattedPrice}</p>
+
+        {/* Details - Single line */}
+        <div className="text-sm text-slate-600 mb-3 space-y-1">
+          {formattedMileage && <div>{formattedMileage} miles</div>}
+          {vehicle.transmission && <div>{vehicle.transmission}</div>}
+        </div>
+
+        {/* Spacer to push location and button to bottom */}
+        <div className="flex-grow"></div>
+
         {/* Location */}
-        <div className="flex items-center justify-between text-sm text-slate-500 pt-3 border-t border-slate-100">
+        <div className="flex items-center justify-between text-sm text-slate-600 mb-3">
           <div className="flex items-center gap-1">
-            <MapPin className="w-4 h-4" />
-            <span>
+            <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="line-clamp-1">
               {vehicle.dealer_city}, {vehicle.dealer_state}
             </span>
           </div>
           {vehicle.distance !== undefined && vehicle.distance !== Infinity && (
-            <span className="text-blue-600 font-medium">
-              {vehicle.distance} mi
+            <span className="text-blue-600 font-semibold ml-2 flex-shrink-0">
+              {Math.round(vehicle.distance)} mi
             </span>
           )}
         </div>
 
         {/* CTA */}
-        <button className="w-full mt-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors">
-          See Photos
+        <button className="w-full py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
+          <Camera className="w-4 h-4" />
+          See Full Photo Gallery
+          <span className="text-lg">›</span>
         </button>
       </div>
     </Link>

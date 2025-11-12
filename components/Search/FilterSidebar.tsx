@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 
 interface FilterSidebarProps {
@@ -28,10 +28,16 @@ export default function FilterSidebar({
   currentFilters,
 }: FilterSidebarProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const updateFilter = (key: string, value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams();
+    // Build params from currentFilters
+    Object.entries(currentFilters).forEach(([filterKey, filterValue]) => {
+      if (filterValue && filterKey !== 'page') {
+        params.set(filterKey, filterValue);
+      }
+    });
+    // Update or delete the changed filter
     if (value) {
       params.set(key, value);
     } else {

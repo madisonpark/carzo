@@ -1,0 +1,15 @@
+<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="300" fill="#e2e8f0"/>
+  <g transform="translate(150, 100)">
+    <!-- Simple car icon -->
+    <path d="M10 60 L20 40 L80 40 L90 60 Z" fill="#94a3b8" stroke="#64748b" stroke-width="2"/>
+    <rect x="0" y="60" width="100" height="30" rx="5" fill="#94a3b8" stroke="#64748b" stroke-width="2"/>
+    <circle cx="20" cy="95" r="8" fill="#475569"/>
+    <circle cx="80" cy="95" r="8" fill="#475569"/>
+    <rect x="25" y="45" width="20" height="15" fill="#cbd5e1"/>
+    <rect x="55" y="45" width="20" height="15" fill="#cbd5e1"/>
+  </g>
+  <text x="200" y="220" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#64748b">
+    No Image Available
+  </text>
+</svg>

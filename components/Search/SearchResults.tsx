@@ -3,7 +3,7 @@
 import { Vehicle } from '@/lib/supabase';
 import VehicleCard from './VehicleCard';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 interface SearchResultsProps {
   vehicles: Vehicle[];
@@ -21,10 +21,15 @@ export default function SearchResults({
   currentFilters,
 }: SearchResultsProps) {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const goToPage = (newPage: number) => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams();
+    // Build params from currentFilters
+    Object.entries(currentFilters).forEach(([key, value]) => {
+      if (value && key !== 'page') {
+        params.set(key, value);
+      }
+    });
     params.set('page', newPage.toString());
     router.push(`/search?${params.toString()}`);
   };

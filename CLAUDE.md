@@ -739,6 +739,14 @@ carzo/
 - **LotLinx Integration**: See `../lotlinx/docs/` for LotLinx API docs
 - **Feed Structure**: See `../lotlinx/docs/lotlinx-publisher-feed.md`
 - **Database Schema**: See `supabase-schema.sql` in this project
+- **Supabase CLI Workflow**: See `docs/supabase-migration-workflow.md` for complete guide
+  - **IMPORTANT**: Use Supabase CLI for ALL database/SQL work (not manual dashboard SQL)
+  - Creating and applying migrations via `supabase db push`
+  - Running ad-hoc SQL queries via CLI
+  - Migration troubleshooting (reserved words, type casting, etc.)
+  - Local testing with `supabase start`
+  - Schema syncing between local and remote
+  - Best practices for all database operations
 
 ## Rate Limiting
 

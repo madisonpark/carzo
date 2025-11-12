@@ -32,7 +32,7 @@ export default function Error({
 
           {/* Message */}
           <p className="text-slate-600 mb-6">
-            {error.message || "We encountered an unexpected error. Please try again."}
+            We encountered an unexpected error. Please try again or return to the homepage.
           </p>
 
           {/* Error details (only in development) */}

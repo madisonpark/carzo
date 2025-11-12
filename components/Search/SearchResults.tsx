@@ -21,7 +21,9 @@ export default function SearchResults({
   currentFilters,
 }: SearchResultsProps) {
   const router = useRouter();
-  const hasActiveFilters = Object.values(currentFilters).some(v => v && v !== 'relevance');
+  // Only consider actual user-selectable filters (not location, page, or default sort)
+  const filterKeys = ['make', 'model', 'condition', 'bodyStyle', 'minPrice', 'maxPrice', 'minYear', 'maxYear'];
+  const hasActiveFilters = filterKeys.some(key => currentFilters[key]);
   const currentSort = currentFilters.sortBy || 'relevance';
 
   const goToPage = (newPage: number) => {

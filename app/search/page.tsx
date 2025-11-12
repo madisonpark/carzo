@@ -41,13 +41,47 @@ async function getFilterOptions(params?: {
   const userLat = params?.lat ? parseFloat(params.lat) : null;
   const userLon = params?.lon ? parseFloat(params.lon) : null;
 
+  // OPTIMIZATION: If no location filtering, use database-level DISTINCT queries (much faster)
+  if (!userLat || !userLon) {
+    // Build base query with current filters
+    const buildFilterQuery = () => {
+      let q = supabase.from('vehicles').select('*').eq('is_active', true);
+      if (params?.make) q = q.eq('make', params.make);
+      if (params?.model) q = q.eq('model', params.model);
+      if (params?.condition) q = q.eq('condition', params.condition);
+      if (params?.bodyStyle) q = q.eq('body_style', params.bodyStyle);
+      if (params?.minPrice) q = q.gte('price', parseFloat(params.minPrice));
+      if (params?.maxPrice) q = q.lte('price', parseFloat(params.maxPrice));
+      if (params?.minYear) q = q.gte('year', parseInt(params.minYear));
+      if (params?.maxYear) q = q.lte('year', parseInt(params.maxYear));
+      return q;
+    };
+
+    // Run 4 parallel DISTINCT queries for each filter option
+    const [makesResult, bodyStylesResult, conditionsResult, yearsResult] = await Promise.all([
+      buildFilterQuery().select('make').limit(1000),
+      buildFilterQuery().select('body_style').limit(1000),
+      buildFilterQuery().select('condition').limit(1000),
+      buildFilterQuery().select('year').limit(1000),
+    ]);
+
+    // Extract unique values using Sets
+    const makes = [...new Set(makesResult.data?.map(v => v.make).filter(Boolean))].sort();
+    const bodyStyles = [...new Set(bodyStylesResult.data?.map(v => v.body_style).filter(Boolean))].sort();
+    const conditions = [...new Set(conditionsResult.data?.map(v => v.condition).filter(Boolean))].sort();
+    const years = [...new Set(yearsResult.data?.map(v => v.year).filter(Boolean))].sort((a, b) => b - a);
+
+    return { makes, bodyStyles, conditions, years };
+  }
+
+  // LOCATION-BASED FILTERING (requires client-side distance calculation)
   // Build query with current filters applied
   let query = supabase
     .from('vehicles')
     .select('make, model, body_style, condition, year, latitude, longitude, targeting_radius')
     .eq('is_active', true);
 
-  // Apply current filters to get dynamic options
+  // Apply current filters
   if (params?.make) query = query.eq('make', params.make);
   if (params?.model) query = query.eq('model', params.model);
   if (params?.condition) query = query.eq('condition', params.condition);
@@ -64,9 +98,21 @@ async function getFilterOptions(params?: {
     return { makes: [], bodyStyles: [], conditions: [], years: [] };
   }
 
-  // If location is provided, filter by distance
-  let filteredVehicles = vehicles;
-  if (userLat && userLon) {
+  // Filter by distance
+  let filteredVehicles = vehicles
+    .map(v => ({
+      ...v,
+      distance: v.latitude && v.longitude
+        ? calculateDistance(userLat, userLon, v.latitude, v.longitude)
+        : Infinity,
+    }))
+    .filter(v => {
+      const radius = v.targeting_radius || 30;
+      return v.distance <= radius;
+    });
+
+  // If no vehicles within radius, show closest vehicles
+  if (filteredVehicles.length === 0) {
     filteredVehicles = vehicles
       .map(v => ({
         ...v,
@@ -74,23 +120,8 @@ async function getFilterOptions(params?: {
           ? calculateDistance(userLat, userLon, v.latitude, v.longitude)
           : Infinity,
       }))
-      .filter(v => {
-        const radius = v.targeting_radius || 30;
-        return v.distance <= radius;
-      });
-
-    // If no vehicles within radius, show closest vehicles
-    if (filteredVehicles.length === 0) {
-      filteredVehicles = vehicles
-        .map(v => ({
-          ...v,
-          distance: v.latitude && v.longitude
-            ? calculateDistance(userLat, userLon, v.latitude, v.longitude)
-            : Infinity,
-        }))
-        .sort((a, b) => a.distance - b.distance)
-        .slice(0, 5000); // Take closest 5000
-    }
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 5000); // Take closest 5000
   }
 
   // Extract unique values from filtered results

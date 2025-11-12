@@ -73,10 +73,11 @@ BEGIN
   );
 
   -- Use advisory lock to prevent race conditions
-  -- Both arguments must be INTEGER (not BIGINT)
+  -- Use two separate hashes to avoid Y2038 problem (INTEGER overflow)
+  -- This maintains uniqueness without timestamp limitations
   PERFORM pg_advisory_xact_lock(
-    hashtext(p_identifier || '::' || p_endpoint || '::' || v_window_start::TEXT),
-    EXTRACT(EPOCH FROM v_window_start)::INTEGER
+    hashtext(p_identifier || '::' || p_endpoint),
+    hashtext(v_window_start::TEXT)
   );
 
   -- Get or create counter using upsert

@@ -54,10 +54,11 @@ BEGIN
   );
 
   -- Use advisory lock to prevent race conditions
-  -- Combine hash with epoch to reduce collision risk under high load
+  -- Use two separate hashes to avoid Y2038 problem (INTEGER overflow)
+  -- This maintains uniqueness without timestamp limitations
   PERFORM pg_advisory_xact_lock(
-    hashtext(p_identifier || '::' || p_endpoint || '::' || v_window_start::TEXT),
-    EXTRACT(EPOCH FROM v_window_start)::INTEGER
+    hashtext(p_identifier || '::' || p_endpoint),
+    hashtext(v_window_start::TEXT)
   );
 
   -- Get or create counter using upsert

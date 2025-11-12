@@ -262,6 +262,209 @@ Create new UI components when:
 3. A component has complex logic that should be encapsulated
 4. TypeScript types would improve developer experience
 
+## Mobile Optimization
+
+Carzo is **mobile-first** - most paid ad traffic (Facebook/Google) comes from mobile devices.
+
+### Mobile Filter Drawer
+
+**Component:** `components/Search/FilterSidebar.tsx`
+
+**Desktop Behavior (≥1024px):**
+- Sticky sidebar in left column (always visible)
+- Standard filter interface
+
+**Mobile Behavior (<1024px):**
+- **Fixed bottom button** with active filter count badge
+- **Slide-in drawer** from left (300ms ease-in-out)
+- **Backdrop overlay** (z-50) with fade-in animation
+- **Body scroll lock** when drawer is open
+- **Tap backdrop to close**
+
+**Z-index Layering:**
+```tsx
+Mobile filter button: z-40  // Fixed bottom
+Filter overlay: z-50        // Backdrop
+Filter drawer: z-[60]       // Above overlay
+VDP sticky CTA: z-50        // Different page, no conflict
+```
+
+**Implementation:**
+```tsx
+// Mobile button shows on mobile, hidden on desktop
+<div className="lg:hidden fixed bottom-0 left-0 right-0 z-40">
+  <Button onClick={() => setDrawerOpen(true)}>
+    Filters {activeCount > 0 && <Badge>{activeCount}</Badge>}
+  </Button>
+</div>
+
+// Overlay with fade animation
+{isOpen && (
+  <div
+    className="lg:hidden fixed inset-0 bg-black/50 z-50 animate-fade-in"
+    onClick={() => setDrawerOpen(false)}
+  />
+)}
+
+// Drawer slides in from left
+// NOTE: Use inline style to target only transform property for better performance
+<div
+  className={cn(
+    'lg:hidden fixed top-0 left-0 bottom-0 z-[60]',
+    isOpen ? 'translate-x-0' : '-translate-x-full'
+  )}
+  style={{ transition: 'transform 300ms ease-in-out' }}
+>
+  {/* Filter content */}
+</div>
+
+// Desktop sidebar (hidden on mobile)
+<div className="hidden lg:block sticky top-8">
+  {/* Same filter content */}
+</div>
+```
+
+**Key UX Features:**
+- **Body Scroll Lock**: When drawer opens, adds `overflow-hidden` class to body
+- **Escape Key**: Press Escape to close drawer (keyboard accessibility)
+- **Active Filter Count**: Badge shows total count of all active filters (including model)
+- **Component Pattern**: FilterContent extracted as separate component to avoid React anti-pattern of defining components inside render functions
+
+**Performance Optimizations:**
+- Drawer animation targets only `transform` property (not `transition: all`)
+- FilterContent component defined outside render function (prevents recreation on every render)
+- Event listeners properly cleaned up in useEffect return functions
+
+### Responsive Breakpoints
+
+**Tailwind Breakpoints:**
+- `sm:` - 640px (small tablets)
+- `md:` - 768px (tablets)
+- `lg:` - 1024px (desktop) - **Primary mobile/desktop split**
+- `xl:` - 1280px (large desktop)
+
+**Mobile-First Approach:**
+1. Base styles are mobile (320px+)
+2. Add `sm:`, `md:`, `lg:` for progressive enhancement
+3. Touch targets minimum 40x40px (WCAG Level AAA)
+
+**Example:**
+```tsx
+// Mobile: stacks vertically, desktop: horizontal
+<div className="flex flex-col sm:flex-row gap-3">
+
+// Mobile: full width, desktop: auto width
+<Button className="w-full sm:w-auto">
+
+// Mobile: small text, desktop: large text
+<h1 className="text-3xl sm:text-4xl lg:text-5xl">
+```
+
+### Mobile Layout Adjustments
+
+**Search Page:**
+```tsx
+// Add bottom padding on mobile for filter button
+<main className="pb-24 lg:pb-8">
+```
+
+**Hero Search:**
+```tsx
+// Stacks vertically on mobile, horizontal on desktop
+<form className="flex flex-col sm:flex-row gap-3">
+  <input className="flex-1" />
+  <Button className="w-full sm:w-auto">Search</Button>
+</form>
+```
+
+## Animations & Transitions
+
+All animations support **prefers-reduced-motion** for accessibility.
+
+### Custom Animations
+
+**Location:** `app/globals.css`
+
+**Available Animations:**
+```css
+.animate-fade-in          // 0.3s fade in with slight upward movement
+.animate-fade-in-slow     // 0.6s slower fade in
+.animate-slide-in-left    // 0.3s slide in from left
+.animate-slide-in-right   // 0.3s slide in from right
+.animate-scale-in         // 0.2s scale up from 95% to 100%
+.animate-skeleton-pulse   // 2s infinite smooth pulse for loading states
+```
+
+**Transition Utilities:**
+```css
+.transition-smooth        // 0.3s cubic-bezier easing
+.transition-smooth-slow   // 0.5s cubic-bezier easing
+```
+
+### Usage Examples
+
+**Page Transitions:**
+```tsx
+// Loading screens fade in
+<div className="min-h-screen animate-fade-in">
+  <LoadingSkeleton />
+</div>
+
+// Modal/drawer overlays
+<div className="fixed inset-0 bg-black/50 animate-fade-in">
+```
+
+**Loading States:**
+```tsx
+// Skeleton loaders use custom pulse
+<div className="h-10 bg-slate-200 rounded animate-skeleton-pulse" />
+
+// Spinner with scale-in entrance
+<div className="animate-scale-in">
+  <div className="animate-spin" />
+</div>
+```
+
+**Interactive Elements:**
+```tsx
+// Button hover effects (built into Button component)
+<Button className="transition-all duration-300 hover:scale-105">
+
+// Drawer slide animations
+<div className={cn(
+  'transform transition-transform duration-300',
+  isOpen ? 'translate-x-0' : '-translate-x-full'
+)}>
+```
+
+### Accessibility Support
+
+**Prefers Reduced Motion:**
+```css
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+```
+
+All animations automatically respect user's motion preferences (WCAG 2.1 compliance).
+
+### Smooth Scroll
+
+**Global behavior:**
+```css
+html {
+  scroll-behavior: smooth;
+}
+```
+
+Disabled automatically for users with `prefers-reduced-motion: reduce`.
+
 ## Page Architecture
 
 ### Three Page Types (Not a Full Car Shopping Site)
@@ -1235,13 +1438,33 @@ gh pr create --title "HOTFIX: Critical issue" --body "Description" # Requires Gi
 - ✅ Image fallback handling with placeholder SVG
 - ✅ **Tailwind CSS v4 design system (Phase 1)**
 - ✅ **UI Component Library (Phase 2)**
-  - Button component with 6 variants (primary, brand, dealer, secondary, outline, ghost)
+  - Button component with 6 variants (primary, brand, dealer, secondary, outline, ghost) + icon size
   - Input component with error states
   - Badge component with 7 variants
   - Card components (Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter)
   - cn() utility for conditional class merging
   - All components fully typed with TypeScript
   - All existing components refactored to use new UI library
+  - React.forwardRef pattern for all components
+  - Radix UI Slot integration for asChild pattern
+- ✅ **Mobile Optimization (Phase 3)**
+  - Mobile-first responsive design (lg breakpoint at 1024px)
+  - Filter drawer with slide-in animation (300ms ease-in-out)
+  - Fixed bottom filter button with active count badge
+  - Backdrop overlay with proper z-index layering (z-40/50/60)
+  - Body scroll lock when drawer is open
+  - Touch-friendly button sizes (40x40px minimum for WCAG Level AAA)
+  - Responsive hero search (stacks on mobile, horizontal on desktop)
+  - Bottom padding on search page for mobile filter button (pb-24 lg:pb-8)
+  - All components tested at mobile/tablet/desktop breakpoints
+- ✅ **Animations & Transitions (Phase 4)**
+  - Custom keyframe animations (fadeIn, slideInLeft/Right, scaleIn, skeleton-pulse)
+  - Smooth scroll behavior with accessibility support
+  - Prefers-reduced-motion support (WCAG 2.1 compliance)
+  - Enhanced loading states with skeleton-pulse animation
+  - Transition utilities (transition-smooth, transition-smooth-slow)
+  - Proper z-index hierarchy for overlays and drawers
+  - All animations respect user motion preferences
 
 **Ready for deployment to Vercel**
 
@@ -1249,3 +1472,4 @@ gh pr create --title "HOTFIX: Critical issue" --body "Description" # Requires Gi
 
 **Last Updated**: 2025-11-12
 **Project Started**: 2025-11-11
+- after considering and addressing feedback on PRs in github from gemini-code-assist, remember to add comment to PR and tag gemini-code-assist noting what you did or did not do and why

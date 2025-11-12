@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { X } from 'lucide-react';
+import { X, SlidersHorizontal } from 'lucide-react';
 import { Input, Badge, Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
@@ -50,6 +50,7 @@ export default function FilterSidebar({
   const [minPrice, setMinPrice] = useState(currentFilters.minPrice || '');
   const [maxPrice, setMaxPrice] = useState(currentFilters.maxPrice || '');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   const updateFilter = useCallback((key: string, value: string) => {
     const params = new URLSearchParams();
@@ -107,9 +108,30 @@ export default function FilterSidebar({
   };
 
   const hasActiveFilters = Object.keys(currentFilters).length > 0;
+  const activeFilterCount = [
+    currentFilters.make,
+    currentFilters.condition,
+    currentFilters.bodyStyle,
+    currentFilters.minPrice,
+    currentFilters.maxPrice,
+    currentFilters.minYear,
+    currentFilters.maxYear,
+  ].filter(Boolean).length;
 
-  return (
-    <div className="bg-white rounded-xl border border-slate-200 p-6 sticky top-8">
+  // Lock body scroll when mobile drawer is open
+  useEffect(() => {
+    if (isMobileDrawerOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileDrawerOpen]);
+
+  const FilterContent = () => (
+    <>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-bold text-slate-900">Filters</h2>
@@ -265,6 +287,64 @@ export default function FilterSidebar({
           </div>
         </div>
       )}
-    </div>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile Filter Button - Fixed at bottom on mobile */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-lg p-4">
+        <Button
+          onClick={() => setIsMobileDrawerOpen(true)}
+          variant="brand"
+          className="w-full gap-2"
+        >
+          <SlidersHorizontal className="w-5 h-5" />
+          Filters
+          {activeFilterCount > 0 && (
+            <Badge variant="secondary" className="bg-white text-brand">
+              {activeFilterCount}
+            </Badge>
+          )}
+        </Button>
+      </div>
+
+      {/* Mobile Drawer Overlay */}
+      {isMobileDrawerOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-50 animate-in fade-in duration-200"
+          onClick={() => setIsMobileDrawerOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Mobile Drawer */}
+      <div
+        className={cn(
+          'lg:hidden fixed top-0 left-0 bottom-0 w-full max-w-sm bg-white z-50 overflow-y-auto transform transition-transform duration-300 ease-in-out',
+          isMobileDrawerOpen ? 'translate-x-0' : '-translate-x-full'
+        )}
+      >
+        <div className="sticky top-0 bg-white border-b border-slate-200 p-4 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-slate-900">Filters</h2>
+          <Button
+            onClick={() => setIsMobileDrawerOpen(false)}
+            variant="ghost"
+            size="icon"
+            aria-label="Close filters"
+          >
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
+        <div className="p-6 pb-24">
+          <FilterContent />
+        </div>
+      </div>
+
+      {/* Desktop Sidebar - Hidden on mobile */}
+      <div className="hidden lg:block bg-white rounded-xl border border-slate-200 p-6 sticky top-8">
+        <FilterContent />
+      </div>
+    </>
   );
 }

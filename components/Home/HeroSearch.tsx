@@ -42,26 +42,28 @@ export default function HeroSearch() {
       {/* Main Search Bar */}
       <form
         onSubmit={handleSearch}
-        className="flex items-center gap-4 bg-white text-slate-900 px-6 py-5 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-300 group"
+        className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 bg-white text-slate-900 px-4 sm:px-6 py-4 sm:py-5 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-300 group"
       >
-        <Search className="w-6 h-6 text-slate-400 group-hover:text-brand transition-colors" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search by make, model, or type..."
-          className="flex-1 text-lg text-slate-900 placeholder:text-slate-500 bg-transparent outline-none"
-        />
-        <Button type="submit" variant="brand">
+        <div className="flex items-center gap-3 flex-1">
+          <Search className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400 group-hover:text-brand transition-colors flex-shrink-0" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by make, model, or type..."
+            className="flex-1 text-base sm:text-lg text-slate-900 placeholder:text-slate-500 bg-transparent outline-none"
+          />
+        </div>
+        <Button type="submit" variant="brand" className="w-full sm:w-auto sm:flex-shrink-0">
           Search
         </Button>
       </form>
 
       {/* Zip Code Input */}
-      <div className="flex items-center justify-center gap-3 text-white">
-        <span className="text-sm">or find vehicles near</span>
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
-          <ZipCodeInput placeholder="Enter zip code" className="text-white" />
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 text-white text-sm">
+        <span>or find vehicles near</span>
+        <div className="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 w-full sm:w-auto max-w-xs">
+          <ZipCodeInput placeholder="Enter zip code" className="text-white w-full" />
         </div>
       </div>
     </div>

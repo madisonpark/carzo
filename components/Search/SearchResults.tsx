@@ -21,6 +21,8 @@ export default function SearchResults({
   currentFilters,
 }: SearchResultsProps) {
   const router = useRouter();
+  const hasActiveFilters = Object.values(currentFilters).some(v => v && v !== 'relevance');
+  const currentSort = currentFilters.sortBy || 'relevance';
 
   const goToPage = (newPage: number) => {
     const params = new URLSearchParams();
@@ -96,10 +98,6 @@ export default function SearchResults({
       </div>
     );
   }
-
-  const hasActiveFilters = Object.values(currentFilters).some(v => v && v !== 'relevance');
-
-  const currentSort = currentFilters.sortBy || 'relevance';
 
   return (
     <div>

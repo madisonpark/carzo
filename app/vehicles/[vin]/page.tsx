@@ -82,14 +82,8 @@ export default async function VehicleDetailPage({ params }: PageProps) {
     vehicleConfiguration: vehicle.trim || undefined,
     bodyType: vehicle.body_style || undefined,
     vehicleTransmission: vehicle.transmission || undefined,
-    driveWheelConfiguration: vehicle.drivetrain || undefined,
+    driveWheelConfiguration: vehicle.drive_type || undefined,
     fuelType: vehicle.fuel_type || undefined,
-    vehicleEngine: vehicle.engine
-      ? {
-          '@type': 'EngineSpecification',
-          name: vehicle.engine,
-        }
-      : undefined,
     color: vehicle.exterior_color || undefined,
     mileageFromOdometer: vehicle.miles
       ? {

@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
+import { Input, Badge, Button } from '@/components/ui';
+import { cn } from '@/lib/utils';
 
 interface FilterSidebarProps {
   makes: string[];
@@ -100,14 +102,16 @@ export default function FilterSidebar({
           )}
         </div>
         {hasActiveFilters && (
-          <button
+          <Button
             onClick={clearFilters}
+            variant="ghost"
+            size="sm"
             aria-label="Clear all filters"
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+            className="text-brand hover:text-brand-hover gap-1"
           >
             <X className="w-4 h-4" />
             Clear
-          </button>
+          </Button>
         )}
       </div>
 
@@ -200,21 +204,21 @@ export default function FilterSidebar({
         <div>
           <label className="block text-sm font-semibold text-slate-700 mb-2">Price</label>
           <div className="grid grid-cols-2 gap-3">
-            <input
+            <Input
               type="number"
               placeholder="Min"
               value={minPrice}
               onChange={(e) => handleMinPriceChange(e.target.value)}
               aria-label="Minimum price"
-              className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="text-sm py-2"
             />
-            <input
+            <Input
               type="number"
               placeholder="Max"
               value={maxPrice}
               onChange={(e) => handleMaxPriceChange(e.target.value)}
               aria-label="Maximum price"
-              className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="text-sm py-2"
             />
           </div>
         </div>
@@ -226,37 +230,37 @@ export default function FilterSidebar({
           <h3 className="text-sm font-semibold text-slate-700 mb-3">Active Filters</h3>
           <div className="flex flex-wrap gap-2">
             {currentFilters.make && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-muted text-brand text-sm rounded-full">
+              <Badge variant="secondary" className="gap-1 rounded-full text-brand">
                 {currentFilters.make}
                 <button
                   onClick={() => updateFilter('make', '')}
-                  className="hover:bg-blue-200 rounded-full"
+                  className="hover:bg-slate-300 rounded-full"
                 >
                   <X className="w-3 h-3" />
                 </button>
-              </span>
+              </Badge>
             )}
             {currentFilters.condition && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-muted text-brand text-sm rounded-full">
+              <Badge variant="secondary" className="gap-1 rounded-full text-brand">
                 {currentFilters.condition}
                 <button
                   onClick={() => updateFilter('condition', '')}
-                  className="hover:bg-blue-200 rounded-full"
+                  className="hover:bg-slate-300 rounded-full"
                 >
                   <X className="w-3 h-3" />
                 </button>
-              </span>
+              </Badge>
             )}
             {currentFilters.bodyStyle && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-muted text-brand text-sm rounded-full">
+              <Badge variant="secondary" className="gap-1 rounded-full text-brand">
                 {currentFilters.bodyStyle}
                 <button
                   onClick={() => updateFilter('bodyStyle', '')}
-                  className="hover:bg-blue-200 rounded-full"
+                  className="hover:bg-slate-300 rounded-full"
                 >
                   <X className="w-3 h-3" />
                 </button>
-              </span>
+              </Badge>
             )}
           </div>
         </div>

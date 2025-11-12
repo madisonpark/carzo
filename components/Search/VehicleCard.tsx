@@ -3,6 +3,7 @@
 import { Vehicle } from '@/lib/supabase';
 import Link from 'next/link';
 import { Camera, MapPin } from 'lucide-react';
+import { Button, Badge } from '@/components/ui';
 
 interface VehicleCardProps {
   vehicle: Vehicle & { distance_miles?: number };
@@ -36,9 +37,9 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
           }}
         />
         {vehicle.condition && (
-          <span className="absolute top-2 left-2 px-2.5 py-0.5 bg-brand text-white text-xs font-semibold rounded">
+          <Badge variant="brand" className="absolute top-2 left-2">
             {vehicle.condition}
-          </span>
+          </Badge>
         )}
         {vehicle.total_photos && (
           <div className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 bg-black/75 text-white text-xs font-medium rounded">
@@ -88,11 +89,14 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
         </div>
 
         {/* CTA */}
-        <button className="w-full py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-lg transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
+        <Button
+          variant="primary"
+          className="w-full hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] gap-2"
+        >
           <Camera className="w-4 h-4" />
           See Full Photo Gallery
           <span className="text-lg">›</span>
-        </button>
+        </Button>
       </div>
     </Link>
   );

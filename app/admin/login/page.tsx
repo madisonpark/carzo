@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Shield } from 'lucide-react';
+import { Input, Button, Card, CardHeader, CardContent } from '@/components/ui';
 
 export default function AdminLogin() {
   const [password, setPassword] = useState('');
@@ -56,15 +57,15 @@ export default function AdminLogin() {
             <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
               Admin Password
             </label>
-            <input
+            <Input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
               placeholder="Enter admin password"
               required
               autoFocus
+              error={!!error}
             />
           </div>
 
@@ -74,13 +75,14 @@ export default function AdminLogin() {
             </div>
           )}
 
-          <button
+          <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-brand hover:bg-brand-hover text-white font-semibold py-3 rounded-lg transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed"
+            variant="brand"
+            className="w-full"
           >
             {loading ? 'Authenticating...' : 'Login'}
-          </button>
+          </Button>
         </form>
 
         <div className="mt-6 text-center text-xs text-slate-500">

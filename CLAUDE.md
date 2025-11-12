@@ -130,6 +130,138 @@ Dark mode will be activated via `prefers-color-scheme: dark` media query. All br
 4. **All CTAs use primary color** (red) for maximum conversion
 5. **Brand accents use brand color** (blue) for consistency
 
+## UI Component Library
+
+Carzo uses a custom UI component library built on top of the Tailwind design system for consistency and maintainability.
+
+### Available Components
+
+Located in `components/ui/` with a central export from `components/ui/index.ts`.
+
+#### Button Component
+
+**Usage:**
+```tsx
+import { Button } from '@/components/ui';
+
+<Button variant="primary">See Photos</Button>
+<Button variant="brand">Search</Button>
+<Button variant="secondary">Cancel</Button>
+<Button variant="outline">More Info</Button>
+<Button variant="ghost">Clear</Button>
+<Button size="sm">Small</Button>
+<Button size="lg">Large</Button>
+```
+
+**Variants:**
+- `primary` (default) - Red background, white text (main CTAs)
+- `brand` - Blue background, white text (brand actions)
+- `dealer` - Violet background, white text (dealer-specific, Phase 2)
+- `secondary` - Muted gray background
+- `outline` - White background with border
+- `ghost` - Transparent background, text only
+
+**Sizes:**
+- `sm` - Small (px-3 py-1.5, text-sm)
+- `md` (default) - Medium (px-6 py-3, text-base)
+- `lg` - Large (px-8 py-4, text-lg)
+
+#### Input Component
+
+**Usage:**
+```tsx
+import { Input } from '@/components/ui';
+
+<Input type="text" placeholder="Enter value" />
+<Input type="email" error={hasError} />
+<Input type="number" className="text-sm" />
+```
+
+**Props:**
+- `error?: boolean` - Shows red border and error focus ring
+- All standard HTML input attributes supported
+
+#### Badge Component
+
+**Usage:**
+```tsx
+import { Badge } from '@/components/ui';
+
+<Badge variant="brand">New</Badge>
+<Badge variant="success">Certified</Badge>
+<Badge variant="warning">Low Stock</Badge>
+<Badge variant="error">Sold</Badge>
+```
+
+**Variants:**
+- `default` - Dark gray background
+- `brand` - Blue background
+- `success` - Green background
+- `warning` - Orange background
+- `error` - Red background
+- `info` - Sky blue background
+- `secondary` - Muted gray background
+
+#### Card Components
+
+**Usage:**
+```tsx
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui';
+
+<Card>
+  <CardHeader>
+    <CardTitle>Title</CardTitle>
+    <CardDescription>Description</CardDescription>
+  </CardHeader>
+  <CardContent>
+    Main content
+  </CardContent>
+  <CardFooter>
+    Footer content
+  </CardFooter>
+</Card>
+```
+
+**Components:**
+- `Card` - Container with border and shadow
+- `CardHeader` - Header section with padding
+- `CardTitle` - Bold title (h3)
+- `CardDescription` - Muted description text
+- `CardContent` - Main content area
+- `CardFooter` - Footer section
+
+### Component Usage Guidelines
+
+1. **Always use UI components** instead of raw HTML elements when available
+2. **Import from `@/components/ui`** for cleaner imports
+3. **Extend with className prop** when custom styling needed
+4. **Use cn() utility** for conditional classes
+5. **Maintain consistency** - Don't create one-off button styles
+
+### Example Refactoring
+
+**Before:**
+```tsx
+<button className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg">
+  See Photos
+</button>
+```
+
+**After:**
+```tsx
+import { Button } from '@/components/ui';
+
+<Button variant="primary">See Photos</Button>
+```
+
+### When to Create New Components
+
+Create new UI components when:
+1. A pattern is used 3+ times across the codebase
+2. A component has multiple style variants
+3. A component has complex logic that should be encapsulated
+4. TypeScript types would improve developer experience
+
 ## Page Architecture
 
 ### Three Page Types (Not a Full Car Shopping Site)
@@ -437,6 +569,12 @@ carzo/
 │       ├── zipcode-lookup/route.ts     # Zip code to coordinates
 │       └── cron/sync-feed/route.ts     # Feed sync (4x daily)
 ├── components/
+│   ├── ui/                             # Reusable UI component library
+│   │   ├── Button.tsx                  # Button with variants (primary, brand, etc.)
+│   │   ├── Input.tsx                   # Input field with error states
+│   │   ├── Badge.tsx                   # Badge component with variants
+│   │   ├── Card.tsx                    # Card components (Card, CardHeader, etc.)
+│   │   └── index.ts                    # Central export for all UI components
 │   ├── Search/
 │   │   ├── SearchResults.tsx           # Results grid with pagination
 │   │   ├── FilterSidebar.tsx           # Filter controls
@@ -446,6 +584,8 @@ carzo/
 │   │   └── ZipCodeInput.tsx            # Zip code search input
 │   ├── Home/
 │   │   └── HeroSearch.tsx              # Homepage hero with search
+│   ├── VDP/
+│   │   └── VehicleBridgePage.tsx       # VDP bridge page component
 │   └── Admin/
 │       └── DashboardStats.tsx          # Analytics widgets
 ├── lib/
@@ -454,7 +594,8 @@ carzo/
 │   ├── dealer-diversity.ts             # Revenue optimization algorithm
 │   ├── feed-sync.ts                    # LotLinx feed integration
 │   ├── geolocation.ts                  # MaxMind GeoIP + Haversine
-│   └── revenue.ts                      # Revenue calculation
+│   ├── revenue.ts                      # Revenue calculation
+│   └── utils.ts                        # Utility functions (cn() for class merging)
 ├── types/
 │   └── zipcodes.d.ts                   # TypeScript types for zipcodes package
 ├── supabase/
@@ -1084,10 +1225,19 @@ gh pr create --title "HOTFIX: Critical issue" --body "Description" # Requires Gi
 - ✅ Accessibility (ARIA labels, skip links, semantic HTML)
 - ✅ Empty states with clear calls-to-action
 - ✅ Image fallback handling with placeholder SVG
+- ✅ **Tailwind CSS v4 design system (Phase 1)**
+- ✅ **UI Component Library (Phase 2)**
+  - Button component with 6 variants (primary, brand, dealer, secondary, outline, ghost)
+  - Input component with error states
+  - Badge component with 7 variants
+  - Card components (Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter)
+  - cn() utility for conditional class merging
+  - All components fully typed with TypeScript
+  - All existing components refactored to use new UI library
 
 **Ready for deployment to Vercel**
 
 ---
 
-**Last Updated**: 2025-11-11
+**Last Updated**: 2025-11-12
 **Project Started**: 2025-11-11

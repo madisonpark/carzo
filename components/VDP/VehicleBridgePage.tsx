@@ -4,6 +4,7 @@ import { ArrowRight, MapPin, Camera, Shield, Star, Calculator } from 'lucide-rea
 import { useState, useEffect } from 'react';
 import { Vehicle } from '@/lib/supabase';
 import { useClickTracking } from '@/hooks/useClickTracking';
+import { Badge } from '@/components/ui';
 
 interface VehicleBridgePageProps {
   vehicle: Vehicle;
@@ -73,9 +74,9 @@ export default function VehicleBridgePage({ vehicle }: VehicleBridgePageProps) {
               Located in: {vehicle.dealer_city}, {vehicle.dealer_state}
             </span>
           </div>
-          <span className="bg-brand text-white text-xs font-bold px-3 py-1 rounded-full">
+          <Badge variant="brand" className="rounded-full">
             {condition}
-          </span>
+          </Badge>
         </div>
       </div>
 

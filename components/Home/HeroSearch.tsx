@@ -4,6 +4,7 @@ import { useState, FormEvent } from 'react';
 import { Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import ZipCodeInput from '@/components/Location/ZipCodeInput';
+import { Button } from '@/components/ui';
 
 export default function HeroSearch() {
   const router = useRouter();
@@ -51,12 +52,9 @@ export default function HeroSearch() {
           placeholder="Search by make, model, or type..."
           className="flex-1 text-lg text-slate-900 placeholder:text-slate-500 bg-transparent outline-none"
         />
-        <button
-          type="submit"
-          className="px-6 py-2 bg-brand hover:bg-brand-hover text-white font-semibold rounded-lg transition-colors"
-        >
+        <Button type="submit" variant="brand">
           Search
-        </button>
+        </Button>
       </form>
 
       {/* Zip Code Input */}

@@ -54,7 +54,11 @@ BEGIN
   );
 
   -- Use advisory lock to prevent race conditions
-  PERFORM pg_advisory_xact_lock(hashtext(p_identifier || p_endpoint || v_window_start::TEXT));
+  -- Combine hash with epoch to reduce collision risk under high load
+  PERFORM pg_advisory_xact_lock(
+    hashtext(p_identifier || '::' || p_endpoint || '::' || v_window_start::TEXT),
+    EXTRACT(EPOCH FROM v_window_start)::BIGINT
+  );
 
   -- Get or create counter using upsert
   INSERT INTO rate_limits (identifier, endpoint, window_start, request_count, updated_at)

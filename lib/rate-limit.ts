@@ -147,6 +147,16 @@ export async function checkMultipleRateLimits(
   reset: number;
   failedCheck?: string;
 }> {
+  // Handle edge case: empty checks array
+  if (!checks || checks.length === 0) {
+    return {
+      allowed: true,
+      limit: 0,
+      remaining: 0,
+      reset: Date.now(),
+    };
+  }
+
   let firstResult: Awaited<ReturnType<typeof checkRateLimit>> | null = null;
 
   for (let i = 0; i < checks.length; i++) {

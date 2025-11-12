@@ -29,37 +29,38 @@ import {
  * - max_year?: number
  */
 export async function POST(request: NextRequest) {
+  // Get client identifier (IP or user ID)
+  const identifier = getClientIdentifier(request);
+
+  // Check rate limits (both per-minute and burst)
+  // Note: This is outside try block to ensure headers are always available
+  const rateLimitResult = await checkMultipleRateLimits(identifier, [
+    { endpoint: 'filter_options', ...RATE_LIMITS.FILTER_OPTIONS },
+    { endpoint: 'filter_options_burst', ...RATE_LIMITS.BURST },
+  ]);
+
+  // Add rate limit headers to response
+  const headers = {
+    'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+    'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+    'X-RateLimit-Reset': new Date(rateLimitResult.reset).toISOString(),
+  };
+
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      {
+        error: 'Rate limit exceeded',
+        message:
+          'Too many requests. Please wait a moment before trying again.',
+        limit: rateLimitResult.limit,
+        remaining: rateLimitResult.remaining,
+        reset: rateLimitResult.reset,
+      },
+      { status: 429, headers }
+    );
+  }
+
   try {
-    // Get client identifier (IP or user ID)
-    const identifier = getClientIdentifier(request);
-
-    // Check rate limits (both per-minute and burst)
-    const rateLimitResult = await checkMultipleRateLimits(identifier, [
-      { endpoint: 'filter_options', ...RATE_LIMITS.FILTER_OPTIONS },
-      { endpoint: 'filter_options_burst', ...RATE_LIMITS.BURST },
-    ]);
-
-    // Add rate limit headers to response
-    const headers = {
-      'X-RateLimit-Limit': rateLimitResult.limit.toString(),
-      'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
-      'X-RateLimit-Reset': new Date(rateLimitResult.reset).toISOString(),
-    };
-
-    if (!rateLimitResult.allowed) {
-      return NextResponse.json(
-        {
-          error: 'Rate limit exceeded',
-          message:
-            'Too many requests. Please wait a moment before trying again.',
-          limit: rateLimitResult.limit,
-          remaining: rateLimitResult.remaining,
-          reset: rateLimitResult.reset,
-        },
-        { status: 429, headers }
-      );
-    }
-
     // Parse request body
     const body = await request.json();
 

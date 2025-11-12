@@ -2,7 +2,7 @@
 
 import { Vehicle } from '@/lib/supabase';
 import Link from 'next/link';
-import { Camera, MapPin } from 'lucide-react';
+import { Camera, MapPin, ChevronRight } from 'lucide-react';
 import { Button, Badge } from '@/components/ui';
 
 interface VehicleCardProps {
@@ -95,7 +95,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
         >
           <Camera className="w-4 h-4" />
           See Full Photo Gallery
-          <span className="text-lg">›</span>
+          <ChevronRight className="w-5 h-5" />
         </Button>
       </div>
     </Link>

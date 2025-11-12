@@ -23,6 +23,20 @@ interface FilterSidebarProps {
   };
 }
 
+// Extracted reusable active filter badge component
+const ActiveFilterBadge = ({ label, onRemove }: { label: string; onRemove: () => void }) => (
+  <Badge variant="secondary" className="gap-1 rounded-full text-brand">
+    {label}
+    <button
+      onClick={onRemove}
+      className="hover:bg-slate-300 rounded-full"
+      aria-label={`Remove ${label} filter`}
+    >
+      <X className="w-3 h-3" />
+    </button>
+  </Badge>
+);
+
 export default function FilterSidebar({
   makes,
   bodyStyles,
@@ -230,37 +244,22 @@ export default function FilterSidebar({
           <h3 className="text-sm font-semibold text-slate-700 mb-3">Active Filters</h3>
           <div className="flex flex-wrap gap-2">
             {currentFilters.make && (
-              <Badge variant="secondary" className="gap-1 rounded-full text-brand">
-                {currentFilters.make}
-                <button
-                  onClick={() => updateFilter('make', '')}
-                  className="hover:bg-slate-300 rounded-full"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </Badge>
+              <ActiveFilterBadge
+                label={currentFilters.make}
+                onRemove={() => updateFilter('make', '')}
+              />
             )}
             {currentFilters.condition && (
-              <Badge variant="secondary" className="gap-1 rounded-full text-brand">
-                {currentFilters.condition}
-                <button
-                  onClick={() => updateFilter('condition', '')}
-                  className="hover:bg-slate-300 rounded-full"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </Badge>
+              <ActiveFilterBadge
+                label={currentFilters.condition}
+                onRemove={() => updateFilter('condition', '')}
+              />
             )}
             {currentFilters.bodyStyle && (
-              <Badge variant="secondary" className="gap-1 rounded-full text-brand">
-                {currentFilters.bodyStyle}
-                <button
-                  onClick={() => updateFilter('bodyStyle', '')}
-                  className="hover:bg-slate-300 rounded-full"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </Badge>
+              <ActiveFilterBadge
+                label={currentFilters.bodyStyle}
+                onRemove={() => updateFilter('bodyStyle', '')}
+              />
             )}
           </div>
         </div>

@@ -58,6 +58,48 @@ interface AnalyticsData {
   };
 }
 
+/**
+ * Helper function to determine the winning flow for a given metric
+ * @param flowPerformance - Flow performance data
+ * @param metric - The metric to compare ('revenue', 'billableRate', or 'clicks')
+ * @returns The name of the winning flow, 'Tie', or 'No data yet'
+ */
+function getFlowWinner(
+  flowPerformance: AnalyticsData['flowPerformance'],
+  metric: 'revenue' | 'billableRate' | 'clicks'
+): string {
+  const { direct, vdpOnly, full } = flowPerformance;
+
+  // Check if all values are zero (no data yet)
+  if (metric === 'revenue') {
+    if (direct.revenue === 0 && vdpOnly.revenue === 0 && full.revenue === 0) {
+      return 'No data yet';
+    }
+  } else if (metric === 'billableRate' || metric === 'clicks') {
+    if (direct.clicks === 0 && vdpOnly.clicks === 0 && full.clicks === 0) {
+      return 'No data yet';
+    }
+  }
+
+  // Get values for comparison
+  const directValue = direct[metric];
+  const vdpOnlyValue = vdpOnly[metric];
+  const fullValue = full[metric];
+
+  // Determine winner
+  if (directValue > vdpOnlyValue && directValue > fullValue) {
+    return 'Flow A (Direct)';
+  }
+  if (vdpOnlyValue > directValue && vdpOnlyValue > fullValue) {
+    return 'Flow B (VDP-Only)';
+  }
+  if (fullValue > directValue && fullValue > vdpOnlyValue) {
+    return 'Flow C (Full Funnel)';
+  }
+
+  return 'Tie';
+}
+
 async function getAnalytics(): Promise<AnalyticsData> {
   // Get total clicks with flow information
   const { data: allClicks } = await supabaseAdmin
@@ -463,64 +505,19 @@ export default async function AdminDashboard() {
               <div>
                 <p className="text-slate-600 mb-1">Highest Revenue</p>
                 <p className="font-bold text-slate-900">
-                  {(() => {
-                    const { direct, vdpOnly, full } = analytics.flowPerformance;
-                    if (direct.revenue === 0 && vdpOnly.revenue === 0 && full.revenue === 0) {
-                      return 'No data yet';
-                    }
-                    if (direct.revenue > vdpOnly.revenue && direct.revenue > full.revenue) {
-                      return 'Flow A (Direct)';
-                    }
-                    if (vdpOnly.revenue > direct.revenue && vdpOnly.revenue > full.revenue) {
-                      return 'Flow B (VDP-Only)';
-                    }
-                    if (full.revenue > direct.revenue && full.revenue > vdpOnly.revenue) {
-                      return 'Flow C (Full Funnel)';
-                    }
-                    return 'Tie';
-                  })()}
+                  {getFlowWinner(analytics.flowPerformance, 'revenue')}
                 </p>
               </div>
               <div>
                 <p className="text-slate-600 mb-1">Highest Billable Rate</p>
                 <p className="font-bold text-slate-900">
-                  {(() => {
-                    const { direct, vdpOnly, full } = analytics.flowPerformance;
-                    if (direct.clicks === 0 && vdpOnly.clicks === 0 && full.clicks === 0) {
-                      return 'No data yet';
-                    }
-                    if (direct.billableRate > vdpOnly.billableRate && direct.billableRate > full.billableRate) {
-                      return 'Flow A (Direct)';
-                    }
-                    if (vdpOnly.billableRate > direct.billableRate && vdpOnly.billableRate > full.billableRate) {
-                      return 'Flow B (VDP-Only)';
-                    }
-                    if (full.billableRate > direct.billableRate && full.billableRate > vdpOnly.billableRate) {
-                      return 'Flow C (Full Funnel)';
-                    }
-                    return 'Tie';
-                  })()}
+                  {getFlowWinner(analytics.flowPerformance, 'billableRate')}
                 </p>
               </div>
               <div>
                 <p className="text-slate-600 mb-1">Most Traffic</p>
                 <p className="font-bold text-slate-900">
-                  {(() => {
-                    const { direct, vdpOnly, full } = analytics.flowPerformance;
-                    if (direct.clicks === 0 && vdpOnly.clicks === 0 && full.clicks === 0) {
-                      return 'No data yet';
-                    }
-                    if (direct.clicks > vdpOnly.clicks && direct.clicks > full.clicks) {
-                      return 'Flow A (Direct)';
-                    }
-                    if (vdpOnly.clicks > direct.clicks && vdpOnly.clicks > full.clicks) {
-                      return 'Flow B (VDP-Only)';
-                    }
-                    if (full.clicks > direct.clicks && full.clicks > vdpOnly.clicks) {
-                      return 'Flow C (Full Funnel)';
-                    }
-                    return 'Tie';
-                  })()}
+                  {getFlowWinner(analytics.flowPerformance, 'clicks')}
                 </p>
               </div>
             </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MapPin } from 'lucide-react';
 
@@ -20,6 +20,35 @@ export default function LocationDetector() {
   const searchParams = useSearchParams();
   const [location, setLocation] = useState<UserLocation | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const detectLocation = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/detect-location');
+      if (!response.ok) {
+        throw new Error('Failed to detect location');
+      }
+
+      const data = await response.json();
+      if (data.success && data.location) {
+        const loc = data.location;
+        setLocation(loc);
+
+        // Cache in sessionStorage
+        sessionStorage.setItem('userLocation', JSON.stringify(loc));
+
+        // Add to URL
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('lat', loc.latitude.toString());
+        params.set('lon', loc.longitude.toString());
+        router.replace(`/search?${params.toString()}`, { scroll: false });
+      }
+    } catch (error) {
+      console.error('Error detecting location:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [router, searchParams]);
 
   useEffect(() => {
     // Check if location is already in URL or sessionStorage
@@ -58,36 +87,7 @@ export default function LocationDetector() {
 
     // Detect location for the first time
     detectLocation();
-  }, []);
-
-  const detectLocation = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch('/api/detect-location');
-      if (!response.ok) {
-        throw new Error('Failed to detect location');
-      }
-
-      const data = await response.json();
-      if (data.success && data.location) {
-        const loc = data.location;
-        setLocation(loc);
-
-        // Cache in sessionStorage
-        sessionStorage.setItem('userLocation', JSON.stringify(loc));
-
-        // Add to URL
-        const params = new URLSearchParams(searchParams.toString());
-        params.set('lat', loc.latitude.toString());
-        params.set('lon', loc.longitude.toString());
-        router.replace(`/search?${params.toString()}`, { scroll: false });
-      }
-    } catch (error) {
-      console.error('Error detecting location:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [detectLocation, router, searchParams]);
 
   if (loading) {
     return (

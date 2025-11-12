@@ -76,7 +76,7 @@ export default function SearchResults({
           No vehicles found
         </h3>
         <p className="text-slate-600 mb-6 max-w-md mx-auto">
-          We couldn't find any vehicles matching your search criteria. Try adjusting your filters
+          We couldn&apos;t find any vehicles matching your search criteria. Try adjusting your filters
           or browse all available vehicles.
         </p>
 

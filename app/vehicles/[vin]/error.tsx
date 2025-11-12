@@ -6,7 +6,6 @@ import { Car, Home, ArrowLeft } from 'lucide-react';
 
 export default function VehicleError({
   error,
-  reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
@@ -42,7 +41,7 @@ export default function VehicleError({
 
           {/* Message */}
           <p className="text-lg text-slate-600 mb-8">
-            We're having trouble loading this vehicle's information. It may no longer be available.
+            We&apos;re having trouble loading this vehicle&apos;s information. It may no longer be available.
           </p>
 
           {/* Actions */}

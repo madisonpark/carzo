@@ -4,8 +4,6 @@
  * Business Rule: $0.80 per UNIQUE dealer per user per 30 days
  */
 
-import { Vehicle } from './supabase';
-
 /**
  * Diversify vehicles by dealer using round-robin algorithm
  * Ensures maximum variety of dealers to maximize billable clicks

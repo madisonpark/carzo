@@ -56,8 +56,9 @@ export function getClientIdentifier(request: Request): string {
     }
   }
 
-  // Last resort: use a static identifier (not ideal, but prevents crashes)
-  return 'anonymous';
+  // Last resort: generate unique anonymous identifier per request
+  // Using timestamp + random to prevent all anonymous users sharing same limit
+  return `anon:${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
 }
 
 /**

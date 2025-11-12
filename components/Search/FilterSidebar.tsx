@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 
@@ -28,6 +29,21 @@ export default function FilterSidebar({
   currentFilters,
 }: FilterSidebarProps) {
   const router = useRouter();
+  const [minPrice, setMinPrice] = useState(currentFilters.minPrice || '');
+  const [maxPrice, setMaxPrice] = useState(currentFilters.maxPrice || '');
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // Debounced update function
+  const debouncedUpdateFilter = useCallback(
+    (key: string, value: string) => {
+      const timer = setTimeout(() => {
+        updateFilter(key, value);
+        setIsUpdating(false);
+      }, 800); // 800ms debounce
+      return () => clearTimeout(timer);
+    },
+    []
+  );
 
   const updateFilter = (key: string, value: string) => {
     const params = new URLSearchParams();
@@ -47,6 +63,19 @@ export default function FilterSidebar({
     router.push(`/search?${params.toString()}`);
   };
 
+  // Handle price input changes with debouncing
+  const handleMinPriceChange = (value: string) => {
+    setMinPrice(value);
+    setIsUpdating(true);
+    debouncedUpdateFilter('minPrice', value);
+  };
+
+  const handleMaxPriceChange = (value: string) => {
+    setMaxPrice(value);
+    setIsUpdating(true);
+    debouncedUpdateFilter('maxPrice', value);
+  };
+
   const clearFilters = () => {
     router.push('/search');
   };
@@ -56,7 +85,12 @@ export default function FilterSidebar({
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-6 sticky top-8">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-bold text-slate-900">Filters</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-bold text-slate-900">Filters</h2>
+          {isUpdating && (
+            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          )}
+        </div>
         {hasActiveFilters && (
           <button
             onClick={clearFilters}
@@ -161,16 +195,16 @@ export default function FilterSidebar({
             <input
               type="number"
               placeholder="Min"
-              value={currentFilters.minPrice || ''}
-              onChange={(e) => updateFilter('minPrice', e.target.value)}
+              value={minPrice}
+              onChange={(e) => handleMinPriceChange(e.target.value)}
               aria-label="Minimum price"
               className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             />
             <input
               type="number"
               placeholder="Max"
-              value={currentFilters.maxPrice || ''}
-              onChange={(e) => updateFilter('maxPrice', e.target.value)}
+              value={maxPrice}
+              onChange={(e) => handleMaxPriceChange(e.target.value)}
               aria-label="Maximum price"
               className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             />

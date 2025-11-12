@@ -50,11 +50,54 @@ export default function SearchResults({
   if (vehicles.length === 0) {
     return (
       <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
-        <p className="text-xl text-slate-600">No vehicles found matching your criteria.</p>
-        <p className="text-sm text-slate-500 mt-2">Try adjusting your filters</p>
+        {/* Empty State Icon */}
+        <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-100 rounded-full mb-6">
+          <svg
+            className="w-10 h-10 text-slate-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </div>
+
+        {/* Message */}
+        <h3 className="text-2xl font-bold text-slate-900 mb-2">
+          No vehicles found
+        </h3>
+        <p className="text-slate-600 mb-6 max-w-md mx-auto">
+          We couldn't find any vehicles matching your search criteria. Try adjusting your filters
+          or browse all available vehicles.
+        </p>
+
+        {/* Actions */}
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <button
+            onClick={() => router.push('/search')}
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+          >
+            View All Vehicles
+          </button>
+          {hasActiveFilters && (
+            <button
+              onClick={() => router.push('/search')}
+              className="px-6 py-3 bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-900 font-semibold rounded-lg transition-colors"
+            >
+              Clear Filters
+            </button>
+          )}
+        </div>
       </div>
     );
   }
+
+  const hasActiveFilters = Object.values(currentFilters).some(v => v && v !== 'relevance');
 
   const currentSort = currentFilters.sortBy || 'relevance';
 

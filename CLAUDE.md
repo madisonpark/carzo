@@ -492,6 +492,92 @@ Disabled automatically for users with `prefers-reduced-motion: reduce`.
    - Secondary CTAs: "View FREE Vehicle History", "Estimate Monthly Payments"
    - All CTAs go to same dealer URL, open in new tab
 
+## A/B Test Flow Routing
+
+Carzo implements URL parameter-based A/B testing to optimize the user journey and maximize revenue per impression. Three flow variants are supported:
+
+### Flow Variants
+
+**Flow A: Direct to Dealer** (`?flow=direct`)
+- **Path**: SERP → Dealer Site (skip VDP)
+- **Strategy**: Minimal friction, direct links from search results
+- **UX**: Vehicle cards link directly to dealer VDP, open in new tab
+- **Button**: "View at Dealer" with ExternalLink icon
+- **Use Case**: Test if VDP bridge adds or removes value
+- **Tracking**: Click tracked with `flow: 'direct'` and `ctaClicked: 'serp_direct'`
+
+**Flow B: VDP-Only** (`?flow=vdp-only`)
+- **Path**: Ad → VDP → Dealer (skip SERP, auto-redirect)
+- **Strategy**: Vehicle-specific landing pages for targeted ads
+- **UX**: VDP shows loading spinner for 1.5s, then auto-opens dealer site in new tab
+- **Use Case**: Direct traffic from Facebook/Google Ads to specific vehicles
+- **Tracking**: Impression + click both tracked with `flow: 'vdp-only'` before redirect
+
+**Flow C: Full Funnel** (default, no parameter or `?flow=full`)
+- **Path**: SERP → VDP → Dealer (traditional flow)
+- **Strategy**: Full trust-building funnel with photo gallery tease
+- **UX**: Search → Vehicle card → VDP bridge → Dealer CTAs
+- **Button**: "See Full Photo Gallery" with Camera icon
+- **Use Case**: Default behavior, maximizes session depth
+- **Tracking**: Standard impression/click tracking with `flow: 'full'`
+
+### Flow Detection & Preservation
+
+**Detection**: `lib/flow-detection.ts`
+```typescript
+export function getFlowFromUrl(): UserFlow {
+  const params = new URLSearchParams(window.location.search);
+  const flow = params.get('flow');
+  if (flow === 'direct' || flow === 'vdp-only') return flow;
+  return 'full'; // Default
+}
+```
+
+**Preservation**: Flow parameter automatically preserved through all navigation:
+- Filter changes (make, model, price, condition, etc.)
+- Pagination (page 1, 2, 3...)
+- Sorting (price, year, mileage)
+- Clear filters (preserves flow, clears other params)
+
+**Implementation**: All components use `new URLSearchParams(window.location.search)` to preserve existing parameters.
+
+### Edge Case Handling
+
+**Missing `dealer_vdp_url`**:
+- VehicleCard: Falls back to VDP flow (not direct) if URL missing
+- VDPRedirect: Shows error state with "Return to Search" button
+- Prevents broken links or opening about:blank
+
+**Invalid flow values**:
+- Client-side: Default to `'full'` if not `'direct'` or `'vdp-only'`
+- Server-side: API normalizes to `'full'` if invalid value passed
+
+### Testing Flows
+
+**URL Examples**:
+```
+# Flow A: Direct to dealer from search
+/search?make=toyota&flow=direct
+
+# Flow B: Auto-redirect VDP (for ads)
+/vehicles/1HGBH41JXMN109186?flow=vdp-only
+
+# Flow C: Default full funnel
+/search?make=toyota
+```
+
+**Marketing Use Cases**:
+- **Facebook Ads → Flow B**: Link directly to VDP with auto-redirect
+- **Google Display → Flow A**: Test direct dealer links from search
+- **Organic/Referral → Flow C**: Default experience with VDP bridge
+
+### Analytics Tracking
+
+All flows tracked in database:
+- `clicks.flow`: Which variant generated the click
+- `impressions.flow`: Which variant generated the impression
+- Analytics dashboard shows performance by flow variant
+
 ## Database Schema
 
 See `supabase-schema.sql` for complete schema.
@@ -876,6 +962,11 @@ carzo/
 - Top performing vehicles
 - CTR by traffic source (Facebook vs Google)
 - Dealer diversity metrics
+- **A/B Test Flow Performance** (Phase 6):
+  - Flow A (Direct): Clicks, billable rate, revenue
+  - Flow B (VDP-Only): Impressions, clicks, CTR, billable rate, revenue
+  - Flow C (Full Funnel): Clicks, billable rate, revenue
+  - Performance comparison summary (highest revenue, highest billable rate, most traffic)
 
 ## Known Constraints
 
@@ -1465,6 +1556,21 @@ gh pr create --title "HOTFIX: Critical issue" --body "Description" # Requires Gi
   - Transition utilities (transition-smooth, transition-smooth-slow)
   - Proper z-index hierarchy for overlays and drawers
   - All animations respect user motion preferences
+- ✅ **A/B Test Flow Routing (Phases 1-7)**
+  - Flow A (Direct): SERP → Dealer (skip VDP, `?flow=direct`)
+  - Flow B (VDP-Only): Ad → VDP → Dealer (auto-redirect, `?flow=vdp-only`)
+  - Flow C (Full Funnel): SERP → VDP → Dealer (traditional bridge page)
+  - Flow detection utilities and parameter preservation
+  - Conditional routing in VehicleCard component
+  - VDP redirect logic with impression tracking
+  - Flow preservation across filters, pagination, sorting
+  - Database schema with flow columns (clicks, impressions)
+  - `/api/track-impression` endpoint for Flow B tracking
+  - Manual browser testing completed (all flows verified)
+  - Database verification completed (all tracking working)
+  - Analytics dashboard with flow performance widget (Phase 6)
+  - Flow comparison: clicks, billable rate, revenue, CTR (Flow B only)
+  - Performance summary: highest revenue, billable rate, traffic
 
 **Ready for deployment to Vercel**
 

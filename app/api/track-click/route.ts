@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { vehicleId, dealerId, userId, sessionId, ctaClicked } = body;
+    const { vehicleId, dealerId, userId, sessionId, ctaClicked, flow } = body;
 
     // Validate required fields
     if (!vehicleId || !dealerId || !userId) {
@@ -30,6 +30,10 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Validate and normalize flow parameter
+    const validFlows = ['direct', 'vdp-only', 'full'];
+    const normalizedFlow = validFlows.includes(flow) ? flow : 'full';
 
     // Check if user has clicked this dealer in the last 30 days
     const thirtyDaysAgo = new Date();
@@ -54,6 +58,7 @@ export async function POST(request: NextRequest) {
       session_id: sessionId || null,
       is_billable: isBillable,
       cta_clicked: ctaClicked || 'primary',
+      flow: normalizedFlow,
       created_at: new Date().toISOString(),
     });
 

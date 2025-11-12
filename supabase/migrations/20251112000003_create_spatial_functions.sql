@@ -175,10 +175,26 @@ COMMENT ON FUNCTION search_vehicles_by_location IS 'Fast spatial search using Po
 COMMENT ON FUNCTION get_filter_options_by_location IS 'Get available filter options for vehicles within radius. Uses spatial index for performance.';
 
 -- Grant execute permissions to authenticated and anonymous users
--- SECURITY NOTE: Granting to 'anon' allows unauthenticated access, which is necessary for
--- public vehicle search but may expose the database to potential abuse (DoS, scraping).
--- RECOMMENDATION: Implement rate limiting at the API gateway level (Supabase Kong)
--- to mitigate risks. If these functions should only be available to authenticated users,
--- remove 'anon' from the GRANT statements below.
+--
+-- ⚠️ CRITICAL SECURITY REQUIREMENT ⚠️
+-- Granting EXECUTE to 'anon' exposes these functions publicly without strict rate limiting.
+-- This opens the database to Denial of Service (DoS) attacks and large-scale data scraping,
+-- which could incur significant costs and performance degradation.
+--
+-- 🚨 REQUIRED BEFORE PRODUCTION DEPLOYMENT 🚨
+-- Rate limiting MUST be configured at the API gateway level (Supabase's Kong gateway)
+-- before deploying to production. Without rate limiting, this is a critical security vulnerability.
+--
+-- Recommended rate limits:
+-- - Per IP: 100 requests per minute
+-- - Per session: 500 requests per hour
+-- - Burst limit: 10 requests per second
+--
+-- Implementation options:
+-- 1. Supabase Kong gateway rate limiting (recommended)
+-- 2. Remove 'anon' from GRANT and require authentication
+-- 3. Implement application-level rate limiting with Redis
+--
+-- DO NOT deploy to production without implementing one of the above solutions.
 GRANT EXECUTE ON FUNCTION search_vehicles_by_location TO authenticated, anon;
 GRANT EXECUTE ON FUNCTION get_filter_options_by_location TO authenticated, anon;

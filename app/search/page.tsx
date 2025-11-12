@@ -75,6 +75,12 @@ async function getFilterOptions(params?: {
   }
 
   // LOCATION-BASED FILTERING (requires client-side distance calculation)
+  // TODO: Replace with PostGIS spatial queries for production scalability
+  // Current approach: Fetch 10,000 records and filter client-side (workaround)
+  // Better solution: Use ST_DWithin() stored procedure in PostgreSQL with PostGIS
+  // Example: SELECT * FROM vehicles WHERE ST_DWithin(location, ST_Point($lon, $lat)::geography, radius_meters)
+  // This is acceptable for MVP but should be migrated to PostGIS as dataset grows
+
   // Build query with current filters applied
   let query = supabase
     .from('vehicles')
@@ -92,6 +98,7 @@ async function getFilterOptions(params?: {
   if (params?.maxYear) query = query.lte('year', parseInt(params.maxYear));
 
   // Fetch up to 10,000 vehicles for filter options
+  // For location filtering, fetch up to 10,000 vehicles to find nearby ones
   const { data: vehicles } = await query.limit(10000);
 
   if (!vehicles || vehicles.length === 0) {
@@ -236,7 +243,7 @@ async function searchVehicles(params: {
   }
 
   // Sorting helper function
-  function applySorting(vehicles: any[], sortBy: string) {
+  function applySorting(vehicles: (Vehicle & { distance?: number })[], sortBy: string) {
     switch (sortBy) {
       case 'price_asc':
         vehicles.sort((a, b) => a.price - b.price);

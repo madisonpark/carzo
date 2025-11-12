@@ -25,7 +25,7 @@ RETURNS TABLE (
   year INTEGER,
   make VARCHAR(100),
   model VARCHAR(100),
-  trim VARCHAR(100),
+  "trim" VARCHAR(100),
   price NUMERIC(10,2),
   miles INTEGER,
   condition VARCHAR(20),
@@ -60,7 +60,7 @@ BEGIN
     v.year,
     v.make,
     v.model,
-    v.trim,
+    v."trim",
     v.price,
     v.miles,
     v.condition,
@@ -163,9 +163,9 @@ BEGIN
       AND (p_max_year IS NULL OR v.year <= p_max_year)
   )
   SELECT
-    ARRAY(SELECT DISTINCT make FROM filtered_vehicles WHERE make IS NOT NULL ORDER BY make),
-    ARRAY(SELECT DISTINCT body_style FROM filtered_vehicles WHERE body_style IS NOT NULL ORDER BY body_style),
-    ARRAY(SELECT DISTINCT condition FROM filtered_vehicles WHERE condition IS NOT NULL ORDER BY condition),
+    ARRAY(SELECT DISTINCT make::TEXT FROM filtered_vehicles WHERE make IS NOT NULL ORDER BY make),
+    ARRAY(SELECT DISTINCT body_style::TEXT FROM filtered_vehicles WHERE body_style IS NOT NULL ORDER BY body_style),
+    ARRAY(SELECT DISTINCT condition::TEXT FROM filtered_vehicles WHERE condition IS NOT NULL ORDER BY condition),
     ARRAY(SELECT DISTINCT year FROM filtered_vehicles WHERE year IS NOT NULL ORDER BY year DESC);
 END;
 $$ LANGUAGE plpgsql STABLE;

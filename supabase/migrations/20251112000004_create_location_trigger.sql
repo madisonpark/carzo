@@ -6,10 +6,17 @@
 CREATE OR REPLACE FUNCTION update_vehicle_location()
 RETURNS TRIGGER AS $$
 BEGIN
-  -- If latitude or longitude changed, update location
-  IF (NEW.latitude IS NOT NULL AND NEW.longitude IS NOT NULL) AND
-     (NEW.latitude != OLD.latitude OR NEW.longitude != OLD.longitude OR OLD.location IS NULL) THEN
-    NEW.location = ST_SetSRID(ST_MakePoint(NEW.longitude, NEW.latitude), 4326)::geography;
+  -- On INSERT: Always populate location if lat/lon exist
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.latitude IS NOT NULL AND NEW.longitude IS NOT NULL THEN
+      NEW.location = ST_SetSRID(ST_MakePoint(NEW.longitude, NEW.latitude), 4326)::geography;
+    END IF;
+  -- On UPDATE: Only populate if lat/lon changed or location is NULL
+  ELSIF TG_OP = 'UPDATE' THEN
+    IF (NEW.latitude IS NOT NULL AND NEW.longitude IS NOT NULL) AND
+       (NEW.latitude != OLD.latitude OR NEW.longitude != OLD.longitude OR OLD.location IS NULL) THEN
+      NEW.location = ST_SetSRID(ST_MakePoint(NEW.longitude, NEW.latitude), 4326)::geography;
+    END IF;
   END IF;
 
   RETURN NEW;

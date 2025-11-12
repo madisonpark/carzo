@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Vehicle } from '@/lib/supabase';
+import { Vehicle, VehicleWithDistance } from '@/lib/supabase';
 import { diversifyByDealer } from '@/lib/dealer-diversity';
 import SearchResults from '@/components/Search/SearchResults';
 import FilterSidebar from '@/components/Search/FilterSidebar';
@@ -164,8 +164,13 @@ async function searchVehicles(params: {
       };
     }
 
+    // Map distance_miles to distance for component compatibility
+    let vehiclesWithDistance = ((spatialVehicles || []) as VehicleWithDistance[]).map(v => ({
+      ...v,
+      distance: v.distance_miles
+    }));
+
     // PostGIS already sorted by distance, just apply user-selected sort if needed
-    let vehiclesWithDistance = spatialVehicles || [];
     if (params.sortBy && params.sortBy !== 'distance' && params.sortBy !== 'relevance') {
       applySorting(vehiclesWithDistance, params.sortBy);
     }
@@ -225,7 +230,7 @@ async function searchVehicles(params: {
     : [];
 
   // Sorting helper function
-  function applySorting(vehicles: (Vehicle & { distance_miles?: number })[], sortBy: string) {
+  function applySorting(vehicles: (Vehicle & { distance?: number })[], sortBy: string) {
     switch (sortBy) {
       case 'price_asc':
         vehicles.sort((a, b) => a.price - b.price);
@@ -246,13 +251,13 @@ async function searchVehicles(params: {
         vehicles.sort((a, b) => (b.miles || 0) - (a.miles || 0));
         break;
       case 'distance':
-        vehicles.sort((a, b) => (a.distance_miles || Infinity) - (b.distance_miles || Infinity));
+        vehicles.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity));
         break;
       case 'relevance':
       default:
         // Relevance = distance if available, otherwise year
-        if (vehicles[0]?.distance_miles !== undefined) {
-          vehicles.sort((a, b) => (a.distance_miles || Infinity) - (b.distance_miles || Infinity));
+        if (vehicles[0]?.distance !== undefined) {
+          vehicles.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity));
         } else {
           vehicles.sort((a, b) => b.year - a.year);
         }

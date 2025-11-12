@@ -64,6 +64,15 @@ export interface Vehicle {
   is_active?: boolean;
   last_sync?: string;
   created_at?: string;
+  latitude?: number;
+  longitude?: number;
+  targeting_radius?: number;
+}
+
+// PostGIS spatial query response (includes distance calculation)
+export interface VehicleWithDistance extends Vehicle {
+  distance_miles: number; // Distance in miles from PostGIS ST_Distance
+  distance?: number; // Mapped from distance_miles for component compatibility
 }
 
 export interface Click {

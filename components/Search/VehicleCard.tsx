@@ -30,7 +30,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
     : null;
 
   // Determine link destination based on flow
-  const isDirect = isDirectFlow(flow);
+  const isDirect = isDirectFlow(flow) && vehicle.dealer_vdp_url; // Only direct if URL exists
   const linkHref = isDirect
     ? vehicle.dealer_vdp_url // Flow A: Direct to dealer
     : preserveFlowParam(`/vehicles/${vehicle.vin}`); // Flow C: To VDP

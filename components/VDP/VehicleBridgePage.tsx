@@ -435,7 +435,15 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
  * Shows a loading message for 1.5s while tracking, then redirects
  */
 function VDPRedirect({ vehicle }: { vehicle: Vehicle }) {
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
+    // Validate dealer URL exists
+    if (!vehicle.dealer_vdp_url) {
+      setError('Dealer URL not available');
+      return;
+    }
+
     // Track impression
     fetch('/api/track-impression', {
       method: 'POST',
@@ -470,6 +478,28 @@ function VDPRedirect({ vehicle }: { vehicle: Vehicle }) {
 
     return () => clearTimeout(timer);
   }, [vehicle]);
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center space-y-6 px-4 max-w-lg">
+          <div className="text-error text-6xl">⚠️</div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">
+            Unable to Redirect
+          </h1>
+          <p className="text-lg text-slate-600">
+            {error}. This vehicle listing may be incomplete.
+          </p>
+          <a
+            href="/search"
+            className="inline-block px-6 py-3 bg-brand hover:bg-brand-hover text-white font-semibold rounded-lg transition-colors"
+          >
+            Return to Search
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">

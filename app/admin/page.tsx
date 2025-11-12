@@ -34,19 +34,82 @@ interface AnalyticsData {
     vehicle_vin: string;
     dealer_name: string;
   }>;
+  flowPerformance: {
+    direct: {
+      clicks: number;
+      billable: number;
+      revenue: number;
+      billableRate: number;
+    };
+    vdpOnly: {
+      clicks: number;
+      impressions: number;
+      billable: number;
+      revenue: number;
+      billableRate: number;
+      ctr: number;
+    };
+    full: {
+      clicks: number;
+      billable: number;
+      revenue: number;
+      billableRate: number;
+    };
+  };
 }
 
 async function getAnalytics(): Promise<AnalyticsData> {
-  // Get total clicks
+  // Get total clicks with flow information
   const { data: allClicks } = await supabaseAdmin
     .from('clicks')
-    .select('id, is_billable, user_id');
+    .select('id, is_billable, user_id, flow');
 
   const totalClicks = allClicks?.length || 0;
   const billableClicks = allClicks?.filter((c) => c.is_billable).length || 0;
   const wastedClicks = totalClicks - billableClicks;
   const uniqueUsers = new Set(allClicks?.map((c) => c.user_id)).size;
   const revenue = billableClicks * 0.8;
+
+  // Calculate flow performance (treat null/undefined as 'full' for backward compatibility)
+  const directClicks = allClicks?.filter((c) => c.flow === 'direct') || [];
+  const vdpOnlyClicks = allClicks?.filter((c) => c.flow === 'vdp-only') || [];
+  const fullClicks = allClicks?.filter((c) => c.flow === 'full' || c.flow === null || c.flow === undefined) || [];
+
+  // Get impressions for vdp-only flow (for CTR calculation)
+  const { data: vdpImpressions } = await supabaseAdmin
+    .from('impressions')
+    .select('id')
+    .eq('flow', 'vdp-only');
+
+  const directBillable = directClicks.filter((c) => c.is_billable).length;
+  const vdpOnlyBillable = vdpOnlyClicks.filter((c) => c.is_billable).length;
+  const fullBillable = fullClicks.filter((c) => c.is_billable).length;
+
+  const flowPerformance = {
+    direct: {
+      clicks: directClicks.length,
+      billable: directBillable,
+      revenue: directBillable * 0.8,
+      billableRate: directClicks.length > 0 ? (directBillable / directClicks.length) * 100 : 0,
+    },
+    vdpOnly: {
+      clicks: vdpOnlyClicks.length,
+      impressions: vdpImpressions?.length || 0,
+      billable: vdpOnlyBillable,
+      revenue: vdpOnlyBillable * 0.8,
+      billableRate: vdpOnlyClicks.length > 0 ? (vdpOnlyBillable / vdpOnlyClicks.length) * 100 : 0,
+      ctr:
+        vdpImpressions && vdpImpressions.length > 0
+          ? (vdpOnlyClicks.length / vdpImpressions.length) * 100
+          : 0,
+    },
+    full: {
+      clicks: fullClicks.length,
+      billable: fullBillable,
+      revenue: fullBillable * 0.8,
+      billableRate: fullClicks.length > 0 ? (fullBillable / fullClicks.length) * 100 : 0,
+    },
+  };
 
   // Get top vehicles by click count
   const { data: vehicleClicks } = await supabaseAdmin
@@ -135,6 +198,7 @@ async function getAnalytics(): Promise<AnalyticsData> {
     revenue,
     topVehicles,
     recentClicks,
+    flowPerformance,
   };
 }
 
@@ -216,6 +280,250 @@ export default async function AdminDashboard() {
             </div>
             <p className="text-3xl font-bold">{analytics.uniqueUsers}</p>
             <p className="text-indigo-100 text-sm mt-1">Unique Users</p>
+          </div>
+        </div>
+
+        {/* Flow Performance A/B Test Results */}
+        <div className="mb-8 bg-white rounded-xl border border-slate-200 p-6">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">A/B Test Flow Performance</h2>
+            <p className="text-slate-600">
+              Compare conversion metrics across three flow variants: Direct, VDP-Only, and Full Funnel
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Flow A: Direct */}
+            <div className="border-2 border-red-200 bg-red-50 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-slate-900">Flow A: Direct</h3>
+                <span className="px-3 py-1 bg-red-500 text-white text-xs font-semibold rounded-full">
+                  SERP → Dealer
+                </span>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-slate-600 mb-1">Total Clicks</p>
+                  <p className="text-3xl font-bold text-slate-900">
+                    {analytics.flowPerformance.direct.clicks}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-slate-600 mb-1">Billable</p>
+                    <p className="text-xl font-bold text-green-600">
+                      {analytics.flowPerformance.direct.billable}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-600 mb-1">Revenue</p>
+                    <p className="text-xl font-bold text-green-600">
+                      ${analytics.flowPerformance.direct.revenue.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+                <div className="pt-4 border-t border-red-200">
+                  <p className="text-xs text-slate-600 mb-1">Billable Rate</p>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 bg-slate-200 rounded-full h-2" role="progressbar" aria-label="Flow A billable rate" aria-valuenow={Math.min(100, analytics.flowPerformance.direct.billableRate)} aria-valuemin={0} aria-valuemax={100}>
+                      <div
+                        className="bg-green-500 h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min(100, analytics.flowPerformance.direct.billableRate)}%` }}
+                      />
+                    </div>
+                    <p className="text-lg font-bold text-slate-900">
+                      {analytics.flowPerformance.direct.billableRate.toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Flow B: VDP-Only */}
+            <div className="border-2 border-blue-200 bg-blue-50 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-slate-900">Flow B: VDP-Only</h3>
+                <span className="px-3 py-1 bg-blue-500 text-white text-xs font-semibold rounded-full">
+                  Ad → VDP → Dealer
+                </span>
+              </div>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-slate-600 mb-1">Impressions</p>
+                    <p className="text-3xl font-bold text-slate-900">
+                      {analytics.flowPerformance.vdpOnly.impressions}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-600 mb-1">Clicks</p>
+                    <p className="text-3xl font-bold text-slate-900">
+                      {analytics.flowPerformance.vdpOnly.clicks}
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-slate-600 mb-1">Billable</p>
+                    <p className="text-xl font-bold text-green-600">
+                      {analytics.flowPerformance.vdpOnly.billable}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-600 mb-1">Revenue</p>
+                    <p className="text-xl font-bold text-green-600">
+                      ${analytics.flowPerformance.vdpOnly.revenue.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+                <div className="pt-4 border-t border-blue-200 space-y-3">
+                  <div>
+                    <p className="text-xs text-slate-600 mb-1">Click-Through Rate (CTR)</p>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 bg-slate-200 rounded-full h-2" role="progressbar" aria-label="Flow B click-through rate" aria-valuenow={Math.min(100, analytics.flowPerformance.vdpOnly.ctr)} aria-valuemin={0} aria-valuemax={100}>
+                        <div
+                          className="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${Math.min(100, analytics.flowPerformance.vdpOnly.ctr)}%` }}
+                        />
+                      </div>
+                      <p className="text-lg font-bold text-slate-900">
+                        {analytics.flowPerformance.vdpOnly.ctr.toFixed(1)}%
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-600 mb-1">Billable Rate</p>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 bg-slate-200 rounded-full h-2" role="progressbar" aria-label="Flow B billable rate" aria-valuenow={Math.min(100, analytics.flowPerformance.vdpOnly.billableRate)} aria-valuemin={0} aria-valuemax={100}>
+                        <div
+                          className="bg-green-500 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${Math.min(100, analytics.flowPerformance.vdpOnly.billableRate)}%` }}
+                        />
+                      </div>
+                      <p className="text-lg font-bold text-slate-900">
+                        {analytics.flowPerformance.vdpOnly.billableRate.toFixed(1)}%
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Flow C: Full Funnel */}
+            <div className="border-2 border-purple-200 bg-purple-50 rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-slate-900">Flow C: Full Funnel</h3>
+                <span className="px-3 py-1 bg-purple-500 text-white text-xs font-semibold rounded-full">
+                  SERP → VDP → Dealer
+                </span>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-slate-600 mb-1">Total Clicks</p>
+                  <p className="text-3xl font-bold text-slate-900">
+                    {analytics.flowPerformance.full.clicks}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-slate-600 mb-1">Billable</p>
+                    <p className="text-xl font-bold text-green-600">
+                      {analytics.flowPerformance.full.billable}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-600 mb-1">Revenue</p>
+                    <p className="text-xl font-bold text-green-600">
+                      ${analytics.flowPerformance.full.revenue.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+                <div className="pt-4 border-t border-purple-200">
+                  <p className="text-xs text-slate-600 mb-1">Billable Rate</p>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 bg-slate-200 rounded-full h-2" role="progressbar" aria-label="Flow C billable rate" aria-valuenow={Math.min(100, analytics.flowPerformance.full.billableRate)} aria-valuemin={0} aria-valuemax={100}>
+                      <div
+                        className="bg-green-500 h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min(100, analytics.flowPerformance.full.billableRate)}%` }}
+                      />
+                    </div>
+                    <p className="text-lg font-bold text-slate-900">
+                      {analytics.flowPerformance.full.billableRate.toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Flow Comparison Summary */}
+          <div className="mt-6 p-4 bg-slate-50 rounded-lg">
+            <h4 className="text-sm font-semibold text-slate-900 mb-3">Performance Summary</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div>
+                <p className="text-slate-600 mb-1">Highest Revenue</p>
+                <p className="font-bold text-slate-900">
+                  {(() => {
+                    const { direct, vdpOnly, full } = analytics.flowPerformance;
+                    if (direct.revenue === 0 && vdpOnly.revenue === 0 && full.revenue === 0) {
+                      return 'No data yet';
+                    }
+                    if (direct.revenue > vdpOnly.revenue && direct.revenue > full.revenue) {
+                      return 'Flow A (Direct)';
+                    }
+                    if (vdpOnly.revenue > direct.revenue && vdpOnly.revenue > full.revenue) {
+                      return 'Flow B (VDP-Only)';
+                    }
+                    if (full.revenue > direct.revenue && full.revenue > vdpOnly.revenue) {
+                      return 'Flow C (Full Funnel)';
+                    }
+                    return 'Tie';
+                  })()}
+                </p>
+              </div>
+              <div>
+                <p className="text-slate-600 mb-1">Highest Billable Rate</p>
+                <p className="font-bold text-slate-900">
+                  {(() => {
+                    const { direct, vdpOnly, full } = analytics.flowPerformance;
+                    if (direct.clicks === 0 && vdpOnly.clicks === 0 && full.clicks === 0) {
+                      return 'No data yet';
+                    }
+                    if (direct.billableRate > vdpOnly.billableRate && direct.billableRate > full.billableRate) {
+                      return 'Flow A (Direct)';
+                    }
+                    if (vdpOnly.billableRate > direct.billableRate && vdpOnly.billableRate > full.billableRate) {
+                      return 'Flow B (VDP-Only)';
+                    }
+                    if (full.billableRate > direct.billableRate && full.billableRate > vdpOnly.billableRate) {
+                      return 'Flow C (Full Funnel)';
+                    }
+                    return 'Tie';
+                  })()}
+                </p>
+              </div>
+              <div>
+                <p className="text-slate-600 mb-1">Most Traffic</p>
+                <p className="font-bold text-slate-900">
+                  {(() => {
+                    const { direct, vdpOnly, full } = analytics.flowPerformance;
+                    if (direct.clicks === 0 && vdpOnly.clicks === 0 && full.clicks === 0) {
+                      return 'No data yet';
+                    }
+                    if (direct.clicks > vdpOnly.clicks && direct.clicks > full.clicks) {
+                      return 'Flow A (Direct)';
+                    }
+                    if (vdpOnly.clicks > direct.clicks && vdpOnly.clicks > full.clicks) {
+                      return 'Flow B (VDP-Only)';
+                    }
+                    if (full.clicks > direct.clicks && full.clicks > vdpOnly.clicks) {
+                      return 'Flow C (Full Funnel)';
+                    }
+                    return 'Tie';
+                  })()}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 

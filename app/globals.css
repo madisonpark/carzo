@@ -169,4 +169,9 @@
   .transition-smooth-slow {
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
+
+  /* Primary gradient utility */
+  .bg-primary-gradient {
+    background: linear-gradient(to right, var(--color-primary), var(--color-primary-hover));
+  }
 }

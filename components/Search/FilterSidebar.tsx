@@ -242,22 +242,21 @@ export default function FilterSidebar({
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   const updateFilter = useCallback((key: string, value: string) => {
-    const params = new URLSearchParams();
-    // Build params from currentFilters
-    Object.entries(currentFilters).forEach(([filterKey, filterValue]) => {
-      if (filterValue && filterKey !== 'page') {
-        params.set(filterKey, filterValue);
-      }
-    });
+    const params = new URLSearchParams(window.location.search);
+
     // Update or delete the changed filter
     if (value) {
       params.set(key, value);
     } else {
       params.delete(key);
     }
-    params.delete('page'); // Reset to page 1 when filtering
+
+    // Reset to page 1 when filtering
+    params.delete('page');
+
+    // Flow parameter is automatically preserved since we're using window.location.search
     router.push(`/search?${params.toString()}`);
-  }, [currentFilters, router]);
+  }, [router]);
 
   // Debounce minPrice updates
   useEffect(() => {
@@ -293,7 +292,15 @@ export default function FilterSidebar({
   };
 
   const clearFilters = () => {
-    router.push('/search');
+    const params = new URLSearchParams(window.location.search);
+    const flow = params.get('flow');
+
+    // Clear all filters but preserve flow
+    if (flow) {
+      router.push(`/search?flow=${flow}`);
+    } else {
+      router.push('/search');
+    }
   };
 
   const hasActiveFilters = Object.keys(currentFilters).length > 0;

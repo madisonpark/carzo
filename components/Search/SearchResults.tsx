@@ -27,27 +27,17 @@ export default function SearchResults({
   const currentSort = currentFilters.sortBy || 'relevance';
 
   const goToPage = (newPage: number) => {
-    const params = new URLSearchParams();
-    // Build params from currentFilters
-    Object.entries(currentFilters).forEach(([key, value]) => {
-      if (value && key !== 'page') {
-        params.set(key, value);
-      }
-    });
+    const params = new URLSearchParams(window.location.search);
     params.set('page', newPage.toString());
+    // Flow parameter automatically preserved
     router.push(`/search?${params.toString()}`);
   };
 
   const updateSort = (sortBy: string) => {
-    const params = new URLSearchParams();
-    // Build params from currentFilters
-    Object.entries(currentFilters).forEach(([key, value]) => {
-      if (value && key !== 'page' && key !== 'sortBy') {
-        params.set(key, value);
-      }
-    });
+    const params = new URLSearchParams(window.location.search);
     params.set('sortBy', sortBy);
     params.delete('page'); // Reset to page 1 when sorting
+    // Flow parameter automatically preserved
     router.push(`/search?${params.toString()}`);
   };
 
@@ -83,14 +73,22 @@ export default function SearchResults({
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
-            onClick={() => router.push('/search')}
+            onClick={() => {
+              const params = new URLSearchParams(window.location.search);
+              const flow = params.get('flow');
+              router.push(flow ? `/search?flow=${flow}` : '/search');
+            }}
             className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
           >
             View All Vehicles
           </button>
           {hasActiveFilters && (
             <button
-              onClick={() => router.push('/search')}
+              onClick={() => {
+                const params = new URLSearchParams(window.location.search);
+                const flow = params.get('flow');
+                router.push(flow ? `/search?flow=${flow}` : '/search');
+              }}
               className="px-6 py-3 bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-900 font-semibold rounded-lg transition-colors"
             >
               Clear Filters

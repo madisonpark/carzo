@@ -57,7 +57,7 @@ BEGIN
   -- Combine hash with epoch to reduce collision risk under high load
   PERFORM pg_advisory_xact_lock(
     hashtext(p_identifier || '::' || p_endpoint || '::' || v_window_start::TEXT),
-    EXTRACT(EPOCH FROM v_window_start)::BIGINT
+    EXTRACT(EPOCH FROM v_window_start)::INTEGER
   );
 
   -- Get or create counter using upsert

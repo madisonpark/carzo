@@ -40,11 +40,95 @@ Carzo is a Next.js 16 vehicle marketplace platform that earns revenue by driving
 
 - **Framework**: Next.js 16 (with Turbopack - 2-5x faster builds)
 - **Database**: Supabase (PostgreSQL)
-- **Styling**: Tailwind CSS
+- **Styling**: Tailwind CSS v4 (CSS-first configuration)
 - **Deployment**: Vercel
 - **Images**: Sharp (blur generation for photo tease)
 - **User Tracking**: Cookie-based (no JWT - anonymous tracking only)
 - **Feed Source**: LotLinx Publisher Feed (72K+ vehicles, 4x daily updates)
+
+## Tailwind CSS Design System
+
+Carzo uses **Tailwind v4** with a custom design system for brand consistency.
+
+### Brand Colors
+
+**Semantic Color Tokens** (use these, not hard-coded colors):
+- `bg-primary` / `text-primary` - Red (#dc2626) - Primary CTAs
+- `bg-primary-hover` - Red (#b91c1c) - Hover state for primary CTAs
+- `bg-brand` / `text-brand` - Blue (#2563eb) - Brand accent color
+- `bg-brand-hover` / `text-brand-hover` - Blue (#1d4ed8) - Hover state for brand
+- `bg-dealer` - Violet (#7c3aed) - Dealer-specific elements (Phase 2)
+- `bg-muted` / `text-muted-foreground` - Gray - Muted backgrounds/text
+- `border-border` - Gray (#e5e7eb) - Default borders
+
+**Semantic Colors** (for specific purposes):
+- `bg-success` / `text-success` - Green - Success states
+- `bg-warning` / `text-warning` - Orange - Warning states
+- `bg-error` / `text-error` - Red - Error states
+- `bg-info` / `text-info` - Sky blue - Info states
+
+### Configuration
+
+Located in `app/globals.css` using Tailwind v4's `@theme` directive:
+
+```css
+@theme {
+  --color-primary: #dc2626;
+  --color-primary-hover: #b91c1c;
+  --color-brand: #2563eb;
+  --color-brand-hover: #1d4ed8;
+  /* ... see globals.css for full config */
+}
+```
+
+### Usage Examples
+
+**Buttons:**
+```tsx
+// Primary CTA (red)
+<button className="bg-primary hover:bg-primary-hover text-white px-6 py-3 rounded-lg">
+  See Photos
+</button>
+
+// Brand accent (blue)
+<button className="bg-brand hover:bg-brand-hover text-white px-6 py-3 rounded-lg">
+  Search
+</button>
+```
+
+**Conditional Classes with `cn()` Utility:**
+```tsx
+import { cn } from '@/lib/utils';
+
+<div className={cn(
+  'p-4 rounded-lg',
+  isActive && 'bg-brand text-white',
+  !isActive && 'bg-muted text-foreground'
+)}>
+  Content
+</div>
+```
+
+### Dark Mode
+
+**Status:** Infrastructure in place, implementation deferred to Phase 2.
+
+Dark mode will be activated via `prefers-color-scheme: dark` media query. All brand colors have dark mode variants pre-defined in `globals.css` (currently commented out).
+
+### Design Tokens
+
+- **Fonts**: Geist Sans (primary), Geist Mono (code)
+- **Border Radius**: `rounded-lg` (buttons/inputs), `rounded-xl` (cards), `rounded-2xl` (hero sections)
+- **Spacing**: Use Tailwind defaults (`p-4`, `p-6`, `p-8`, etc.)
+- **Shadows**: `shadow-lg` (cards), `shadow-2xl` (CTAs)
+
+### Important Rules
+
+1. **Always use semantic colors** (`bg-primary`, `bg-brand`) instead of hard-coded values (`bg-red-600`, `bg-blue-500`)
+2. **Use `cn()` utility** from `lib/utils.ts` for conditional classes
+3. **Preserve semantic colors** - Red for errors, green for success (don't change these)
+4. **All CTAs use primary color** (red) for maximum conversion
+5. **Brand accents use brand color** (blue) for consistency
 
 ## Page Architecture
 

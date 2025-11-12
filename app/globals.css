@@ -1,15 +1,15 @@
 @import "tailwindcss";
 
 /* ============================================
-   Carzo Design System - CSS Variables
+   Tailwind v4 Theme Configuration
    ============================================ */
 
-:root {
-  /* Base colors */
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* Fonts */
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
 
-  /* Brand colors */
+  /* Brand colors - Light Mode (default) */
   --color-primary: #dc2626; /* Red-600 - Primary CTA */
   --color-primary-hover: #b91c1c; /* Red-700 - Hover state */
   --color-brand: #2563eb; /* Blue-600 - Brand accent */
@@ -29,82 +29,27 @@
   --color-border: #e5e7eb; /* Gray-200 */
 }
 
-/* Dark mode colors */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-
-    /* Adjust brand colors for dark mode (slightly lighter) */
-    --color-primary: #ef4444; /* Red-500 */
-    --color-primary-hover: #dc2626; /* Red-600 */
-    --color-brand: #3b82f6; /* Blue-500 */
-    --color-brand-hover: #2563eb; /* Blue-600 */
-    --color-dealer: #8b5cf6; /* Violet-500 */
-    --color-dealer-hover: #7c3aed; /* Violet-600 */
-
-    /* Neutral colors (dark mode) */
-    --color-muted: #1f2937; /* Gray-800 */
-    --color-muted-foreground: #9ca3af; /* Gray-400 */
-    --color-border: #374151; /* Gray-700 */
-  }
-}
-
-/* ============================================
-   Tailwind v4 Theme Configuration
-   ============================================ */
-
-@theme inline {
-  /* Base colors */
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-
-  /* Brand colors */
-  --color-primary: var(--color-primary);
-  --color-primary-hover: var(--color-primary-hover);
-  --color-brand: var(--color-brand);
-  --color-brand-hover: var(--color-brand-hover);
-  --color-dealer: var(--color-dealer);
-  --color-dealer-hover: var(--color-dealer-hover);
-
-  /* Semantic colors */
-  --color-success: var(--color-success);
-  --color-warning: var(--color-warning);
-  --color-error: var(--color-error);
-  --color-info: var(--color-info);
-
-  /* Neutral colors */
-  --color-muted: var(--color-muted);
-  --color-muted-foreground: var(--color-muted-foreground);
-  --color-border: var(--color-border);
-
-  /* Fonts */
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-
-  /* Custom blur utilities for VDP photo tease */
-  --blur-photo-tease: 8px;
-  --blur-sm: 4px;
-  --blur-md: 8px;
-  --blur-lg: 16px;
-
-  /* Spacing scale (matches Tailwind defaults) */
-  /* Using default Tailwind spacing - documented here for reference */
-  /* 4px (1), 8px (2), 12px (3), 16px (4), 24px (6), 32px (8) */
-
-  /* Border radius scale */
-  /* Using default Tailwind - documented here for reference */
-  /* lg: 8px (buttons, inputs) */
-  /* xl: 12px (cards) */
-  /* 2xl: 16px (hero sections) */
-}
-
 /* ============================================
    Global Styles
    ============================================ */
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+@layer base {
+  :root {
+    --background: #ffffff;
+    --foreground: #171717;
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  }
+
+  /* Dark mode support (currently disabled - will be enabled in Phase 2) */
+  /* @media (prefers-color-scheme: dark) {
+    :root {
+      --background: #0a0a0a;
+      --foreground: #ededed;
+    }
+  } */
 }

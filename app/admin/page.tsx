@@ -183,12 +183,12 @@ export default async function AdminDashboard() {
           </div>
 
           {/* Billable Clicks */}
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white">
+          <div className="bg-gradient-to-br from-brand to-brand-hover rounded-xl p-6 text-white">
             <div className="flex items-center justify-between mb-2">
               <CheckCircle className="w-8 h-8" />
             </div>
             <p className="text-3xl font-bold">{analytics.billableClicks}</p>
-            <p className="text-blue-100 text-sm mt-1">Billable Clicks</p>
+            <p className="text-slate-100 text-sm mt-1">Billable Clicks</p>
           </div>
 
           {/* Total Clicks */}
@@ -223,7 +223,7 @@ export default async function AdminDashboard() {
           {/* Top Performing Vehicles */}
           <div className="bg-white rounded-xl border border-slate-200 p-6">
             <div className="flex items-center gap-3 mb-6">
-              <TrendingUp className="w-6 h-6 text-blue-600" />
+              <TrendingUp className="w-6 h-6 text-brand" />
               <h2 className="text-xl font-bold text-slate-900">Top Performing Vehicles</h2>
             </div>
             <div className="space-y-4">
@@ -239,7 +239,7 @@ export default async function AdminDashboard() {
                     <p className="text-sm text-slate-500">VIN: {vehicle.vin}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-blue-600">{vehicle.clicks}</p>
+                    <p className="text-2xl font-bold text-brand">{vehicle.clicks}</p>
                     <p className="text-xs text-slate-500">clicks</p>
                   </div>
                 </div>
@@ -292,7 +292,7 @@ export default async function AdminDashboard() {
         </div>
 
         {/* Performance Insights */}
-        <div className="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-6">
+        <div className="mt-8 bg-muted border border-border rounded-xl p-6">
           <h3 className="text-lg font-bold text-slate-900 mb-4">Performance Insights</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>

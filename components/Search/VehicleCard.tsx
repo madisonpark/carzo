@@ -36,7 +36,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
           }}
         />
         {vehicle.condition && (
-          <span className="absolute top-2 left-2 px-2.5 py-0.5 bg-blue-600 text-white text-xs font-semibold rounded">
+          <span className="absolute top-2 left-2 px-2.5 py-0.5 bg-brand text-white text-xs font-semibold rounded">
             {vehicle.condition}
           </span>
         )}
@@ -52,7 +52,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
       <div className="p-4 flex flex-col flex-grow">
         {/* Title - Fixed height with line clamp */}
         <div className="mb-2 min-h-[3rem]">
-          <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+          <h3 className="text-base font-bold text-slate-900 group-hover:text-brand transition-colors line-clamp-1">
             {vehicle.year} {vehicle.make} {vehicle.model}
           </h3>
           {vehicle.trim && (
@@ -81,14 +81,14 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
             </span>
           </div>
           {vehicle.distance_miles !== undefined && vehicle.distance_miles !== Infinity && (
-            <span className="text-blue-600 font-semibold ml-2 flex-shrink-0">
+            <span className="text-brand font-semibold ml-2 flex-shrink-0">
               {Math.round(vehicle.distance_miles)} mi
             </span>
           )}
         </div>
 
         {/* CTA */}
-        <button className="w-full py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
+        <button className="w-full py-3 bg-primary hover:bg-primary-hover text-white font-semibold rounded-lg transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
           <Camera className="w-4 h-4" />
           See Full Photo Gallery
           <span className="text-lg">›</span>

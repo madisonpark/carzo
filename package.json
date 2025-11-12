@@ -11,12 +11,14 @@
   "dependencies": {
     "@maxmind/geoip2-node": "^6.2.0",
     "@supabase/supabase-js": "^2.81.1",
+    "clsx": "^2.1.1",
     "csv-parse": "^6.1.0",
     "lucide-react": "^0.553.0",
     "next": "16.0.1",
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "sharp": "^0.34.5",
+    "tailwind-merge": "^3.4.0",
     "uuid": "^13.0.0",
     "zipcodes": "^8.0.0"
   },

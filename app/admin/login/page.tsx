@@ -44,7 +44,7 @@ export default function AdminLogin() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
         <div className="flex flex-col items-center mb-8">
-          <div className="bg-blue-500 p-4 rounded-full mb-4">
+          <div className="bg-brand p-4 rounded-full mb-4">
             <Shield className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-slate-900">Carzo Admin</h1>
@@ -61,7 +61,7 @@ export default function AdminLogin() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
               placeholder="Enter admin password"
               required
               autoFocus
@@ -77,7 +77,7 @@ export default function AdminLogin() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded-lg transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed"
+            className="w-full bg-brand hover:bg-brand-hover text-white font-semibold py-3 rounded-lg transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed"
           >
             {loading ? 'Authenticating...' : 'Login'}
           </button>

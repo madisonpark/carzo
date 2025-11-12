@@ -19,7 +19,7 @@ export default function VehicleLoading() {
             </div>
 
             {/* Badge Skeleton */}
-            <div className="h-6 w-40 bg-blue-100 rounded-full animate-pulse"></div>
+            <div className="h-6 w-40 bg-muted rounded-full animate-pulse"></div>
 
             {/* Photo Gallery Skeleton */}
             <div className="bg-slate-50 rounded-xl p-8 space-y-4">

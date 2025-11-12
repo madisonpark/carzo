@@ -68,12 +68,12 @@ export default function VehicleBridgePage({ vehicle }: VehicleBridgePageProps) {
       <div className="bg-slate-900 text-white py-3 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-blue-400" />
+            <MapPin className="w-4 h-4 text-brand" />
             <span className="text-sm font-medium">
               Located in: {vehicle.dealer_city}, {vehicle.dealer_state}
             </span>
           </div>
-          <span className="bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+          <span className="bg-brand text-white text-xs font-bold px-3 py-1 rounded-full">
             {condition}
           </span>
         </div>
@@ -132,7 +132,7 @@ export default function VehicleBridgePage({ vehicle }: VehicleBridgePageProps) {
                   dealerId: vehicle.dealer_id,
                   ctaClicked: 'photos',
                 })}
-                className="relative aspect-video bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg overflow-hidden flex flex-col items-center justify-center text-white hover:from-blue-600 hover:to-blue-700 transition-all duration-300 cursor-pointer group"
+                className="relative aspect-video bg-gradient-to-br from-brand to-brand-hover rounded-lg overflow-hidden flex flex-col items-center justify-center text-white hover:from-brand-hover hover:to-brand transition-all duration-300 cursor-pointer group"
               >
                 <Camera className="w-6 h-6 mb-1 group-hover:scale-110 transition-transform" />
                 <span className="text-lg font-bold">+{remainingPhotos}</span>
@@ -149,7 +149,7 @@ export default function VehicleBridgePage({ vehicle }: VehicleBridgePageProps) {
                 dealerId: vehicle.dealer_id,
                 ctaClicked: 'photos',
               })}
-              className="flex items-center justify-center gap-2 mt-4 text-blue-600 hover:text-blue-700 font-semibold text-base group"
+              className="flex items-center justify-center gap-2 mt-4 text-brand hover:text-brand-hover font-semibold text-base group"
             >
               <Camera className="w-5 h-5" />
               See All Photos
@@ -182,7 +182,7 @@ export default function VehicleBridgePage({ vehicle }: VehicleBridgePageProps) {
                   dealerId: vehicle.dealer_id,
                   ctaClicked: 'primary',
                 })}
-                className="group w-full inline-flex items-center justify-center gap-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold text-lg px-8 py-5 rounded-xl shadow-2xl transition-all duration-300 hover:scale-105 mb-4"
+                className="group w-full inline-flex items-center justify-center gap-3 bg-gradient-to-r from-primary to-primary-hover hover:from-primary-hover hover:to-primary text-white font-bold text-lg px-8 py-5 rounded-xl shadow-2xl transition-all duration-300 hover:scale-105 mb-4"
               >
                 <Camera className="w-6 h-6" />
                 See Full Photo Gallery
@@ -204,13 +204,13 @@ export default function VehicleBridgePage({ vehicle }: VehicleBridgePageProps) {
                     dealerId: vehicle.dealer_id,
                     ctaClicked: 'history',
                   })}
-                  className="w-full flex items-center justify-between bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-blue-400 text-slate-900 font-semibold px-5 py-4 rounded-lg transition-all duration-300 group"
+                  className="w-full flex items-center justify-between bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-brand text-slate-900 font-semibold px-5 py-4 rounded-lg transition-all duration-300 group"
                 >
                   <div className="flex items-center gap-3">
-                    <Shield className="w-5 h-5 text-blue-600" />
+                    <Shield className="w-5 h-5 text-brand" />
                     <span>View FREE Vehicle History Report</span>
                   </div>
-                  <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                  <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-brand group-hover:translate-x-1 transition-all" />
                 </a>
 
                 <a
@@ -222,20 +222,20 @@ export default function VehicleBridgePage({ vehicle }: VehicleBridgePageProps) {
                     dealerId: vehicle.dealer_id,
                     ctaClicked: 'payment',
                   })}
-                  className="w-full flex items-center justify-between bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-blue-400 text-slate-900 font-semibold px-5 py-4 rounded-lg transition-all duration-300 group"
+                  className="w-full flex items-center justify-between bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-brand text-slate-900 font-semibold px-5 py-4 rounded-lg transition-all duration-300 group"
                 >
                   <div className="flex items-center gap-3">
-                    <Calculator className="w-5 h-5 text-blue-600" />
+                    <Calculator className="w-5 h-5 text-brand" />
                     <span>Estimate Monthly Payments</span>
                   </div>
-                  <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                  <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-brand group-hover:translate-x-1 transition-all" />
                 </a>
               </div>
             </div>
 
             {/* Trust Signals */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
-              <Star className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <Star className="w-5 h-5 text-brand flex-shrink-0 mt-0.5" />
               <div>
                 <p className="font-semibold text-slate-900 text-sm">Verified Listing</p>
                 <p className="text-xs text-slate-600 mt-1">
@@ -256,7 +256,7 @@ export default function VehicleBridgePage({ vehicle }: VehicleBridgePageProps) {
               <ul className="space-y-4">
                 {keyFeatures.map((feature, index) => (
                   <li key={index} className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                    <div className="w-2 h-2 bg-brand rounded-full flex-shrink-0"></div>
                     <span className="text-lg text-slate-700 font-medium">{feature}</span>
                   </li>
                 ))}
@@ -271,7 +271,7 @@ export default function VehicleBridgePage({ vehicle }: VehicleBridgePageProps) {
                   dealerId: vehicle.dealer_id,
                   ctaClicked: 'primary',
                 })}
-                className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold mt-6 group"
+                className="inline-flex items-center gap-2 text-brand hover:text-brand-hover font-semibold mt-6 group"
               >
                 See All Features & Options
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -294,7 +294,7 @@ export default function VehicleBridgePage({ vehicle }: VehicleBridgePageProps) {
                   dealerId: vehicle.dealer_id,
                   ctaClicked: 'primary',
                 })}
-                className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold group"
+                className="inline-flex items-center gap-2 text-brand hover:text-brand-hover font-semibold group"
               >
                 Read Full Vehicle Description
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -368,7 +368,7 @@ export default function VehicleBridgePage({ vehicle }: VehicleBridgePageProps) {
               dealerId: vehicle.dealer_id,
               ctaClicked: 'primary',
             })}
-            className="group inline-flex items-center gap-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold text-lg px-10 py-5 rounded-xl shadow-2xl transition-all duration-300 hover:scale-105"
+            className="group inline-flex items-center gap-3 bg-gradient-to-r from-brand to-brand-hover hover:from-brand-hover hover:to-brand text-white font-bold text-lg px-10 py-5 rounded-xl shadow-2xl transition-all duration-300 hover:scale-105"
           >
             View Complete Listing
             <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
@@ -397,7 +397,7 @@ export default function VehicleBridgePage({ vehicle }: VehicleBridgePageProps) {
                 dealerId: vehicle.dealer_id,
                 ctaClicked: 'primary',
               })}
-              className="group flex-shrink-0 inline-flex items-center gap-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold text-sm px-6 py-3 rounded-lg shadow-xl transition-all duration-300 active:scale-95"
+              className="group flex-shrink-0 inline-flex items-center gap-2 bg-gradient-to-r from-primary to-primary-hover hover:from-primary-hover hover:to-primary text-white font-bold text-sm px-6 py-3 rounded-lg shadow-xl transition-all duration-300 active:scale-95"
             >
               View Details
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

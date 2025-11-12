@@ -97,8 +97,8 @@ export default async function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="flex items-start gap-4">
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <TrendingUp className="w-6 h-6 text-blue-600" />
+              <div className="bg-muted p-3 rounded-lg">
+                <TrendingUp className="w-6 h-6 text-brand" />
               </div>
               <div>
                 <h3 className="font-bold text-slate-900 mb-1">Wide Selection</h3>
@@ -139,9 +139,9 @@ export default async function HomePage() {
             <Link
               key={make}
               href={`/search?make=${encodeURIComponent(make)}`}
-              className="bg-white border-2 border-slate-200 hover:border-blue-500 rounded-xl p-6 text-center transition-all duration-300 hover:shadow-lg group"
+              className="bg-white border-2 border-slate-200 hover:border-brand rounded-xl p-6 text-center transition-all duration-300 hover:shadow-lg group"
             >
-              <p className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+              <p className="font-bold text-slate-900 group-hover:text-brand transition-colors">
                 {make}
               </p>
             </Link>
@@ -161,9 +161,9 @@ export default async function HomePage() {
                 <Link
                   key={style}
                   href={`/search?bodyStyle=${encodeURIComponent(style)}`}
-                  className="bg-white border-2 border-slate-200 hover:border-blue-500 rounded-xl p-6 text-center transition-all duration-300 hover:shadow-lg group"
+                  className="bg-white border-2 border-slate-200 hover:border-brand rounded-xl p-6 text-center transition-all duration-300 hover:shadow-lg group"
                 >
-                  <p className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
+                  <p className="font-bold text-slate-900 group-hover:text-brand transition-colors">
                     {style}
                   </p>
                 </Link>
@@ -179,7 +179,7 @@ export default async function HomePage() {
           <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">Featured Vehicles</h2>
           <Link
             href="/search"
-            className="text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-2"
+            className="text-brand hover:text-brand-hover font-semibold flex items-center gap-2"
           >
             View All
             <ArrowRight className="w-5 h-5" />
@@ -194,15 +194,15 @@ export default async function HomePage() {
       </div>
 
       {/* CTA Section */}
-      <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white py-16">
+      <div className="bg-gradient-to-br from-brand to-brand-hover text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold mb-4">Ready to Find Your Next Vehicle?</h2>
-          <p className="text-xl text-blue-100 mb-8">
+          <p className="text-xl text-slate-100 mb-8">
             Browse our complete inventory and connect with dealers instantly
           </p>
           <Link
             href="/search"
-            className="inline-flex items-center gap-3 bg-white text-blue-600 px-8 py-4 rounded-xl font-bold text-lg hover:shadow-2xl transition-all duration-300 hover:scale-105"
+            className="inline-flex items-center gap-3 bg-white text-brand px-8 py-4 rounded-xl font-bold text-lg hover:shadow-2xl transition-all duration-300 hover:scale-105"
           >
             Start Searching
             <ArrowRight className="w-6 h-6" />

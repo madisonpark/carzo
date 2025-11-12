@@ -43,7 +43,7 @@ export default function HeroSearch() {
         onSubmit={handleSearch}
         className="flex items-center gap-4 bg-white text-slate-900 px-6 py-5 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-300 group"
       >
-        <Search className="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition-colors" />
+        <Search className="w-6 h-6 text-slate-400 group-hover:text-brand transition-colors" />
         <input
           type="text"
           value={searchQuery}
@@ -53,7 +53,7 @@ export default function HeroSearch() {
         />
         <button
           type="submit"
-          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+          className="px-6 py-2 bg-brand hover:bg-brand-hover text-white font-semibold rounded-lg transition-colors"
         >
           Search
         </button>

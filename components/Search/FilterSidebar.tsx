@@ -96,7 +96,7 @@ export default function FilterSidebar({
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-bold text-slate-900">Filters</h2>
           {isUpdating && (
-            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin"></div>
           )}
         </div>
         {hasActiveFilters && (
@@ -226,7 +226,7 @@ export default function FilterSidebar({
           <h3 className="text-sm font-semibold text-slate-700 mb-3">Active Filters</h3>
           <div className="flex flex-wrap gap-2">
             {currentFilters.make && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-muted text-brand text-sm rounded-full">
                 {currentFilters.make}
                 <button
                   onClick={() => updateFilter('make', '')}
@@ -237,7 +237,7 @@ export default function FilterSidebar({
               </span>
             )}
             {currentFilters.condition && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-muted text-brand text-sm rounded-full">
                 {currentFilters.condition}
                 <button
                   onClick={() => updateFilter('condition', '')}
@@ -248,7 +248,7 @@ export default function FilterSidebar({
               </span>
             )}
             {currentFilters.bodyStyle && (
-              <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full">
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-muted text-brand text-sm rounded-full">
                 {currentFilters.bodyStyle}
                 <button
                   onClick={() => updateFilter('bodyStyle', '')}

@@ -72,7 +72,6 @@ export interface Vehicle {
 // PostGIS spatial query response (includes distance calculation)
 export interface VehicleWithDistance extends Vehicle {
   distance_miles: number; // Distance in miles from PostGIS ST_Distance
-  distance?: number; // Mapped from distance_miles for component compatibility
   total_results: number; // Total count of matching records (from window function)
 }
 

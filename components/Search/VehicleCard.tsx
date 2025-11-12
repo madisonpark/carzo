@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Camera, MapPin } from 'lucide-react';
 
 interface VehicleCardProps {
-  vehicle: Vehicle & { distance?: number };
+  vehicle: Vehicle & { distance_miles?: number };
 }
 
 export default function VehicleCard({ vehicle }: VehicleCardProps) {
@@ -80,9 +80,9 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
               {vehicle.dealer_city}, {vehicle.dealer_state}
             </span>
           </div>
-          {vehicle.distance !== undefined && vehicle.distance !== Infinity && (
+          {vehicle.distance_miles !== undefined && vehicle.distance_miles !== Infinity && (
             <span className="text-blue-600 font-semibold ml-2 flex-shrink-0">
-              {Math.round(vehicle.distance)} mi
+              {Math.round(vehicle.distance_miles)} mi
             </span>
           )}
         </div>

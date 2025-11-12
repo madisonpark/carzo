@@ -143,7 +143,11 @@ async function searchVehicles(params: {
     // LOCATION-BASED SEARCH: Use PostGIS spatial function (100x faster)
     // Calls search_vehicles_by_location() stored procedure
     // Uses ST_DWithin with GIST spatial index for fast radius queries
-    // Pagination performed in database using LIMIT/OFFSET
+    //
+    // PAGINATION STRATEGY: Fetch all results (limited by 100-mile radius cap)
+    // and perform dealer diversification in memory before slicing for current page.
+    // This prevents pagination duplicates that occur when diversifying overlapping windows.
+    // With 100-mile cap, result sets are typically small enough for memory (< 5K vehicles).
     const { data: spatialVehicles, error: spatialError } = await supabase.rpc('search_vehicles_by_location', {
       user_lat: userLat,
       user_lon: userLon,
@@ -155,8 +159,8 @@ async function searchVehicles(params: {
       p_max_price: params.maxPrice ? parseFloat(params.maxPrice) : null,
       p_min_year: params.minYear ? parseInt(params.minYear) : null,
       p_max_year: params.maxYear ? parseInt(params.maxYear) : null,
-      p_limit: RESULTS_PER_PAGE * 3, // Fetch extra for dealer diversification
-      p_offset: (page - 1) * RESULTS_PER_PAGE,
+      p_limit: 10000, // Fetch all results within 100-mile radius (typically < 5K)
+      p_offset: 0,
     });
 
     if (spatialError) {
@@ -170,24 +174,26 @@ async function searchVehicles(params: {
       };
     }
 
-    // Map distance_miles to distance for component compatibility
-    let vehiclesWithDistance = ((spatialVehicles || []) as VehicleWithDistance[]).map(v => ({
-      ...v,
-      distance: v.distance_miles
-    }));
+    // Get total count from window function (same for all records)
+    const totalResults = spatialVehicles?.[0]?.total_results || 0;
+
+    // Cast to VehicleWithDistance type
+    let vehiclesWithDistance = (spatialVehicles || []) as VehicleWithDistance[];
 
     // PostGIS already sorted by distance, just apply user-selected sort if needed
     if (params.sortBy && params.sortBy !== 'distance' && params.sortBy !== 'relevance') {
       applySorting(vehiclesWithDistance, params.sortBy);
     }
 
-    // Apply dealer diversification
-    const vehicles = vehiclesWithDistance.length > 0
-      ? diversifyByDealer(vehiclesWithDistance, RESULTS_PER_PAGE)
+    // Apply dealer diversification to FULL result set to ensure stable pagination
+    const diversifiedVehicles = vehiclesWithDistance.length > 0
+      ? diversifyByDealer(vehiclesWithDistance, totalResults)
       : [];
 
-    // Get total count from window function (same for all records)
-    const totalResults = spatialVehicles?.[0]?.total_results || 0;
+    // Now slice for current page from diversified results
+    const startIdx = (page - 1) * RESULTS_PER_PAGE;
+    const endIdx = startIdx + RESULTS_PER_PAGE;
+    const vehicles = diversifiedVehicles.slice(startIdx, endIdx);
 
     return {
       vehicles: vehicles as Vehicle[],
@@ -199,6 +205,10 @@ async function searchVehicles(params: {
   }
 
   // NON-LOCATION SEARCH: Use regular Supabase query
+  //
+  // PAGINATION STRATEGY: Similar to location search - fetch larger set,
+  // diversify, then paginate to prevent duplicates across pages.
+  // Limit to 5000 results to prevent memory issues on broad searches.
   let query = supabase
     .from('vehicles')
     .select('*', { count: 'exact' })
@@ -217,9 +227,8 @@ async function searchVehicles(params: {
   // Apply default sort (newest first)
   query = query.order('year', { ascending: false });
 
-  // Fetch with pagination - fetch 3x the results for dealer diversification
-  const fetchLimit = RESULTS_PER_PAGE * 3;
-  const { data: allVehicles, count } = await query.range(offset, offset + fetchLimit - 1);
+  // Fetch up to 5000 results for dealer diversification
+  const { data: allVehicles, count } = await query.limit(5000);
 
   // Apply user-selected sorting if different from default
   let vehiclesWithDistance = allVehicles || [];
@@ -227,13 +236,18 @@ async function searchVehicles(params: {
     applySorting(vehiclesWithDistance, params.sortBy);
   }
 
-  // Apply dealer diversification
-  const vehicles = vehiclesWithDistance.length > 0
-    ? diversifyByDealer(vehiclesWithDistance, RESULTS_PER_PAGE)
+  // Apply dealer diversification to FULL result set to ensure stable pagination
+  const diversifiedVehicles = vehiclesWithDistance.length > 0
+    ? diversifyByDealer(vehiclesWithDistance, count || 0)
     : [];
 
+  // Now slice for current page from diversified results
+  const startIdx = (page - 1) * RESULTS_PER_PAGE;
+  const endIdx = startIdx + RESULTS_PER_PAGE;
+  const vehicles = diversifiedVehicles.slice(startIdx, endIdx);
+
   // Sorting helper function
-  function applySorting(vehicles: (Vehicle & { distance?: number })[], sortBy: string) {
+  function applySorting(vehicles: (Vehicle & { distance_miles?: number })[], sortBy: string) {
     switch (sortBy) {
       case 'price_asc':
         vehicles.sort((a, b) => a.price - b.price);
@@ -254,13 +268,13 @@ async function searchVehicles(params: {
         vehicles.sort((a, b) => (b.miles || 0) - (a.miles || 0));
         break;
       case 'distance':
-        vehicles.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity));
+        vehicles.sort((a, b) => (a.distance_miles || Infinity) - (b.distance_miles || Infinity));
         break;
       case 'relevance':
       default:
         // Relevance = distance if available, otherwise year
-        if (vehicles[0]?.distance !== undefined) {
-          vehicles.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity));
+        if (vehicles[0]?.distance_miles !== undefined) {
+          vehicles.sort((a, b) => (a.distance_miles || Infinity) - (b.distance_miles || Infinity));
         } else {
           vehicles.sort((a, b) => b.year - a.year);
         }

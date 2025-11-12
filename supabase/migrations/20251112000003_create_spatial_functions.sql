@@ -49,7 +49,8 @@ RETURNS TABLE (
   latitude DECIMAL(10,7),
   longitude DECIMAL(10,7),
   targeting_radius INTEGER,
-  distance_miles DOUBLE PRECISION
+  distance_miles DOUBLE PRECISION,
+  total_results BIGINT
 ) AS $$
 BEGIN
   RETURN QUERY
@@ -87,16 +88,19 @@ BEGIN
     ST_Distance(
       v.location,
       ST_SetSRID(ST_MakePoint(user_lon, user_lat), 4326)::geography
-    ) / 1609.34 AS distance_miles
+    ) / 1609.34 AS distance_miles,
+    -- Total count of matching records (window function)
+    count(*) OVER() AS total_results
   FROM vehicles v
   WHERE v.is_active = true
     AND v.location IS NOT NULL
     -- ST_DWithin: Fast spatial query using GIST index
     -- Convert miles to meters: targeting_radius * 1609.34
+    -- Cap maximum radius at 100 miles for relevant local results
     AND ST_DWithin(
       v.location,
       ST_SetSRID(ST_MakePoint(user_lon, user_lat), 4326)::geography,
-      COALESCE(v.targeting_radius, 30) * 1609.34
+      LEAST(COALESCE(v.targeting_radius, 30), 100) * 1609.34
     )
     -- Apply filters
     AND (p_make IS NULL OR v.make = p_make)
@@ -147,7 +151,7 @@ BEGIN
       AND ST_DWithin(
         v.location,
         ST_SetSRID(ST_MakePoint(user_lon, user_lat), 4326)::geography,
-        COALESCE(v.targeting_radius, 30) * 1609.34
+        LEAST(COALESCE(v.targeting_radius, 30), 100) * 1609.34
       )
       AND (p_make IS NULL OR v.make = p_make)
       AND (p_model IS NULL OR v.model = p_model)
@@ -170,6 +174,11 @@ $$ LANGUAGE plpgsql STABLE;
 COMMENT ON FUNCTION search_vehicles_by_location IS 'Fast spatial search using PostGIS ST_DWithin. Returns vehicles within their targeting radius, sorted by distance.';
 COMMENT ON FUNCTION get_filter_options_by_location IS 'Get available filter options for vehicles within radius. Uses spatial index for performance.';
 
--- Grant execute permissions to authenticated users
+-- Grant execute permissions to authenticated and anonymous users
+-- SECURITY NOTE: Granting to 'anon' allows unauthenticated access, which is necessary for
+-- public vehicle search but may expose the database to potential abuse (DoS, scraping).
+-- RECOMMENDATION: Implement rate limiting at the API gateway level (Supabase Kong)
+-- to mitigate risks. If these functions should only be available to authenticated users,
+-- remove 'anon' from the GRANT statements below.
 GRANT EXECUTE ON FUNCTION search_vehicles_by_location TO authenticated, anon;
 GRANT EXECUTE ON FUNCTION get_filter_options_by_location TO authenticated, anon;

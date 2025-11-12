@@ -78,6 +78,11 @@ async function getFilterOptions(params?: {
   // LOCATION-BASED FILTERING: Use PostGIS spatial function (100x faster)
   // Calls get_filter_options_by_location() stored procedure
   // Uses ST_DWithin with GIST spatial index for fast radius queries
+  //
+  // DESIGN DECISION: No fallback for sparse areas
+  // Previous implementation showed 5K closest vehicles when radius search returned nothing.
+  // Removed for paid ad traffic use case - users expect local results, not vehicles 500+ miles away.
+  // Better UX to show "no results" than irrelevant distant vehicles.
   const { data, error } = await supabase.rpc('get_filter_options_by_location', {
     user_lat: userLat,
     user_lon: userLon,
@@ -138,6 +143,7 @@ async function searchVehicles(params: {
     // LOCATION-BASED SEARCH: Use PostGIS spatial function (100x faster)
     // Calls search_vehicles_by_location() stored procedure
     // Uses ST_DWithin with GIST spatial index for fast radius queries
+    // Pagination performed in database using LIMIT/OFFSET
     const { data: spatialVehicles, error: spatialError } = await supabase.rpc('search_vehicles_by_location', {
       user_lat: userLat,
       user_lon: userLon,
@@ -149,8 +155,8 @@ async function searchVehicles(params: {
       p_max_price: params.maxPrice ? parseFloat(params.maxPrice) : null,
       p_min_year: params.minYear ? parseInt(params.minYear) : null,
       p_max_year: params.maxYear ? parseInt(params.maxYear) : null,
-      p_limit: 1000, // Get enough for pagination + dealer diversity
-      p_offset: 0,
+      p_limit: RESULTS_PER_PAGE * 3, // Fetch extra for dealer diversification
+      p_offset: (page - 1) * RESULTS_PER_PAGE,
     });
 
     if (spatialError) {
@@ -175,16 +181,13 @@ async function searchVehicles(params: {
       applySorting(vehiclesWithDistance, params.sortBy);
     }
 
-    // Apply pagination
-    const totalResults = vehiclesWithDistance.length;
-    const startIdx = (page - 1) * RESULTS_PER_PAGE;
-    const endIdx = startIdx + (RESULTS_PER_PAGE * 3); // Fetch extra for diversification
-    const paginatedVehicles = vehiclesWithDistance.slice(startIdx, endIdx);
-
     // Apply dealer diversification
-    const vehicles = paginatedVehicles.length > 0
-      ? diversifyByDealer(paginatedVehicles, RESULTS_PER_PAGE)
+    const vehicles = vehiclesWithDistance.length > 0
+      ? diversifyByDealer(vehiclesWithDistance, RESULTS_PER_PAGE)
       : [];
+
+    // Get total count from window function (same for all records)
+    const totalResults = spatialVehicles?.[0]?.total_results || 0;
 
     return {
       vehicles: vehicles as Vehicle[],

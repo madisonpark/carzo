@@ -307,10 +307,14 @@ VDP sticky CTA: z-50        // Different page, no conflict
 )}
 
 // Drawer slides in from left
-<div className={cn(
-  'lg:hidden fixed top-0 left-0 bottom-0 z-[60]',
-  isOpen ? 'translate-x-0' : '-translate-x-full'
-)}>
+// NOTE: Use inline style to target only transform property for better performance
+<div
+  className={cn(
+    'lg:hidden fixed top-0 left-0 bottom-0 z-[60]',
+    isOpen ? 'translate-x-0' : '-translate-x-full'
+  )}
+  style={{ transition: 'transform 300ms ease-in-out' }}
+>
   {/* Filter content */}
 </div>
 
@@ -319,6 +323,17 @@ VDP sticky CTA: z-50        // Different page, no conflict
   {/* Same filter content */}
 </div>
 ```
+
+**Key UX Features:**
+- **Body Scroll Lock**: When drawer opens, adds `overflow-hidden` class to body
+- **Escape Key**: Press Escape to close drawer (keyboard accessibility)
+- **Active Filter Count**: Badge shows total count of all active filters (including model)
+- **Component Pattern**: FilterContent extracted as separate component to avoid React anti-pattern of defining components inside render functions
+
+**Performance Optimizations:**
+- Drawer animation targets only `transform` property (not `transition: all`)
+- FilterContent component defined outside render function (prevents recreation on every render)
+- Event listeners properly cleaned up in useEffect return functions
 
 ### Responsive Breakpoints
 

@@ -1563,6 +1563,15 @@ gh pr create --title "HOTFIX: Critical issue" --body "Description" # Requires Gi
   - Filter drawer with slide-in animation (300ms ease-in-out)
   - Fixed bottom filter button with active count badge
   - Backdrop overlay with proper z-index layering (z-40/50/60)
+- ✅ **Tailwind v4 Migration Complete (Phase 5)**
+  - All components use focus-visible: for WCAG 2.1 accessibility compliance
+  - All hard-coded colors converted to semantic tokens (bg-brand, text-error, etc.)
+  - Removed inline styles (blur effects, transitions) → Tailwind utilities
+  - Added .bg-primary-gradient custom utility class
+  - Button component migration with asChild pattern for links
+  - Template literals replaced with cn() utility
+  - All error states use semantic error color
+  - 13 files refactored, production build passing
   - Body scroll lock when drawer is open
   - Touch-friendly button sizes (40x40px minimum for WCAG Level AAA)
   - Responsive hero search (stacks on mobile, horizontal on desktop)

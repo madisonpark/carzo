@@ -1,111 +1,85 @@
 import { describe, it, expect } from 'vitest';
+import { FeedSyncService } from '../feed-sync';
 
 /**
  * Tests for DMA field mapping in feed sync
- * Validates certified, dol, and dma field parsing from LotLinx feed
+ * Tests the ACTUAL production parsing functions (not simulations)
  */
 
-describe('Feed Sync - DMA Fields Parsing', () => {
-  // Helper to simulate the parsing logic from feed-sync.ts
-  function parseCertified(value: string | undefined): boolean {
-    return ['true', '1', 'yes'].includes(value?.toLowerCase() || '');
-  }
-
-  function parseDol(value: string | undefined): number | null {
-    const parsed = parseInt(value || '');
-    return !isNaN(parsed) ? parsed : null;
-  }
-
-  describe('certified field parsing', () => {
+describe('FeedSyncService - DMA Fields Parsing', () => {
+  describe('parseCertified (production function)', () => {
     it('should parse "true" as true', () => {
-      expect(parseCertified('true')).toBe(true);
+      expect(FeedSyncService.parseCertified('true')).toBe(true);
     });
 
     it('should parse "True" (capital) as true', () => {
-      expect(parseCertified('True')).toBe(true);
+      expect(FeedSyncService.parseCertified('True')).toBe(true);
     });
 
     it('should parse "1" as true', () => {
-      expect(parseCertified('1')).toBe(true);
+      expect(FeedSyncService.parseCertified('1')).toBe(true);
     });
 
     it('should parse "yes" as true', () => {
-      expect(parseCertified('yes')).toBe(true);
+      expect(FeedSyncService.parseCertified('yes')).toBe(true);
     });
 
     it('should parse "YES" as true', () => {
-      expect(parseCertified('YES')).toBe(true);
+      expect(FeedSyncService.parseCertified('YES')).toBe(true);
     });
 
     it('should parse "false" as false', () => {
-      expect(parseCertified('false')).toBe(false);
+      expect(FeedSyncService.parseCertified('false')).toBe(false);
     });
 
     it('should parse "0" as false', () => {
-      expect(parseCertified('0')).toBe(false);
+      expect(FeedSyncService.parseCertified('0')).toBe(false);
     });
 
     it('should parse empty string as false', () => {
-      expect(parseCertified('')).toBe(false);
+      expect(FeedSyncService.parseCertified('')).toBe(false);
     });
 
     it('should parse undefined as false', () => {
-      expect(parseCertified(undefined)).toBe(false);
+      expect(FeedSyncService.parseCertified(undefined)).toBe(false);
     });
 
     it('should parse random string as false', () => {
-      expect(parseCertified('maybe')).toBe(false);
+      expect(FeedSyncService.parseCertified('maybe')).toBe(false);
     });
   });
 
-  describe('dol (days on lot) field parsing', () => {
+  describe('parseDol (production function)', () => {
     it('should parse "5" as 5', () => {
-      expect(parseDol('5')).toBe(5);
+      expect(FeedSyncService.parseDol('5')).toBe(5);
     });
 
     it('should parse "0" as 0 (NOT null - critical bug fix)', () => {
-      expect(parseDol('0')).toBe(0);
+      expect(FeedSyncService.parseDol('0')).toBe(0);
     });
 
     it('should parse "100" as 100', () => {
-      expect(parseDol('100')).toBe(100);
+      expect(FeedSyncService.parseDol('100')).toBe(100);
     });
 
     it('should parse empty string as null', () => {
-      expect(parseDol('')).toBe(null);
+      expect(FeedSyncService.parseDol('')).toBe(null);
     });
 
     it('should parse undefined as null', () => {
-      expect(parseDol(undefined)).toBe(null);
+      expect(FeedSyncService.parseDol(undefined)).toBe(null);
     });
 
     it('should parse "N/A" as null', () => {
-      expect(parseDol('N/A')).toBe(null);
+      expect(FeedSyncService.parseDol('N/A')).toBe(null);
     });
 
     it('should parse "abc" as null', () => {
-      expect(parseDol('abc')).toBe(null);
+      expect(FeedSyncService.parseDol('abc')).toBe(null);
     });
 
     it('should parse negative numbers correctly', () => {
-      expect(parseDol('-5')).toBe(-5);
-    });
-  });
-
-  describe('dma field mapping', () => {
-    it('should pass through valid DMA', () => {
-      const dma = 'Tampa-St. Petersburg-Clearwater DMA';
-      expect(dma || null).toBe(dma);
-    });
-
-    it('should return null for empty DMA', () => {
-      const dma = '';
-      expect(dma || null).toBe(null);
-    });
-
-    it('should return null for undefined DMA', () => {
-      const dma = undefined;
-      expect(dma || null).toBe(null);
+      expect(FeedSyncService.parseDol('-5')).toBe(-5);
     });
   });
 });

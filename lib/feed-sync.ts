@@ -359,6 +359,23 @@ export class FeedSyncService {
   }
 
   /**
+   * Parse certified field from LotLinx feed
+   * Handles: 'true', 'True', '1', 'yes', 'YES', etc.
+   */
+  public static parseCertified(value: string | undefined): boolean {
+    return ['true', '1', 'yes'].includes(value?.toLowerCase() || '');
+  }
+
+  /**
+   * Parse days on lot field from LotLinx feed
+   * Critical: Preserves 0 (not null) for newly added vehicles
+   */
+  public static parseDol(value: string | undefined): number | null {
+    const parsed = parseInt(value || '');
+    return !isNaN(parsed) ? parsed : null;
+  }
+
+  /**
    * Map LotLinx vehicle to database schema
    */
   private mapVehicleToDb(vehicle: LotLinxVehicle): DbVehicle {
@@ -411,11 +428,8 @@ export class FeedSyncService {
       longitude: parseFloat(vehicle.Longitude) || null,
       targeting_radius: parseInt(vehicle.Radius) || 30,
       dma: vehicle.Dma || null,
-      certified: ['true', '1', 'yes'].includes(vehicle.Certified?.toLowerCase() || ''),
-      dol: (() => {
-        const parsed = parseInt(vehicle.Dol);
-        return !isNaN(parsed) ? parsed : null;
-      })(),
+      certified: FeedSyncService.parseCertified(vehicle.Certified),
+      dol: FeedSyncService.parseDol(vehicle.Dol),
       is_active: true,
       last_sync: new Date().toISOString(),
     };

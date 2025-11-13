@@ -238,16 +238,16 @@ npm test path/to/test   # Run specific test
 - ✅ lib/utils.ts (100% coverage)
 
 **Phase 3 COMPLETE** (API Route Tests):
-- ✅ app/api/track-click/route.test.ts
-- ✅ app/api/track-impression/route.test.ts
-- ✅ app/api/zipcode-lookup/route.test.ts
+- ✅ app/api/track-click/__tests__/route.test.ts
+- ✅ app/api/track-impression/__tests__/route.test.ts
+- ✅ app/api/zipcode-lookup/__tests__/route.test.ts
 - ⏳ Remaining routes (search-vehicles, filter-options, etc.)
 
 **Phase 4 COMPLETE** (UI Component Tests):
-- ✅ components/ui/Button.test.tsx
-- ✅ components/ui/Input.test.tsx
-- ✅ components/ui/Badge.test.tsx
-- ✅ components/ui/Card.test.tsx
+- ✅ components/ui/__tests__/Button.test.tsx
+- ✅ components/ui/__tests__/Input.test.tsx
+- ✅ components/ui/__tests__/Badge.test.tsx
+- ✅ components/ui/__tests__/Card.test.tsx
 - ⏳ Feature components (VehicleCard, FilterSidebar, etc.)
 
 **Phase 5 PLANNED** (Integration Tests):

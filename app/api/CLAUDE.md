@@ -253,6 +253,10 @@ import { POST } from '../route';
 import { NextRequest } from 'next/server';
 
 describe('POST /api/[endpoint] - Rate Limiting', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('should enforce rate limits', async () => {
     const mockRequest = new NextRequest('http://localhost/api/endpoint', {
       method: 'POST',

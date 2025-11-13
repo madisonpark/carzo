@@ -195,6 +195,35 @@ When implementing features, aim for:
 - **Database queries**: < 100ms p95
 - **PostGIS spatial queries**: ~50-100ms
 
+### SEO & Crawlability
+
+**Robots & Sitemap:**
+- `app/robots.ts` - Dynamic robots.txt generation (Next.js 16)
+- `app/sitemap.ts` - Dynamic sitemap.xml generation (queries Supabase)
+- Accessible at `/robots.txt` and `/sitemap.xml`
+
+**Crawlable pages:**
+- ✅ Homepage (`/`) - Priority 1.0, daily
+- ✅ Search page (`/search`) - Priority 0.8, daily
+- ✅ Vehicle detail pages (`/vehicles/[vin]`) - Priority 0.7, weekly
+
+**Blocked from crawlers:**
+- ❌ `/admin/*` - Private admin pages
+- ❌ `/api/*` - Internal API endpoints (revenue-critical)
+- ❌ `/search?*` - Search with query params (prevents crawl bloat)
+- ❌ `/*?flow=*` - A/B test flow parameters (prevents duplicate content)
+
+**When adding new pages:**
+1. Add metadata with `generateMetadata()` function
+2. Include OpenGraph and Twitter card tags
+3. Add structured data (JSON-LD) for rich snippets if applicable
+4. Update `app/sitemap.ts` if creating new public route category
+5. Consider ISR/SSR for SEO-critical pages (not CSR)
+
+**When adding new API routes:**
+- Already blocked by `/api/*` in robots.txt
+- No action needed (automatically excluded from search engines)
+
 ### Domain Constraints (Revenue Optimization)
 
 **MOST IMPORTANT RULE:**

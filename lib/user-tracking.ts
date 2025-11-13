@@ -79,11 +79,18 @@ export function markDealerClicked(dealerId: string): void {
 
 /**
  * Get set of clicked dealers in current session
+ * Returns empty set if data is corrupted or invalid
  */
 function getClickedDealers(): Set<string> {
   const stored = sessionStorage.getItem(CLICKED_DEALERS_KEY);
   if (stored) {
-    return new Set(JSON.parse(stored));
+    try {
+      return new Set(JSON.parse(stored));
+    } catch (error) {
+      // Corrupted data - clear it and return empty set
+      sessionStorage.removeItem(CLICKED_DEALERS_KEY);
+      return new Set();
+    }
   }
   return new Set();
 }

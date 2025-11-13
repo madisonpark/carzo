@@ -247,9 +247,10 @@ describe('diversifyByDealer()', () => {
       // First page (20 vehicles)
       const page1 = diversifyByDealer(vehicles, 20);
 
-      // Remove page 1 vehicles and get page 2
+      // Remove page 1 vehicles and get page 2 (O(N+M) using Set for faster lookup)
+      const page1Ids = new Set(page1.map(p => p.id));
       const remainingVehicles = vehicles.filter(
-        v => !page1.find(p => p.id === v.id)
+        v => !page1Ids.has(v.id)
       );
       const page2 = diversifyByDealer(remainingVehicles, 20);
 

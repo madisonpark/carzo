@@ -322,11 +322,11 @@ describe('hasClickedDealer() and markDealerClicked()', () => {
       // Set invalid JSON
       sessionStorage.setItem('carzo_clicked_dealers', 'invalid-json{]');
 
-      // Should throw or handle gracefully - test implementation behavior
-      expect(() => hasClickedDealer('dealer-123')).toThrow();
+      // Should handle gracefully by returning false (not throwing)
+      expect(hasClickedDealer('dealer-123')).toBe(false);
 
-      // Clean up invalid JSON immediately
-      sessionStorage.removeItem('carzo_clicked_dealers');
+      // Verify corrupted data was cleaned up automatically
+      expect(sessionStorage.getItem('carzo_clicked_dealers')).toBeNull();
     });
 
     it('should track dealers across multiple operations', () => {

@@ -967,6 +967,78 @@ carzo/
 4. Update dealer_click_history table
 5. Return billable status to frontend (for UI feedback)
 
+### Testing Requirements
+
+**⚠️ CRITICAL: All code changes require tests**
+
+**Test Coverage Rules:**
+- ✅ **Every new function requires a corresponding test file**
+- ✅ **Every updated function requires updated tests**
+- ✅ **Every new component requires component tests**
+- ✅ **Every new API route requires API route tests**
+- ❌ **Never commit code without tests** (unless it's documentation, config, or types only)
+
+**Testing Workflow:**
+1. **Write tests first** (TDD approach preferred) or immediately after implementation
+2. Run `npm test` after implementing any code changes
+3. Ensure all tests pass before committing
+4. Run `npm run test:coverage` to verify coverage thresholds
+5. Aim for **80%+ code coverage** on all new/modified files
+
+**Test Structure:**
+- Tests go in `__tests__/` folders colocated with source files
+- Example: `lib/utils.ts` → `lib/__tests__/utils.test.ts`
+- Example: `components/ui/Button.tsx` → `components/ui/__tests__/Button.test.tsx`
+- Example: `app/api/track-click/route.ts` → `app/api/track-click/__tests__/route.test.ts`
+
+**Test Standards:**
+- ✅ Use **Vitest v4** for all tests (unit, component, API routes)
+- ✅ Use **@testing-library/react** for component tests
+- ✅ Mock external dependencies (Supabase, fetch, window APIs)
+- ✅ Use **deterministic fixtures** (no random data, fixed timestamps)
+- ✅ Test edge cases and error scenarios
+- ✅ Tests must be **deterministic** (no flaky tests)
+- ✅ Use `vi.useFakeTimers()` for time-sensitive logic (e.g., 30-day windows)
+- ❌ No `any` types in tests - use proper TypeScript types for mocks
+
+**Quick Commands:**
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run specific test file
+npm test path/to/test.test.ts
+
+# Open Vitest UI (visual test runner)
+npm run test:ui
+```
+
+**Example Test Structure:**
+```typescript
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+describe('MyFunction', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should handle success case', () => {
+    const result = myFunction('input');
+    expect(result).toBe('expected');
+  });
+
+  it('should handle error case', () => {
+    expect(() => myFunction('')).toThrow('Error message');
+  });
+});
+```
+
 ## Testing
 
 ### Framework & Tools

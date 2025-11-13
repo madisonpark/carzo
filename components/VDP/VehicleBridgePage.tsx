@@ -4,7 +4,7 @@ import { ArrowRight, MapPin, Camera, Shield, Star, Calculator, Loader2 } from 'l
 import { useState, useEffect } from 'react';
 import { Vehicle } from '@/lib/supabase';
 import { useClickTracking } from '@/hooks/useClickTracking';
-import { Badge } from '@/components/ui';
+import { Badge, Button } from '@/components/ui';
 import { isVDPOnlyFlow, UserFlow } from '@/lib/flow-detection';
 import { getUserId, getSessionId } from '@/lib/user-tracking';
 
@@ -113,8 +113,7 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
                 <img
                   src={(vehicle.primary_image_url && vehicle.primary_image_url.trim()) || '/placeholder-vehicle.svg'}
                   alt="Thumbnail"
-                  className="w-full h-full object-cover blur-sm opacity-60"
-                  style={{ filter: 'blur(8px)' }}
+                  className="w-full h-full object-cover blur opacity-60"
                   onError={(e) => {
                     e.currentTarget.src = '/placeholder-vehicle.svg';
                   }}
@@ -124,8 +123,7 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
                 <img
                   src={(vehicle.primary_image_url && vehicle.primary_image_url.trim()) || '/placeholder-vehicle.svg'}
                   alt="Thumbnail"
-                  className="w-full h-full object-cover blur-sm opacity-60 scale-x-[-1]"
-                  style={{ filter: 'blur(8px)' }}
+                  className="w-full h-full object-cover blur opacity-60 scale-x-[-1]"
                   onError={(e) => {
                     e.currentTarget.src = '/placeholder-vehicle.svg';
                   }}
@@ -181,21 +179,27 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
               )}
 
               {/* Primary CTA - Track Click */}
-              <a
-                href={vehicle.dealer_vdp_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={createClickHandler({
-                  vehicleId: vehicle.id,
-                  dealerId: vehicle.dealer_id,
-                  ctaClicked: 'primary',
-                })}
-                className="group w-full inline-flex items-center justify-center gap-3 bg-gradient-to-r from-primary to-primary-hover hover:from-primary-hover hover:to-primary text-white font-bold text-lg px-8 py-5 rounded-xl shadow-2xl transition-all duration-300 hover:scale-105 mb-4"
+              <Button
+                asChild
+                variant="primary"
+                size="lg"
+                className="w-full gap-3 mb-4 bg-primary-gradient hover:scale-105 group"
               >
-                <Camera className="w-6 h-6" />
-                See Full Photo Gallery
-                <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-              </a>
+                <a
+                  href={vehicle.dealer_vdp_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={createClickHandler({
+                    vehicleId: vehicle.id,
+                    dealerId: vehicle.dealer_id,
+                    ctaClicked: 'primary',
+                  })}
+                >
+                  <Camera className="w-6 h-6" />
+                  See Full Photo Gallery
+                  <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                </a>
+              </Button>
 
               <p className="text-center text-sm text-slate-500 mb-6">
                 Act fast - this vehicle may sell quickly

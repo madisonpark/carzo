@@ -28,8 +28,8 @@ export default function SearchError({
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
           {/* Icon */}
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-6">
-            <Search className="w-8 h-8 text-red-600" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-error/10 rounded-full mb-6">
+            <Search className="w-8 h-8 text-error" />
           </div>
 
           {/* Title */}
@@ -46,7 +46,7 @@ export default function SearchError({
           <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
             <button
               onClick={reset}
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-brand hover:bg-brand-hover text-white font-semibold rounded-lg transition-colors"
             >
               <RefreshCw className="w-4 h-4" />
               Try Again

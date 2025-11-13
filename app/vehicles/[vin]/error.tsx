@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { Car, Home, ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui';
 
 export default function VehicleError({
   error,
@@ -19,7 +20,7 @@ export default function VehicleError({
       {/* Header */}
       <div className="bg-slate-900 text-white py-3 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
-          <Link href="/search" className="inline-flex items-center gap-2 text-sm hover:text-blue-400 transition-colors">
+          <Link href="/search" className="inline-flex items-center gap-2 text-sm hover:text-brand transition-colors">
             <ArrowLeft className="w-4 h-4" />
             Back to Search
           </Link>
@@ -30,8 +31,8 @@ export default function VehicleError({
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center">
           {/* Icon */}
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-6">
-            <Car className="w-8 h-8 text-red-600" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-error/10 rounded-full mb-6">
+            <Car className="w-8 h-8 text-error" />
           </div>
 
           {/* Title */}
@@ -46,19 +47,17 @@ export default function VehicleError({
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
-            <Link
-              href="/search"
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
-            >
-              Browse All Vehicles
-            </Link>
-            <Link
-              href="/"
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-900 font-semibold rounded-lg transition-colors"
-            >
-              <Home className="w-4 h-4" />
-              Go Home
-            </Link>
+            <Button asChild variant="brand">
+              <Link href="/search">
+                Browse All Vehicles
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/" className="gap-2">
+                <Home className="w-4 h-4" />
+                Go Home
+              </Link>
+            </Button>
           </div>
         </div>
       </div>

@@ -4,6 +4,8 @@ import { Vehicle } from '@/lib/supabase';
 import VehicleCard from './VehicleCard';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui';
 
 interface SearchResultsProps {
   vehicles: Vehicle[];
@@ -72,27 +74,27 @@ export default function SearchResults({
 
         {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <button
+          <Button
             onClick={() => {
               const params = new URLSearchParams(window.location.search);
               const flow = params.get('flow');
               router.push(flow ? `/search?flow=${flow}` : '/search');
             }}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+            variant="brand"
           >
             View All Vehicles
-          </button>
+          </Button>
           {hasActiveFilters && (
-            <button
+            <Button
               onClick={() => {
                 const params = new URLSearchParams(window.location.search);
                 const flow = params.get('flow');
                 router.push(flow ? `/search?flow=${flow}` : '/search');
               }}
-              className="px-6 py-3 bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-900 font-semibold rounded-lg transition-colors"
+              variant="outline"
             >
               Clear Filters
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -115,7 +117,7 @@ export default function SearchResults({
             id="sort-select"
             value={currentSort}
             onChange={(e) => updateSort(e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-brand"
           >
             <option value="relevance">Relevance</option>
             <option value="price_asc">Price: Low to High</option>
@@ -138,13 +140,14 @@ export default function SearchResults({
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2">
-          <button
+          <Button
             onClick={() => goToPage(page - 1)}
             disabled={page === 1}
-            className="p-2 border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+            variant="outline"
+            size="icon"
           >
             <ChevronLeft className="w-5 h-5" />
-          </button>
+          </Button>
 
           <div className="flex items-center gap-2">
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -160,28 +163,26 @@ export default function SearchResults({
               }
 
               return (
-                <button
+                <Button
                   key={pageNum}
                   onClick={() => goToPage(pageNum)}
-                  className={`w-10 h-10 rounded-lg font-medium ${
-                    page === pageNum
-                      ? 'bg-blue-600 text-white'
-                      : 'border border-slate-300 hover:bg-slate-50'
-                  }`}
+                  variant={page === pageNum ? 'brand' : 'outline'}
+                  size="icon"
                 >
                   {pageNum}
-                </button>
+                </Button>
               );
             })}
           </div>
 
-          <button
+          <Button
             onClick={() => goToPage(page + 1)}
             disabled={page === totalPages}
-            className="p-2 border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
+            variant="outline"
+            size="icon"
           >
             <ChevronRight className="w-5 h-5" />
-          </button>
+          </Button>
         </div>
       )}
 

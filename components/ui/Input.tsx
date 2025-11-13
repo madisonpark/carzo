@@ -14,13 +14,13 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           // Base styles
           'w-full rounded-lg border px-4 py-3 text-base transition-all duration-200',
           'placeholder:text-slate-400',
-          'focus:outline-none focus:ring-2 focus:ring-offset-1',
+          'outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
           'disabled:cursor-not-allowed disabled:opacity-50',
           // Default state
           'border-border bg-white text-foreground',
-          'focus:border-brand focus:ring-brand/20',
+          'focus-visible:border-brand focus-visible:ring-brand/20',
           // Error state
-          error && 'border-error focus:border-error focus:ring-error/20',
+          error && 'border-error focus-visible:border-error focus-visible:ring-error/20',
           className
         )}
         ref={ref}

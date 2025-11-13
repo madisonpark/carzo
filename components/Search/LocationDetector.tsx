@@ -102,7 +102,7 @@ export default function LocationDetector() {
     return (
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2 text-sm text-slate-700">
-          <MapPin className="w-4 h-4 text-blue-500" />
+          <MapPin className="w-4 h-4 text-brand" />
           <span>
             <strong>{location.city}, {location.state}</strong>
           </span>

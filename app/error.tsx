@@ -21,8 +21,8 @@ export default function Error({
       <div className="max-w-md w-full">
         <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
           {/* Icon */}
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-6">
-            <AlertCircle className="w-8 h-8 text-red-600" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-error/10 rounded-full mb-6">
+            <AlertCircle className="w-8 h-8 text-error" />
           </div>
 
           {/* Title */}
@@ -48,7 +48,7 @@ export default function Error({
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={reset}
-              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-brand hover:bg-brand-hover text-white font-semibold rounded-lg transition-colors"
             >
               <RefreshCw className="w-4 h-4" />
               Try Again

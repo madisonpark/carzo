@@ -97,7 +97,7 @@ const FilterContent = ({
         <select
           value={currentFilters.make || ''}
           onChange={(e) => updateFilter('make', e.target.value)}
-          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand"
         >
           <option value="">All Makes</option>
           {makes.map((make) => (
@@ -114,7 +114,7 @@ const FilterContent = ({
         <select
           value={currentFilters.condition || ''}
           onChange={(e) => updateFilter('condition', e.target.value)}
-          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand"
         >
           <option value="">All Conditions</option>
           {conditions.map((condition) => (
@@ -131,7 +131,7 @@ const FilterContent = ({
         <select
           value={currentFilters.bodyStyle || ''}
           onChange={(e) => updateFilter('bodyStyle', e.target.value)}
-          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand"
         >
           <option value="">All Body Styles</option>
           {bodyStyles.map((style) => (
@@ -150,7 +150,7 @@ const FilterContent = ({
             value={currentFilters.minYear || ''}
             onChange={(e) => updateFilter('minYear', e.target.value)}
             aria-label="Minimum year"
-            className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            className="px-3 py-2 border border-slate-300 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand text-sm"
           >
             <option value="">Min</option>
             {years.map((year) => (
@@ -163,7 +163,7 @@ const FilterContent = ({
             value={currentFilters.maxYear || ''}
             onChange={(e) => updateFilter('maxYear', e.target.value)}
             aria-label="Maximum year"
-            className="px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            className="px-3 py-2 border border-slate-300 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand text-sm"
           >
             <option value="">Max</option>
             {years.map((year) => (
@@ -387,10 +387,9 @@ export default function FilterSidebar({
       {/* Mobile Drawer */}
       <div
         className={cn(
-          'lg:hidden fixed top-0 left-0 bottom-0 w-full max-w-sm bg-white z-[60] overflow-y-auto transform duration-300 ease-in-out shadow-2xl',
+          'lg:hidden fixed top-0 left-0 bottom-0 w-full max-w-sm bg-white z-[60] overflow-y-auto transition-transform duration-300 ease-in-out shadow-2xl',
           isMobileDrawerOpen ? 'translate-x-0' : '-translate-x-full'
         )}
-        style={{ transition: 'transform 300ms ease-in-out' }}
       >
         <div className="sticky top-0 bg-white border-b border-slate-200 p-4 flex items-center justify-between">
           <h2 className="text-xl font-bold text-slate-900">Filters</h2>

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MapPin, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui';
 
 interface ZipCodeInputProps {
   placeholder?: string;
@@ -93,15 +94,17 @@ export default function ZipCodeInput({ placeholder = '98112', className = '', on
                 setError('');
               }}
               placeholder={placeholder}
-              className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:border-transparent"
               disabled={loading}
               maxLength={5}
             />
           </div>
-          <button
+          <Button
             type="submit"
             disabled={loading || zipCode.length !== 5}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            variant="brand"
+            size="sm"
+            className="gap-2"
           >
             {loading ? (
               <>
@@ -109,12 +112,15 @@ export default function ZipCodeInput({ placeholder = '98112', className = '', on
                 <span>Loading...</span>
               </>
             ) : (
-              'Update'
+              <>
+                <MapPin className="w-4 h-4" />
+                Update
+              </>
             )}
-          </button>
+          </Button>
         </div>
         {error && (
-          <p className="text-sm text-red-600 mt-1">{error}</p>
+          <p className="text-sm text-error mt-1">{error}</p>
         )}
       </form>
     </div>

@@ -184,17 +184,21 @@ export function calculateBudgetAllocation(
     overall_roi: number;
   };
 } {
+  // Validate inputs to prevent division by zero
+  const safeCpc = Math.max(0.01, cpcAssumption);
+  const safeConversionRate = Math.max(0, Math.min(1, conversionRateAssumption));
+
   const viableCampaigns = campaigns.filter(c => c.tier !== 'avoid');
 
   const allocations = viableCampaigns.map(campaign => {
     const monthly_budget = campaign.recommended_daily_budget * 30;
     const daily_budget = campaign.recommended_daily_budget;
-    const expected_daily_clicks = daily_budget / cpcAssumption;
-    const expected_dealer_clicks = expected_daily_clicks * conversionRateAssumption;
+    const expected_daily_clicks = daily_budget / safeCpc; // Protected from division by zero
+    const expected_dealer_clicks = expected_daily_clicks * safeConversionRate;
     const expected_daily_revenue = expected_dealer_clicks * 0.80;
     const expected_monthly_revenue = expected_daily_revenue * 30;
     const expected_monthly_profit = expected_monthly_revenue - monthly_budget;
-    const roi_pct = (expected_monthly_profit / monthly_budget) * 100;
+    const roi_pct = monthly_budget > 0 ? (expected_monthly_profit / monthly_budget) * 100 : 0; // Protected from division by zero
 
     return {
       campaign: campaign.name,
@@ -217,7 +221,10 @@ export function calculateBudgetAllocation(
     { total_monthly_spend: 0, total_monthly_revenue: 0, total_monthly_profit: 0, overall_roi: 0 }
   );
 
-  summary.overall_roi = Math.round((summary.total_monthly_profit / summary.total_monthly_spend) * 100);
+  // Protected from division by zero
+  summary.overall_roi = summary.total_monthly_spend > 0
+    ? Math.round((summary.total_monthly_profit / summary.total_monthly_spend) * 100)
+    : 0;
 
   return { allocations, summary };
 }

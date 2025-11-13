@@ -71,6 +71,13 @@ export async function GET(request: NextRequest) {
 
       if (error) throw error;
 
+      if (!dealers || dealers.length === 0) {
+        return NextResponse.json(
+          { error: `No active dealers found for metro: ${metro}` },
+          { status: 404 }
+        );
+      }
+
       // Get unique dealer locations
       const uniqueDealers = Array.from(
         new Map(
@@ -133,6 +140,13 @@ export async function GET(request: NextRequest) {
       });
 
       if (zipError) throw zipError;
+
+      if (!zipCodes || zipCodes.length === 0) {
+        return NextResponse.json(
+          { error: `No ZIP codes found for metro: ${metro}. This metro may not have active dealers.` },
+          { status: 404 }
+        );
+      }
 
       const rows = (zipCodes || []).map((z: any) => ({ zip_code: z.zip_code }));
 

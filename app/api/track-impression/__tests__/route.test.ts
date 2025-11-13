@@ -2,6 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST, OPTIONS } from '../route';
 import { NextRequest } from 'next/server';
 
+// Type definition for mocked Supabase client
+type MockSupabaseClient = {
+  from: ReturnType<typeof vi.fn> & (() => MockSupabaseClient);
+  insert: ReturnType<typeof vi.fn>;
+};
+
 // Mock Supabase module
 vi.mock('@/lib/supabase', () => ({
   supabaseAdmin: {
@@ -24,14 +30,20 @@ function createMockRequest(body: any): NextRequest {
 }
 
 describe('POST /api/track-impression', () => {
-  let mockSupabase: any;
+  let mockSupabase: MockSupabaseClient;
 
   beforeEach(async () => {
     vi.clearAllMocks();
     // Get mocked Supabase instance
     const { supabaseAdmin } = await import('@/lib/supabase');
-    mockSupabase = supabaseAdmin;
+    mockSupabase = supabaseAdmin as MockSupabaseClient;
   });
+
+  // Helper function to mock successful impression insert
+  const mockSuccessfulImpressionInsert = () => {
+    mockSupabase.from.mockReturnThis();
+    mockSupabase.insert.mockResolvedValue({ error: null });
+  };
 
   describe('Request Validation', () => {
     it('should return 400 for empty request body', async () => {
@@ -56,24 +68,12 @@ describe('POST /api/track-impression', () => {
       expect(data.error).toBe('Invalid JSON in request body');
     });
 
-    it('should return 400 when missing vehicleId', async () => {
-      const request = createMockRequest({
-        // vehicleId missing
-        pageType: 'vdp',
-      });
-
-      const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(400);
-      expect(data.error).toContain('Missing required fields');
-    });
-
-    it('should return 400 when missing pageType', async () => {
-      const request = createMockRequest({
-        vehicleId: 'vehicle-123',
-        // pageType missing
-      });
+    // Parameterized test for missing required fields
+    it.each([
+      { field: 'vehicleId', body: { pageType: 'vdp' } },
+      { field: 'pageType', body: { vehicleId: 'vehicle-123' } },
+    ])('should return 400 when missing $field', async ({ body }) => {
+      const request = createMockRequest(body);
 
       const response = await POST(request);
       const data = await response.json();
@@ -99,8 +99,7 @@ describe('POST /api/track-impression', () => {
 
   describe('Valid Page Types', () => {
     it('should accept "search" as valid pageType', async () => {
-      mockSupabase.from.mockReturnThis();
-      mockSupabase.insert.mockResolvedValue({ error: null });
+      mockSuccessfulImpressionInsert();
 
       const request = createMockRequest({
         vehicleId: 'vehicle-123',
@@ -113,8 +112,7 @@ describe('POST /api/track-impression', () => {
     });
 
     it('should accept "homepage" as valid pageType', async () => {
-      mockSupabase.from.mockReturnThis();
-      mockSupabase.insert.mockResolvedValue({ error: null });
+      mockSuccessfulImpressionInsert();
 
       const request = createMockRequest({
         vehicleId: 'vehicle-123',
@@ -127,8 +125,7 @@ describe('POST /api/track-impression', () => {
     });
 
     it('should accept "vdp" as valid pageType', async () => {
-      mockSupabase.from.mockReturnThis();
-      mockSupabase.insert.mockResolvedValue({ error: null });
+      mockSuccessfulImpressionInsert();
 
       const request = createMockRequest({
         vehicleId: 'vehicle-123',
@@ -143,8 +140,7 @@ describe('POST /api/track-impression', () => {
 
   describe('Flow Parameter Normalization', () => {
     it('should normalize valid flow parameter', async () => {
-      mockSupabase.from.mockReturnThis();
-      mockSupabase.insert.mockResolvedValue({ error: null });
+      mockSuccessfulImpressionInsert();
 
       const request = createMockRequest({
         vehicleId: 'vehicle-123',
@@ -165,8 +161,7 @@ describe('POST /api/track-impression', () => {
     });
 
     it('should accept "direct" flow', async () => {
-      mockSupabase.from.mockReturnThis();
-      mockSupabase.insert.mockResolvedValue({ error: null });
+      mockSuccessfulImpressionInsert();
 
       const request = createMockRequest({
         vehicleId: 'vehicle-123',
@@ -181,8 +176,7 @@ describe('POST /api/track-impression', () => {
     });
 
     it('should accept "full" flow', async () => {
-      mockSupabase.from.mockReturnThis();
-      mockSupabase.insert.mockResolvedValue({ error: null });
+      mockSuccessfulImpressionInsert();
 
       const request = createMockRequest({
         vehicleId: 'vehicle-123',
@@ -197,8 +191,7 @@ describe('POST /api/track-impression', () => {
     });
 
     it('should default invalid flow to "full"', async () => {
-      mockSupabase.from.mockReturnThis();
-      mockSupabase.insert.mockResolvedValue({ error: null });
+      mockSuccessfulImpressionInsert();
 
       const request = createMockRequest({
         vehicleId: 'vehicle-123',
@@ -218,8 +211,7 @@ describe('POST /api/track-impression', () => {
     });
 
     it('should default missing flow to "full"', async () => {
-      mockSupabase.from.mockReturnThis();
-      mockSupabase.insert.mockResolvedValue({ error: null });
+      mockSuccessfulImpressionInsert();
 
       const request = createMockRequest({
         vehicleId: 'vehicle-123',
@@ -236,8 +228,7 @@ describe('POST /api/track-impression', () => {
 
   describe('Database Operations', () => {
     it('should insert impression with all fields', async () => {
-      mockSupabase.from.mockReturnThis();
-      mockSupabase.insert.mockResolvedValue({ error: null });
+      mockSuccessfulImpressionInsert();
 
       const request = createMockRequest({
         vehicleId: 'vehicle-456',
@@ -335,8 +326,7 @@ describe('POST /api/track-impression', () => {
 
   describe('Response Format', () => {
     it('should return complete success response', async () => {
-      mockSupabase.from.mockReturnThis();
-      mockSupabase.insert.mockResolvedValue({ error: null });
+      mockSuccessfulImpressionInsert();
 
       const request = createMockRequest({
         vehicleId: 'vehicle-789',
@@ -357,8 +347,7 @@ describe('POST /api/track-impression', () => {
     });
 
     it('should include normalized flow in response', async () => {
-      mockSupabase.from.mockReturnThis();
-      mockSupabase.insert.mockResolvedValue({ error: null });
+      mockSuccessfulImpressionInsert();
 
       const request = createMockRequest({
         vehicleId: 'vehicle-123',

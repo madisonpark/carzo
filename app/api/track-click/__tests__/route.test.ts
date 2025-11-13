@@ -1,6 +1,17 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from 'vitest';
 import { POST, OPTIONS } from '../route';
 import { NextRequest } from 'next/server';
+
+// Type definition for mocked Supabase client
+type MockSupabaseClient = {
+  from: ReturnType<typeof vi.fn> & (() => MockSupabaseClient);
+  select: ReturnType<typeof vi.fn> & (() => MockSupabaseClient);
+  insert: ReturnType<typeof vi.fn>;
+  update: ReturnType<typeof vi.fn> & (() => MockSupabaseClient);
+  eq: ReturnType<typeof vi.fn> & (() => MockSupabaseClient);
+  gte: ReturnType<typeof vi.fn> & (() => MockSupabaseClient);
+  single: ReturnType<typeof vi.fn>;
+};
 
 // Mock Supabase module - factory must be standalone (hoisted)
 vi.mock('@/lib/supabase', () => ({
@@ -29,14 +40,38 @@ function createMockRequest(body: any): NextRequest {
 }
 
 describe('POST /api/track-click', () => {
-  let mockSupabase: any;
+  let mockSupabase: MockSupabaseClient;
+
+  // Use fake timers for deterministic date testing
+  beforeAll(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2024-01-15T12:00:00.000Z'));
+  });
+
+  afterAll(() => {
+    vi.useRealTimers();
+  });
 
   beforeEach(async () => {
     vi.clearAllMocks();
     // Get mocked Supabase instance
     const { supabaseAdmin } = await import('@/lib/supabase');
-    mockSupabase = supabaseAdmin;
+    mockSupabase = supabaseAdmin as MockSupabaseClient;
   });
+
+  // Helper function to mock no click history (billable scenario)
+  const mockNoClickHistory = () => {
+    mockSupabase.from.mockReturnThis();
+    mockSupabase.select.mockReturnThis();
+    mockSupabase.eq.mockReturnThis();
+    mockSupabase.gte.mockReturnThis();
+    mockSupabase.single.mockResolvedValue({ data: null, error: null });
+  };
+
+  // Helper function to mock successful click insert
+  const mockSuccessfulClickInsert = () => {
+    mockSupabase.insert.mockResolvedValue({ error: null });
+  };
 
   describe('Request Validation', () => {
     it('should return 400 for empty request body', async () => {
@@ -61,40 +96,13 @@ describe('POST /api/track-click', () => {
       expect(data.error).toBe('Invalid JSON in request body');
     });
 
-    it('should return 400 when missing vehicleId', async () => {
-      const request = createMockRequest({
-        // vehicleId missing
-        dealerId: 'dealer-123',
-        userId: 'user-456',
-      });
-
-      const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(400);
-      expect(data.error).toContain('Missing required fields');
-    });
-
-    it('should return 400 when missing dealerId', async () => {
-      const request = createMockRequest({
-        vehicleId: 'vehicle-123',
-        // dealerId missing
-        userId: 'user-456',
-      });
-
-      const response = await POST(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(400);
-      expect(data.error).toContain('Missing required fields');
-    });
-
-    it('should return 400 when missing userId', async () => {
-      const request = createMockRequest({
-        vehicleId: 'vehicle-123',
-        dealerId: 'dealer-123',
-        // userId missing
-      });
+    // Parameterized test for missing required fields
+    it.each([
+      { field: 'vehicleId', body: { dealerId: 'dealer-123', userId: 'user-456' } },
+      { field: 'dealerId', body: { vehicleId: 'vehicle-123', userId: 'user-456' } },
+      { field: 'userId', body: { vehicleId: 'vehicle-123', dealerId: 'dealer-123' } },
+    ])('should return 400 when missing $field', async ({ body }) => {
+      const request = createMockRequest(body);
 
       const response = await POST(request);
       const data = await response.json();
@@ -106,15 +114,8 @@ describe('POST /api/track-click', () => {
 
   describe('Flow Parameter Normalization', () => {
     it('should normalize valid flow parameter', async () => {
-      // Mock no click history (billable)
-      mockSupabase.from.mockReturnThis();
-      mockSupabase.select.mockReturnThis();
-      mockSupabase.eq.mockReturnThis();
-      mockSupabase.gte.mockReturnThis();
-      mockSupabase.single.mockResolvedValue({ data: null, error: null });
-
-      // Mock click insert success
-      mockSupabase.insert.mockResolvedValue({ error: null });
+      mockNoClickHistory();
+      mockSuccessfulClickInsert();
 
       const request = createMockRequest({
         vehicleId: 'vehicle-123',
@@ -136,15 +137,8 @@ describe('POST /api/track-click', () => {
     });
 
     it('should default invalid flow to "full"', async () => {
-      // Mock no click history
-      mockSupabase.from.mockReturnThis();
-      mockSupabase.select.mockReturnThis();
-      mockSupabase.eq.mockReturnThis();
-      mockSupabase.gte.mockReturnThis();
-      mockSupabase.single.mockResolvedValue({ data: null, error: null });
-
-      // Mock click insert success
-      mockSupabase.insert.mockResolvedValue({ error: null });
+      mockNoClickHistory();
+      mockSuccessfulClickInsert();
 
       const request = createMockRequest({
         vehicleId: 'vehicle-123',
@@ -164,15 +158,8 @@ describe('POST /api/track-click', () => {
     });
 
     it('should default missing flow to "full"', async () => {
-      // Mock no click history
-      mockSupabase.from.mockReturnThis();
-      mockSupabase.select.mockReturnThis();
-      mockSupabase.eq.mockReturnThis();
-      mockSupabase.gte.mockReturnThis();
-      mockSupabase.single.mockResolvedValue({ data: null, error: null });
-
-      // Mock click insert success
-      mockSupabase.insert.mockResolvedValue({ error: null });
+      mockNoClickHistory();
+      mockSuccessfulClickInsert();
 
       const request = createMockRequest({
         vehicleId: 'vehicle-123',
@@ -194,15 +181,8 @@ describe('POST /api/track-click', () => {
 
   describe('Billable Click Logic (Revenue-Critical)', () => {
     it('should mark first click to dealer as billable', async () => {
-      // Mock no existing click history
-      mockSupabase.from.mockReturnThis();
-      mockSupabase.select.mockReturnThis();
-      mockSupabase.eq.mockReturnThis();
-      mockSupabase.gte.mockReturnThis();
-      mockSupabase.single.mockResolvedValue({ data: null, error: null });
-
-      // Mock successful click insert
-      mockSupabase.insert.mockResolvedValue({ error: null });
+      mockNoClickHistory();
+      mockSuccessfulClickInsert();
 
       const request = createMockRequest({
         vehicleId: 'vehicle-123',
@@ -271,14 +251,8 @@ describe('POST /api/track-click', () => {
     it('should mark click as billable if previous click was >30 days ago', async () => {
       // Mock existing history, but outside 30-day window
       // The query filters by gte(first_click_at, 30 days ago), so old history won't be returned
-      mockSupabase.from.mockReturnThis();
-      mockSupabase.select.mockReturnThis();
-      mockSupabase.eq.mockReturnThis();
-      mockSupabase.gte.mockReturnThis();
-      mockSupabase.single.mockResolvedValue({ data: null, error: null }); // No history in window
-
-      // Mock successful click insert
-      mockSupabase.insert.mockResolvedValue({ error: null });
+      mockNoClickHistory(); // No history in window
+      mockSuccessfulClickInsert();
 
       const request = createMockRequest({
         vehicleId: 'vehicle-123',
@@ -298,11 +272,7 @@ describe('POST /api/track-click', () => {
   describe('Dealer Click History Management', () => {
     it('should create new history record for first click', async () => {
       // Mock no existing history
-      mockSupabase.from.mockReturnThis();
-      mockSupabase.select.mockReturnThis();
-      mockSupabase.eq.mockReturnThis();
-      mockSupabase.gte.mockReturnThis();
-      mockSupabase.single.mockResolvedValue({ data: null, error: null });
+      mockNoClickHistory();
 
       // Mock successful inserts
       let insertCallCount = 0;
@@ -375,13 +345,8 @@ describe('POST /api/track-click', () => {
 
   describe('Optional Fields', () => {
     it('should handle missing sessionId (optional field)', async () => {
-      mockSupabase.from.mockReturnThis();
-      mockSupabase.select.mockReturnThis();
-      mockSupabase.eq.mockReturnThis();
-      mockSupabase.gte.mockReturnThis();
-      mockSupabase.single.mockResolvedValue({ data: null, error: null });
-
-      mockSupabase.insert.mockResolvedValue({ error: null });
+      mockNoClickHistory();
+      mockSuccessfulClickInsert();
 
       const request = createMockRequest({
         vehicleId: 'vehicle-123',
@@ -401,13 +366,8 @@ describe('POST /api/track-click', () => {
     });
 
     it('should default ctaClicked to "primary" when missing', async () => {
-      mockSupabase.from.mockReturnThis();
-      mockSupabase.select.mockReturnThis();
-      mockSupabase.eq.mockReturnThis();
-      mockSupabase.gte.mockReturnThis();
-      mockSupabase.single.mockResolvedValue({ data: null, error: null });
-
-      mockSupabase.insert.mockResolvedValue({ error: null });
+      mockNoClickHistory();
+      mockSuccessfulClickInsert();
 
       const request = createMockRequest({
         vehicleId: 'vehicle-123',
@@ -427,13 +387,8 @@ describe('POST /api/track-click', () => {
     });
 
     it('should accept custom ctaClicked value', async () => {
-      mockSupabase.from.mockReturnThis();
-      mockSupabase.select.mockReturnThis();
-      mockSupabase.eq.mockReturnThis();
-      mockSupabase.gte.mockReturnThis();
-      mockSupabase.single.mockResolvedValue({ data: null, error: null });
-
-      mockSupabase.insert.mockResolvedValue({ error: null });
+      mockNoClickHistory();
+      mockSuccessfulClickInsert();
 
       const request = createMockRequest({
         vehicleId: 'vehicle-123',
@@ -454,11 +409,7 @@ describe('POST /api/track-click', () => {
 
   describe('Error Handling', () => {
     it('should return 404 when vehicle does not exist (foreign key constraint)', async () => {
-      mockSupabase.from.mockReturnThis();
-      mockSupabase.select.mockReturnThis();
-      mockSupabase.eq.mockReturnThis();
-      mockSupabase.gte.mockReturnThis();
-      mockSupabase.single.mockResolvedValue({ data: null, error: null });
+      mockNoClickHistory();
 
       // Mock foreign key constraint error
       mockSupabase.insert.mockResolvedValue({
@@ -480,11 +431,7 @@ describe('POST /api/track-click', () => {
     });
 
     it('should return 500 for database errors (non-FK constraint)', async () => {
-      mockSupabase.from.mockReturnThis();
-      mockSupabase.select.mockReturnThis();
-      mockSupabase.eq.mockReturnThis();
-      mockSupabase.gte.mockReturnThis();
-      mockSupabase.single.mockResolvedValue({ data: null, error: null });
+      mockNoClickHistory();
 
       // Mock generic database error
       mockSupabase.insert.mockResolvedValue({
@@ -539,13 +486,8 @@ describe('POST /api/track-click', () => {
 
   describe('Response Format', () => {
     it('should return complete success response for billable click', async () => {
-      mockSupabase.from.mockReturnThis();
-      mockSupabase.select.mockReturnThis();
-      mockSupabase.eq.mockReturnThis();
-      mockSupabase.gte.mockReturnThis();
-      mockSupabase.single.mockResolvedValue({ data: null, error: null });
-
-      mockSupabase.insert.mockResolvedValue({ error: null });
+      mockNoClickHistory();
+      mockSuccessfulClickInsert();
 
       const request = createMockRequest({
         vehicleId: 'vehicle-123',

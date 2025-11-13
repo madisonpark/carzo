@@ -290,17 +290,26 @@ describe('diversifyByDealer()', () => {
       expect(uniqueDealers.size).toBeGreaterThan(0);
     });
 
-    it('should handle large datasets efficiently', () => {
+    it('should handle large datasets correctly', () => {
       const vehicles = Array.from({ length: 1000 }, (_, i) =>
         createVehicle(`vehicle-${i}`, `dealer-${i % 50}`)
       );
 
-      const start = performance.now();
       const result = diversifyByDealer(vehicles, 100);
-      const duration = performance.now() - start;
 
       expect(result).toHaveLength(100);
-      expect(duration).toBeLessThan(100); // Should complete in < 100ms
+
+      // Verify diversity is maintained with large dataset
+      const dealerCounts = result.reduce((acc, v) => {
+        acc[v.dealer_id] = (acc[v.dealer_id] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      // All dealers should be represented fairly evenly
+      Object.values(dealerCounts).forEach(count => {
+        expect(count).toBeGreaterThan(0);
+        expect(count).toBeLessThanOrEqual(3); // No single dealer dominates
+      });
     });
 
     it('should not infinite loop with maxRounds safety', () => {

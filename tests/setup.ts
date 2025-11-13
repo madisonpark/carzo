@@ -80,7 +80,17 @@ Object.defineProperty(window, 'sessionStorage', {
 // Mock fetch (can be overridden in individual tests)
 global.fetch = vi.fn();
 
-// Mock console methods to reduce test noise (can be re-enabled per test)
+/**
+ * Mock console methods to reduce test noise
+ *
+ * Trade-off: This can hide important warnings from libraries or React,
+ * making debugging more difficult. However, for our use case:
+ * - Reduces noise from expected console.error calls in error tests
+ * - Can be selectively unmocked in specific tests if needed:
+ *   beforeEach(() => { vi.spyOn(console, 'error').mockImplementation(() => {}); });
+ *
+ * If you need to see console output during debugging, comment out this section.
+ */
 global.console = {
   ...console,
   error: vi.fn(),

@@ -603,8 +603,8 @@ describe('Integration: Real-world rate limiting scenarios', () => {
 
     const identifier = getClientIdentifier(request);
     const result = await checkMultipleRateLimits(identifier, [
-      RATE_LIMITS.SEARCH_VEHICLES,
-      RATE_LIMITS.BURST,
+      { endpoint: 'search_vehicles', ...RATE_LIMITS.SEARCH_VEHICLES },
+      { endpoint: 'burst', ...RATE_LIMITS.BURST },
     ]);
 
     expect(identifier).toBe('192.168.1.1');

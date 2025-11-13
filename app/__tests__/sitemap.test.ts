@@ -59,13 +59,18 @@ describe('sitemap.ts', () => {
     });
 
     it('should fetch vehicles with pagination in parallel', async () => {
-      // Mock first page with 1000 vehicles
-      const mockVehicles = Array.from({ length: 1000 }, (_, i) => ({
-        vin: `VIN${i}`,
+      // Mock first page with 1000 unique vehicles
+      const mockVehiclesPage1 = Array.from({ length: 1000 }, (_, i) => ({
+        vin: `VIN_PAGE1_${i}`,
         last_sync: '2025-11-12T06:46:17.149Z',
       }));
 
-      // Mock second page with fewer vehicles (last page)
+      // Mock second page with fewer unique vehicles (last page)
+      const mockVehiclesPage2 = Array.from({ length: 500 }, (_, i) => ({
+        vin: `VIN_PAGE2_${i}`,
+        last_sync: '2025-11-12T06:46:17.149Z',
+      }));
+
       let callCount = 0;
       vi.mocked(supabase.from).mockImplementation(() => {
         const currentCall = callCount++;
@@ -75,9 +80,9 @@ describe('sitemap.ts', () => {
           order: vi.fn().mockReturnThis(),
           range: vi.fn().mockResolvedValue(
             currentCall === 0
-              ? { data: mockVehicles, error: null }
+              ? { data: mockVehiclesPage1, error: null }
               : currentCall === 1
-              ? { data: mockVehicles.slice(0, 500), error: null }
+              ? { data: mockVehiclesPage2, error: null }
               : { data: [], error: null }
           ),
         } as any;
@@ -85,7 +90,7 @@ describe('sitemap.ts', () => {
 
       const result = await sitemap();
 
-      // 2 static + 1500 vehicles = 1502
+      // 2 static + 1500 unique vehicles = 1502
       expect(result).toHaveLength(1502);
       expect(supabase.from).toHaveBeenCalledWith('vehicles');
     });
@@ -149,26 +154,91 @@ describe('sitemap.ts', () => {
       consoleErrorSpy.mockRestore();
     });
 
-    it('should respect Google 50K limit (49,998 vehicles + 2 static = 50,000)', async () => {
-      // Mock exactly 50 pages of 1000 vehicles each
-      const mockVehiclesPage = Array.from({ length: 1000 }, (_, i) => ({
-        vin: `VIN${i}`,
-        last_sync: '2025-11-12T06:46:17.149Z',
-      }));
+    it('should deduplicate vehicles if database returns duplicates', async () => {
+      const duplicateVehicles = [
+        { vin: 'ABC123', last_sync: '2025-11-12T06:46:17.149Z' },
+        { vin: 'DEF456', last_sync: '2025-11-11T06:46:17.149Z' },
+        { vin: 'ABC123', last_sync: '2025-11-10T06:46:17.149Z' }, // Duplicate (older)
+      ];
 
-      const mockSupabaseChain = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        range: vi.fn().mockResolvedValue({ data: mockVehiclesPage, error: null }),
-      };
-
-      vi.mocked(supabase.from).mockReturnValue(mockSupabaseChain as any);
+      let callCount = 0;
+      vi.mocked(supabase.from).mockImplementation(() => {
+        const currentCall = callCount++;
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          order: vi.fn().mockReturnThis(),
+          range: vi.fn().mockResolvedValue(
+            currentCall === 0
+              ? { data: duplicateVehicles, error: null }
+              : { data: [], error: null }
+          ),
+        } as any;
+      });
 
       const result = await sitemap();
 
-      // Should fetch exactly 50 pages but slice to 49,998 vehicles + 2 static = 50,000 total
-      expect(mockSupabaseChain.range).toHaveBeenCalledTimes(50);
+      const vehicleUrls = result.filter(url => url.url.includes('/vehicles/'));
+      // Should have 2 unique vehicles (ABC123 and DEF456), not 3
+      expect(vehicleUrls).toHaveLength(2);
+      // Should keep the most recently synced version of ABC123
+      const abc123 = vehicleUrls.find(url => url.url.includes('ABC123'));
+      expect(abc123?.lastModified?.toISOString()).toContain('2025-11-12');
+    });
+
+    it('should handle VINs with special characters (URL encoding)', async () => {
+      const vehiclesWithSpecialChars = [
+        { vin: 'ABC-123_XYZ', last_sync: '2025-11-12T06:46:17.149Z' },
+        { vin: '1HGCM82633A123456', last_sync: '2025-11-12T06:46:17.149Z' }, // Normal VIN
+      ];
+
+      let callCount = 0;
+      vi.mocked(supabase.from).mockImplementation(() => {
+        const currentCall = callCount++;
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          order: vi.fn().mockReturnThis(),
+          range: vi.fn().mockResolvedValue(
+            currentCall === 0
+              ? { data: vehiclesWithSpecialChars, error: null }
+              : { data: [], error: null }
+          ),
+        } as any;
+      });
+
+      const result = await sitemap();
+
+      const vehicleUrls = result.filter(url => url.url.includes('/vehicles/'));
+      expect(vehicleUrls).toHaveLength(2);
+      // VINs should be included as-is in URLs (Next.js handles encoding)
+      expect(vehicleUrls[0].url).toBe('https://carzo.net/vehicles/ABC-123_XYZ');
+      expect(vehicleUrls[1].url).toBe('https://carzo.net/vehicles/1HGCM82633A123456');
+    });
+
+    it('should respect Google 50K limit (49,998 vehicles + 2 static = 50,000)', async () => {
+      // Mock each page with unique VINs to avoid deduplication
+      let callCount = 0;
+      vi.mocked(supabase.from).mockImplementation(() => {
+        const currentCall = callCount++;
+        const pageOffset = currentCall * 1000;
+        const mockVehiclesPage = Array.from({ length: 1000 }, (_, i) => ({
+          vin: `VIN_${pageOffset + i}`,
+          last_sync: '2025-11-12T06:46:17.149Z',
+        }));
+
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          order: vi.fn().mockReturnThis(),
+          range: vi.fn().mockResolvedValue({ data: mockVehiclesPage, error: null }),
+        } as any;
+      });
+
+      const result = await sitemap();
+
+      // Should fetch exactly 50 pages and slice to 49,998 vehicles + 2 static = 50,000 total
+      expect(supabase.from).toHaveBeenCalledTimes(50);
       expect(result).toHaveLength(50000);
     });
   });

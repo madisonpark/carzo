@@ -2,6 +2,11 @@ import { MetadataRoute } from 'next'
 import { supabase } from '@/lib/supabase'
 
 // Revalidate sitemap every hour to avoid hitting database on every request
+// ISR (Incremental Static Regeneration) caching behavior:
+// - First request after cache expiry triggers regeneration (50 parallel DB queries)
+// - Subsequent requests within 1 hour serve cached version (no DB queries)
+// - Aligns with feed sync schedule (updates every 6 hours)
+// - Handles multiple simultaneous crawlers efficiently (all get cached version)
 export const revalidate = 3600
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -65,8 +70,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
+  // Deduplicate by VIN (in case database returns duplicates across pages)
+  // Keep the most recently synced version of each vehicle
+  const uniqueVehicles = Array.from(
+    allVehicles.reduce((map, vehicle) => {
+      const existing = map.get(vehicle.vin)
+      if (!existing || (vehicle.last_sync && vehicle.last_sync > (existing.last_sync || ''))) {
+        map.set(vehicle.vin, vehicle)
+      }
+      return map
+    }, new Map<string, { vin: string; last_sync: string | null }>())
+  ).map(([_, vehicle]) => vehicle)
+
   // Limit to exactly 49,998 vehicles to stay within Google's 50,000 URL limit (including 2 static pages)
-  const limitedVehicles = allVehicles.slice(0, SITEMAP_LIMIT)
+  const limitedVehicles = uniqueVehicles.slice(0, SITEMAP_LIMIT)
 
   console.log(`Sitemap: Including ${limitedVehicles.length} active vehicles`)
 

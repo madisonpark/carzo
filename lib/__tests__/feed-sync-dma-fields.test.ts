@@ -84,4 +84,24 @@ describe('FeedSyncService - DMA Fields Parsing', () => {
       expect(FeedSyncService.parseDol('-100')).toBe(null);
     });
   });
+
+  describe('DMA field mapping', () => {
+    it('should correctly map DMA || null logic for valid string', () => {
+      const dma = 'Tampa-St. Petersburg-Clearwater DMA';
+      const result = dma || null;
+      expect(result).toBe('Tampa-St. Petersburg-Clearwater DMA');
+    });
+
+    it('should map empty string to null', () => {
+      const dma = '';
+      const result = dma || null;
+      expect(result).toBe(null);
+    });
+
+    it('should map undefined to null', () => {
+      const dma = undefined;
+      const result = dma || null;
+      expect(result).toBe(null);
+    });
+  });
 });

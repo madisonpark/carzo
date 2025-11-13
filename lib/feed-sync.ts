@@ -361,6 +361,9 @@ export class FeedSyncService {
   /**
    * Parse certified field from LotLinx feed
    * Handles: 'true', 'True', '1', 'yes', 'YES', etc.
+   *
+   * Exported as public static for testing purposes.
+   * Tests validate this exact production logic.
    */
   public static parseCertified(value: string | undefined): boolean {
     return ['true', '1', 'yes'].includes(value?.toLowerCase() || '');
@@ -370,6 +373,9 @@ export class FeedSyncService {
    * Parse days on lot field from LotLinx feed
    * Critical: Preserves 0 (not null) for newly added vehicles
    * Rejects negative values (days on lot cannot be negative)
+   *
+   * Exported as public static for testing purposes.
+   * Tests validate this exact production logic.
    */
   public static parseDol(value: string | undefined): number | null {
     const parsed = parseInt(value || '', 10);

@@ -87,6 +87,30 @@ This file contains **Claude Code-specific instructions** for tool usage, task ma
 - Documentation files (`*.md`, `README.md`)
 - Unless explicitly requested by user
 
+### Documentation Best Practices
+
+**Follow Diátaxis framework** (see `/docs/README.md`):
+- **Tutorials** (`/docs/tutorials/`) - Step-by-step learning guides
+- **How-To** (`/docs/how-to/`) - Problem-solving recipes
+- **Reference** (`/docs/reference/`) - Technical specifications
+- **Explanation** (`/docs/explanation/`) - Conceptual "why" documentation
+
+**CRITICAL: Never hardcode data that changes:**
+- ❌ **NO**: "We have 72,000 vehicles" (inventory changes daily)
+- ❌ **NO**: "Sitemap has 1,002 URLs" (grows with inventory)
+- ✅ **YES**: "Vehicle inventory (varies)"
+- ✅ **YES**: "Up to 50,000 URLs per sitemap (Google's limit)"
+
+**Before documenting:**
+1. Verify current behavior (don't assume from old code/docs)
+2. Test endpoints/features locally
+3. Use relative/generic terms for variable data
+4. Reference limits/constraints, not current values
+
+**CLAUDE.md vs detailed docs:**
+- CLAUDE.md: Quick reference + pointer to detailed doc
+- `/docs/explanation/`: Full details, rationale, examples
+
 ### Git Workflow Enforcement
 
 **CRITICAL RULES:**
@@ -194,6 +218,19 @@ When implementing features, aim for:
 - **VDP LCP**: < 2s
 - **Database queries**: < 100ms p95
 - **PostGIS spatial queries**: ~50-100ms
+
+### SEO & Crawlability
+
+**Files:**
+- `app/robots.ts` - Dynamic robots.txt (blocks `/admin/*`, `/api/*`, `/search?*`, `/*?flow=*`)
+- `app/sitemap.ts` - Dynamic sitemap.xml (queries Supabase for active vehicles)
+
+**When adding new pages:**
+- Add metadata with `generateMetadata()` (title, description, OpenGraph)
+- Consider structured data (JSON-LD) for rich snippets
+- Update `app/sitemap.ts` if creating new public route category
+
+**See:** `@/docs/explanation/seo-crawlability.md` for detailed SEO strategy, robots.txt rules, and sitemap configuration
 
 ### Domain Constraints (Revenue Optimization)
 

@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { Car, Home, ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui';
 
 export default function VehicleError({
   error,
@@ -46,19 +47,17 @@ export default function VehicleError({
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto">
-            <Link
-              href="/search"
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-brand hover:bg-brand-hover text-white font-semibold rounded-lg transition-colors"
-            >
-              Browse All Vehicles
-            </Link>
-            <Link
-              href="/"
-              className="flex items-center justify-center gap-2 px-6 py-3 bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-900 font-semibold rounded-lg transition-colors"
-            >
-              <Home className="w-4 h-4" />
-              Go Home
-            </Link>
+            <Button asChild variant="brand">
+              <Link href="/search">
+                Browse All Vehicles
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/" className="gap-2">
+                <Home className="w-4 h-4" />
+                Go Home
+              </Link>
+            </Button>
           </div>
         </div>
       </div>

@@ -67,6 +67,9 @@ export interface Vehicle {
   latitude?: number;
   longitude?: number;
   targeting_radius?: number;
+  dma?: string;
+  certified?: boolean;
+  dol?: number;
 }
 
 // PostGIS spatial query response (includes distance calculation)

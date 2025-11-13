@@ -6,8 +6,9 @@ UPDATE vehicles SET certified = false WHERE certified IS NULL;
 -- Add NOT NULL constraint to certified (safe after backfill)
 ALTER TABLE vehicles ALTER COLUMN certified SET NOT NULL;
 
--- Add CHECK constraint to dol (days on lot must be non-negative)
-ALTER TABLE vehicles ADD CONSTRAINT check_dol_non_negative CHECK (dol >= 0);
+-- Note: No CHECK constraint on dol - application validates >= 0 in parseDol()
+-- This allows resilient parsing (bad data → null) instead of hard insert failures
+-- Per CLAUDE.md: Prefer robust parsing over strict constraints for external data
 
 -- Replace regular indexes with partial indexes (exclude NULL dma values)
 DROP INDEX IF EXISTS idx_vehicles_dma;

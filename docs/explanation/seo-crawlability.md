@@ -210,20 +210,24 @@ If we need to include more than Google's 50K per-sitemap limit, we'll split into
 import { MetadataRoute } from 'next'
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://carzo.com'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://carzo.net'
 
+  // Block all crawlers on staging environment
+  const isStaging = baseUrl.includes('stage.carzo.net')
+
+  if (isStaging) {
+    return {
+      rules: [{ userAgent: '*', disallow: '/' }],
+    }
+  }
+
+  // Production robots.txt
   return {
     rules: [
       {
         userAgent: '*',
         allow: ['/', '/search$', '/vehicles/'],
         disallow: ['/admin/', '/api/', '/search?*', '/*?flow=*', '/*.json$'],
-      },
-      {
-        userAgent: 'Googlebot',
-        allow: ['/', '/search$', '/vehicles/'],
-        disallow: ['/admin/', '/api/', '/search?*', '/*?flow=*'],
-        crawlDelay: 0,  // No delay for Google
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
@@ -232,51 +236,72 @@ export default function robots(): MetadataRoute.Robots {
 ```
 
 **Key points:**
-- Uses `NEXT_PUBLIC_SITE_URL` env var (set in Vercel)
-- Separate Googlebot rules (no crawl delay)
-- References sitemap location
+- Staging detection blocks all crawlers on `stage.carzo.net`
+- Single rule set for all crawlers (Googlebot follows `*` rules)
+- Blocks JSON files, admin routes, and API endpoints
 
-### File: `app/sitemap.ts`
+### File: `app/sitemap.ts` (Simplified View)
+
+**Note**: This is a simplified view showing the core logic. The actual implementation includes:
+- ISR caching (`export const revalidate = 3600`)
+- Staging environment detection
+- Parallel pagination (50 batches × 1,000 vehicles via `Promise.all()`)
+- VIN deduplication (Map-based, keeps newest `last_sync`)
+- 50K URL limit enforcement (`.slice()` to exactly 49,998 vehicles)
 
 ```typescript
 import { MetadataRoute } from 'next'
 import { supabase } from '@/lib/supabase'
 
+// Cache for 1 hour (ISR)
+export const revalidate = 3600
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://carzo.com'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://carzo.net'
+
+  // Block staging
+  if (baseUrl.includes('stage.carzo.net')) return []
 
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
-    {
-      url: baseUrl,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 1.0,
-    },
-    {
-      url: `${baseUrl}/search`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.8,
-    },
+    { url: baseUrl, lastModified: new Date(), changeFrequency: 'daily', priority: 1.0 },
+    { url: `${baseUrl}/search`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
   ]
 
-  // Fetch all active vehicles
-  const { data: vehicles, error } = await supabase
-    .from('vehicles')
-    .select('vin, last_sync')
-    .eq('is_active', true)
-    .order('last_sync', { ascending: false })
+  // Fetch vehicles with pagination (50 parallel requests)
+  const promises = Array.from({ length: 50 }, (_, page) =>
+    supabase
+      .from('vehicles')
+      .select('vin, last_sync')
+      .eq('is_active', true)
+      .order('last_sync', { ascending: false })
+      .range(page * 1000, (page + 1) * 1000 - 1)
+  )
 
-  if (error) {
-    console.error('Error fetching vehicles for sitemap:', error)
-    return staticPages // Return at least static pages
+  const results = await Promise.all(promises)
+  let allVehicles = []
+  for (const { data, error } of results) {
+    if (error) continue
+    if (data) allVehicles.push(...data)
   }
 
-  // Generate vehicle detail pages
-  const vehiclePages: MetadataRoute.Sitemap = (vehicles || []).map((vehicle) => ({
-    url: `${baseUrl}/vehicles/${vehicle.vin}`,
-    lastModified: vehicle.last_sync ? new Date(vehicle.last_sync) : new Date(),
+  // Deduplicate by VIN (keep newest)
+  const uniqueVehicles = Array.from(
+    allVehicles.reduce((map, v) => {
+      const existing = map.get(v.vin)
+      if (!existing || (v.last_sync && v.last_sync > (existing.last_sync || ''))) {
+        map.set(v.vin, v)
+      }
+      return map
+    }, new Map())
+  ).map(([_, v]) => v)
+
+  // Limit to 49,998 (+ 2 static = 50,000)
+  const limitedVehicles = uniqueVehicles.slice(0, 49998)
+
+  const vehiclePages = limitedVehicles.map(v => ({
+    url: `${baseUrl}/vehicles/${encodeURIComponent(v.vin)}`,
+    lastModified: v.last_sync ? new Date(v.last_sync) : new Date(),
     changeFrequency: 'weekly',
     priority: 0.7,
   }))
@@ -286,9 +311,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 ```
 
 **Key points:**
-- Graceful fallback (returns static pages if Supabase query fails)
-- Uses `last_sync` for accurate `lastModified` timestamps
-- Filters by `is_active = true` (sold vehicles excluded)
+- ISR caching prevents DB queries on every request
+- Parallel fetching (50 concurrent requests)
+- VIN deduplication handles potential DB duplicates
+- URL encoding for VINs with special characters
+- Enforces Google's 50K URL limit exactly
 
 ## Impact on Revenue
 

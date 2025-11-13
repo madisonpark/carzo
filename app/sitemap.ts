@@ -89,7 +89,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Generate vehicle detail pages
   const vehiclePages: MetadataRoute.Sitemap = limitedVehicles.map((vehicle) => ({
-    url: `${baseUrl}/vehicles/${vehicle.vin}`,
+    url: `${baseUrl}/vehicles/${encodeURIComponent(vehicle.vin)}`,
     lastModified: vehicle.last_sync ? new Date(vehicle.last_sync) : new Date(),
     changeFrequency: 'weekly',
     priority: 0.7,

@@ -211,7 +211,7 @@ describe('sitemap.ts', () => {
 
       const vehicleUrls = result.filter(url => url.url.includes('/vehicles/'));
       expect(vehicleUrls).toHaveLength(2);
-      // VINs should be included as-is in URLs (Next.js handles encoding)
+      // VINs are URL-encoded (encodeURIComponent), though hyphens/underscores are not affected
       expect(vehicleUrls[0].url).toBe('https://carzo.net/vehicles/ABC-123_XYZ');
       expect(vehicleUrls[1].url).toBe('https://carzo.net/vehicles/1HGCM82633A123456');
     });

@@ -41,11 +41,13 @@ export async function GET(request: NextRequest) {
     ) || 0;
 
     // Get actual unique dealer count from database
-    const { count: totalDealers } = await supabase
-      .from('vehicles')
-      .select('dealer_id', { count: 'exact', head: true })
-      .eq('is_active', true)
-      .then(result => ({ count: result.count || 0 }));
+    const { data: dealerCountData, error: dealerError } = await supabase.rpc('get_unique_dealer_count');
+
+    if (dealerError) {
+      console.error('Error getting dealer count:', dealerError);
+    }
+
+    const totalDealers = dealerCountData || 0;
 
     // Format by_metro as simple object
     const byMetro = Object.fromEntries(

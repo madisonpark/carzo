@@ -47,7 +47,7 @@ export async function validateAdminAuth(request: NextRequest): Promise<AdminAuth
           headers: {
             'X-RateLimit-Limit': String(rateLimitResult.limit),
             'X-RateLimit-Remaining': String(rateLimitResult.remaining),
-            'X-RateLimit-Reset': rateLimitResult.resetTime.toISOString(),
+            'X-RateLimit-Reset': new Date(rateLimitResult.reset * 1000).toISOString(),
           },
         }
       ),

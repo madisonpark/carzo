@@ -137,7 +137,7 @@ export async function GET(request: NextRequest) {
       const rows = (zipCodes || []).map((z: any) => ({ zip_code: z.zip_code }));
 
       if (format === 'csv') {
-        const csv = ['zip_code', ...rows.map(r => r.zip_code)].join('\n');
+        const csv = ['zip_code', ...rows.map((r: { zip_code: string }) => r.zip_code)].join('\n');
 
         return new NextResponse(csv, {
           headers: {

@@ -54,7 +54,18 @@ export async function GET(request: NextRequest) {
     );
 
     // Calculate allocations
-    const allocations = viableCampaigns.map((metro: any) => {
+    type Allocation = {
+      campaign: string;
+      metro: string;
+      monthly_budget: number;
+      daily_budget: number;
+      expected_clicks: number;
+      expected_revenue: number;
+      expected_profit: number;
+      roi_pct: number;
+    };
+
+    const allocations: Allocation[] = viableCampaigns.map((metro: any) => {
       const inventoryScore = Number(metro.vehicle_count) * Number(metro.dealer_count);
       const budgetProportion = inventoryScore / totalScore;
       const monthlyBudget = totalBudget * budgetProportion;
@@ -80,7 +91,12 @@ export async function GET(request: NextRequest) {
 
     // Calculate summary
     const summary = allocations.reduce(
-      (sum, alloc) => ({
+      (sum: {
+        total_monthly_spend: number;
+        total_monthly_revenue: number;
+        total_monthly_profit: number;
+        overall_roi: number;
+      }, alloc: Allocation) => ({
         total_monthly_spend: sum.total_monthly_spend + alloc.monthly_budget,
         total_monthly_revenue: sum.total_monthly_revenue + alloc.expected_revenue,
         total_monthly_profit: sum.total_monthly_profit + alloc.expected_profit,

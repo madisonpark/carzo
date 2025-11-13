@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { validateAdminAuth } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,10 +11,10 @@ export const dynamic = 'force-dynamic';
  * @returns Total counts by metro, body style, and make
  */
 export async function GET(request: NextRequest) {
-  // Simple password auth
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || authHeader !== `Bearer ${process.env.ADMIN_PASSWORD}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  // Validate auth and rate limiting
+  const authResult = await validateAdminAuth(request);
+  if (!authResult.authorized) {
+    return authResult.response!;
   }
 
   const supabase = createClient(
@@ -39,9 +40,12 @@ export async function GET(request: NextRequest) {
       0
     ) || 0;
 
-    const totalDealers = new Set(
-      metroResult.data?.map((m: any) => m.dealer_count) || []
-    ).size;
+    // Get actual unique dealer count from database
+    const { count: totalDealers } = await supabase
+      .from('vehicles')
+      .select('dealer_id', { count: 'exact', head: true })
+      .eq('is_active', true)
+      .then(result => ({ count: result.count || 0 }));
 
     // Format by_metro as simple object
     const byMetro = Object.fromEntries(

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { validateAdminAuth } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,10 +15,10 @@ export const dynamic = 'force-dynamic';
  * @returns Budget allocation recommendations with ROI projections
  */
 export async function GET(request: NextRequest) {
-  // Simple password auth
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || authHeader !== `Bearer ${process.env.ADMIN_PASSWORD}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  // Validate auth and rate limiting
+  const authResult = await validateAdminAuth(request);
+  if (!authResult.authorized) {
+    return authResult.response!;
   }
 
   const { searchParams } = new URL(request.url);
@@ -31,21 +32,33 @@ export async function GET(request: NextRequest) {
   );
 
   try {
-    // Get campaign recommendations
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SITE_URL}/api/admin/campaign-recommendations`,
-      {
-        headers: { Authorization: `Bearer ${process.env.ADMIN_PASSWORD}` },
-      }
+    // Get metro inventory directly (no internal API call)
+    const { data: metros, error: metroError } = await supabase.rpc('get_metro_inventory');
+
+    if (metroError) {
+      throw metroError;
+    }
+
+    // Filter to viable campaigns (tier1 and tier2)
+    const viableCampaigns = (metros || []).filter((metro: any) => {
+      return (
+        (metro.vehicle_count >= 500 && metro.dealer_count >= 15) || // tier1
+        (metro.vehicle_count >= 200 && metro.dealer_count >= 8) // tier2
+      );
+    });
+
+    // Calculate total score for budget allocation
+    const totalScore = viableCampaigns.reduce(
+      (sum: number, metro: any) => sum + Number(metro.vehicle_count) * Number(metro.dealer_count),
+      0
     );
 
-    const { tier1, tier2 } = await response.json();
-    const viableCampaigns = [...tier1, ...tier2];
-
     // Calculate allocations
-    const allocations = viableCampaigns.map((campaign: any) => {
-      const monthlyBudget = campaign.recommended_daily_budget * 30;
-      const dailyBudget = campaign.recommended_daily_budget;
+    const allocations = viableCampaigns.map((metro: any) => {
+      const inventoryScore = Number(metro.vehicle_count) * Number(metro.dealer_count);
+      const budgetProportion = inventoryScore / totalScore;
+      const monthlyBudget = totalBudget * budgetProportion;
+      const dailyBudget = monthlyBudget / 30;
       const dailyClicks = dailyBudget / cpcAssumption;
       const dealerClicks = dailyClicks * conversionRate;
       const dailyRevenue = dealerClicks * 0.80;
@@ -54,8 +67,8 @@ export async function GET(request: NextRequest) {
       const roiPct = (monthlyProfit / monthlyBudget) * 100;
 
       return {
-        campaign: campaign.name,
-        metro: campaign.metro,
+        campaign: `${metro.metro} - All Vehicles`,
+        metro: metro.metro,
         monthly_budget: Math.round(monthlyBudget * 100) / 100,
         daily_budget: Math.round(dailyBudget * 100) / 100,
         expected_clicks: Math.round(dailyClicks * 30),

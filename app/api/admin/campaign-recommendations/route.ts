@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { validateAdminAuth } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,7 @@ interface CampaignRecommendation {
   category: string;
   vehicles: number;
   dealers: number;
-  diversity: number;
+  dealer_concentration: number;
   recommended_daily_budget: number;
   trend: 'stable';
   reason: string;
@@ -23,10 +24,10 @@ interface CampaignRecommendation {
  * @returns JSON with tier-based campaign recommendations
  */
 export async function GET(request: NextRequest) {
-  // Simple password auth
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || authHeader !== `Bearer ${process.env.ADMIN_PASSWORD}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  // Validate auth and rate limiting
+  const authResult = await validateAdminAuth(request);
+  if (!authResult.authorized) {
+    return authResult.response!;
   }
 
   const supabase = createClient(
@@ -45,41 +46,33 @@ export async function GET(request: NextRequest) {
     const totalMonthlyBudget = 7500; // Default budget
     const recommendations: CampaignRecommendation[] = [];
 
-    // Calculate total inventory score
+    // Calculate total inventory score (weight by dealer count for better distribution)
     const totalScore = metros.reduce(
-      (sum: number, metro: any) => sum + metro.vehicle_count * metro.diversity_score,
+      (sum: number, metro: any) => sum + metro.vehicle_count * metro.dealer_count,
       0
     );
 
     // Generate recommendations
     for (const metro of metros) {
-      const inventoryScore = metro.vehicle_count * metro.diversity_score;
+      const inventoryScore = metro.vehicle_count * metro.dealer_count;
       const budgetProportion = inventoryScore / totalScore;
       const recommendedDailyBudget = Math.round((totalMonthlyBudget * budgetProportion) / 30);
 
-      // Determine tier
+      // Determine tier based on vehicle count and dealer count
       let tier: CampaignRecommendation['tier'] = 'avoid';
       let reason = '';
 
-      if (
-        metro.vehicle_count >= 500 &&
-        metro.dealer_count >= 15 &&
-        metro.diversity_score >= 0.80
-      ) {
+      if (metro.vehicle_count >= 500 && metro.dealer_count >= 15) {
         tier = 'tier1';
-        reason = 'High inventory, excellent dealer diversity, recommended for immediate launch';
-      } else if (
-        metro.vehicle_count >= 200 &&
-        metro.dealer_count >= 8 &&
-        metro.diversity_score >= 0.70
-      ) {
+        reason = 'High inventory, many dealers, recommended for immediate launch';
+      } else if (metro.vehicle_count >= 200 && metro.dealer_count >= 8) {
         tier = 'tier2';
-        reason = 'Adequate inventory, good diversity, launch if budget allows';
+        reason = 'Adequate inventory, sufficient dealers, launch if budget allows';
       } else if (metro.vehicle_count >= 100 && metro.dealer_count >= 5) {
         tier = 'tier3';
         reason = 'Low inventory, test with caution and small budget';
       } else {
-        reason = 'Insufficient inventory or dealer diversity';
+        reason = 'Insufficient inventory or dealer count';
       }
 
       recommendations.push({
@@ -90,7 +83,7 @@ export async function GET(request: NextRequest) {
         category: 'all',
         vehicles: Number(metro.vehicle_count),
         dealers: Number(metro.dealer_count),
-        diversity: Number(metro.diversity_score),
+        dealer_concentration: Number(metro.dealer_concentration),
         recommended_daily_budget: recommendedDailyBudget,
         trend: 'stable',
         reason,

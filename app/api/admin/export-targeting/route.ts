@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { validateAdminAuth } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,10 +36,10 @@ function sanitizeCsvField(value: string): string {
  * @returns CSV or JSON download
  */
 export async function GET(request: NextRequest) {
-  // Simple password auth
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || authHeader !== `Bearer ${process.env.ADMIN_PASSWORD}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  // Validate auth and rate limiting
+  const authResult = await validateAdminAuth(request);
+  if (!authResult.authorized) {
+    return authResult.response!;
   }
 
   const { searchParams } = new URL(request.url);

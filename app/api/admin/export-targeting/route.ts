@@ -4,6 +4,27 @@ import { createClient } from '@supabase/supabase-js';
 export const dynamic = 'force-dynamic';
 
 /**
+ * Sanitize field for CSV export to prevent formula injection
+ */
+function sanitizeCsvField(value: string): string {
+  if (!value) return '""';
+
+  // Prevent formula injection (leading =, +, -, @, tab, carriage return)
+  let sanitized = value;
+  if (/^[=+\-@\t\r]/.test(sanitized)) {
+    sanitized = `'${sanitized}`; // Prefix with single quote
+  }
+
+  // Escape double quotes
+  sanitized = sanitized.replace(/"/g, '""');
+
+  // Remove newlines
+  sanitized = sanitized.replace(/[\r\n]/g, ' ');
+
+  return `"${sanitized}"`;
+}
+
+/**
  * Export geographic targeting lists for ad platforms
  *
  * Query params:
@@ -88,7 +109,7 @@ export async function GET(request: NextRequest) {
         const csv = [
           'latitude,longitude,radius_miles,dealer_name,vehicle_count',
           ...rows.map(
-            r => `${r.latitude},${r.longitude},${r.radius_miles},"${r.dealer_name}",${r.vehicle_count}`
+            r => `${r.latitude},${r.longitude},${r.radius_miles},${sanitizeCsvField(r.dealer_name)},${r.vehicle_count}`
           ),
         ].join('\n');
 
@@ -103,40 +124,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(rows);
     } else if (platform === 'google') {
       // Export ZIP codes within 25 miles of dealers
-      const { data: dealers, error: dealerError } = await supabase
-        .from('vehicles')
-        .select('latitude, longitude, dealer_id')
-        .eq('dealer_city', city)
-        .eq('dealer_state', state)
-        .eq('is_active', true);
-
-      if (dealerError) throw dealerError;
-
-      // Get unique dealer locations
-      const uniqueLocations = Array.from(
-        new Set(dealers.map(d => `${d.latitude},${d.longitude}`))
-      ).map(loc => {
-        const [lat, lon] = loc.split(',').map(Number);
-        return { latitude: lat, longitude: lon };
+      // Uses bulk function to avoid N+1 query problem
+      const { data: zipCodes, error: zipError } = await supabase.rpc('get_zips_for_metro', {
+        p_city: city,
+        p_state: state,
+        p_radius_miles: 25,
       });
 
-      // Find ZIP codes within 25 miles of ANY dealer
-      // Using ST_DWithin with 25 miles = 40234 meters
-      const zipCodes = new Set<string>();
+      if (zipError) throw zipError;
 
-      for (const location of uniqueLocations) {
-        const { data: nearbyZips, error: zipError } = await supabase.rpc('get_nearby_zips', {
-          p_latitude: location.latitude,
-          p_longitude: location.longitude,
-          p_radius_miles: 25,
-        });
-
-        if (!zipError && nearbyZips) {
-          nearbyZips.forEach((z: any) => zipCodes.add(z.zip_code));
-        }
-      }
-
-      const rows = Array.from(zipCodes).map(zip => ({ zip_code: zip }));
+      const rows = (zipCodes || []).map((z: any) => ({ zip_code: z.zip_code }));
 
       if (format === 'csv') {
         const csv = ['zip_code', ...rows.map(r => r.zip_code)].join('\n');

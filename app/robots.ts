@@ -4,7 +4,7 @@ export default function robots(): MetadataRoute.Robots {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://carzo.net'
 
   // Block all crawlers on staging environment
-  const isStaging = baseUrl.includes('stage.')
+  const isStaging = baseUrl.includes('stage.carzo.net')
 
   if (isStaging) {
     return {

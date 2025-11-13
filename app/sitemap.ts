@@ -1,11 +1,14 @@
 import { MetadataRoute } from 'next'
 import { supabase } from '@/lib/supabase'
 
+// Revalidate sitemap every hour to avoid hitting database on every request
+export const revalidate = 3600
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://carzo.net'
 
   // Don't generate sitemap for staging environment (blocked by robots.txt anyway)
-  const isStaging = baseUrl.includes('stage.')
+  const isStaging = baseUrl.includes('stage.carzo.net')
   if (isStaging) {
     return []
   }

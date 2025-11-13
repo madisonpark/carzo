@@ -78,40 +78,33 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      // Get unique dealer locations
-      const uniqueDealers = Array.from(
-        new Map(
-          dealers.map(d => [
-            d.dealer_id,
-            {
-              latitude: d.latitude,
-              longitude: d.longitude,
-              dealer_name: d.dealer_name,
-            },
-          ])
-        ).values()
-      );
+      // Get unique dealers and their vehicle counts in one pass (O(N) instead of O(N*M))
+      const dealerData = new Map<
+        string,
+        { latitude: number; longitude: number; dealer_name: string; vehicle_count: number }
+      >();
 
-      // Count vehicles per dealer
-      const dealerCounts = dealers.reduce((acc: Record<string, number>, d) => {
-        acc[d.dealer_id] = (acc[d.dealer_id] || 0) + 1;
-        return acc;
-      }, {});
+      for (const d of dealers) {
+        const existing = dealerData.get(d.dealer_id);
+        if (existing) {
+          existing.vehicle_count++;
+        } else {
+          dealerData.set(d.dealer_id, {
+            latitude: d.latitude,
+            longitude: d.longitude,
+            dealer_name: d.dealer_name,
+            vehicle_count: 1,
+          });
+        }
+      }
 
-      const rows = uniqueDealers.map((dealer: any) => {
-        const dealerId = dealers.find(
-          d => d.latitude === dealer.latitude && d.longitude === dealer.longitude
-        )?.dealer_id;
-        const vehicleCount = dealerId ? dealerCounts[dealerId] : 0;
-
-        return {
-          latitude: dealer.latitude,
-          longitude: dealer.longitude,
-          radius_miles: 25,
-          dealer_name: dealer.dealer_name,
-          vehicle_count: vehicleCount,
-        };
-      });
+      const rows = Array.from(dealerData.values()).map(dealer => ({
+        latitude: dealer.latitude,
+        longitude: dealer.longitude,
+        radius_miles: 25,
+        dealer_name: dealer.dealer_name,
+        vehicle_count: dealer.vehicle_count,
+      }));
 
       if (format === 'csv') {
         const csv = [

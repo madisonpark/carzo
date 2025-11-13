@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     // Generate recommendations
     for (const metro of metros as MetroInventoryRow[]) {
       const inventoryScore = metro.vehicle_count * metro.dealer_count;
-      const budgetProportion = inventoryScore / totalScore;
+      const budgetProportion = totalScore > 0 ? inventoryScore / totalScore : 0; // Protected from division by zero
       const recommendedDailyBudget = Math.round((totalMonthlyBudget * budgetProportion) / 30);
 
       // Determine tier based on vehicle count and dealer count

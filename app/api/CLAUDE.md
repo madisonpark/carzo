@@ -221,21 +221,237 @@ export async function OPTIONS(request: NextRequest) {
 }
 ```
 
-## Testing API Routes
+## Testing API Routes (REQUIRED)
 
-**Every API route needs tests:**
+**⚠️ ALL API routes MUST have tests before committing**
+
+### Test File Location
+
+```
+app/api/[endpoint]/
+├── route.ts           # API route handler
+└── __tests__/
+    └── route.test.ts  # Tests colocated with route
+```
+
+### Required Test Coverage
+
+**Every API route must test:**
+1. ✅ Rate limiting (exhaust limits, check 429)
+2. ✅ Success path (valid request)
+3. ✅ Validation errors (invalid/missing fields)
+4. ✅ Error scenarios (401, 404, 500)
+5. ✅ Response format (correct JSON structure)
+6. ✅ Response headers (Content-Type, rate limit headers)
+
+### 1. Rate Limiting Testing
 
 ```typescript
-// app/api/track-click/__tests__/route.test.ts
+// app/api/[endpoint]/__tests__/route.test.ts
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST } from '../route';
 import { NextRequest } from 'next/server';
 
-describe('/api/track-click', () => {
+describe('POST /api/[endpoint] - Rate Limiting', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
+  it('should enforce rate limits', async () => {
+    const mockRequest = new NextRequest('http://localhost/api/endpoint', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ /* valid body */ }),
+    });
+
+    // First request should succeed
+    const response1 = await POST(mockRequest);
+    expect(response1.status).not.toBe(429);
+
+    // Exhaust rate limit (depends on endpoint limit)
+    for (let i = 0; i < 100; i++) {
+      await POST(mockRequest);
+    }
+
+    // Should now be rate limited
+    const response2 = await POST(mockRequest);
+    expect(response2.status).toBe(429);
+    const data = await response2.json();
+    expect(data.error).toContain('Rate limit exceeded');
+  });
+
+  it('should include rate limit headers', async () => {
+    const mockRequest = new NextRequest('http://localhost/api/endpoint', {
+      method: 'POST',
+      body: JSON.stringify({ /* valid body */ }),
+    });
+
+    const response = await POST(mockRequest);
+    expect(response.headers.get('X-RateLimit-Remaining')).toBeDefined();
+    expect(response.headers.get('X-RateLimit-Reset')).toBeDefined();
+  });
+});
+```
+
+### 2. Supabase Client Mocking
+
+```typescript
+import { vi } from 'vitest';
+import { createClient } from '@supabase/supabase-js';
+
+// Mock Supabase client at top of test file
+vi.mock('@supabase/supabase-js', () => ({
+  createClient: vi.fn(() => ({
+    from: vi.fn(() => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          single: vi.fn(() => Promise.resolve({
+            data: { id: '123', make: 'Toyota' },
+            error: null,
+          })),
+        })),
+      })),
+      insert: vi.fn(() => Promise.resolve({
+        data: { id: '456' },
+        error: null,
+      })),
+    })),
+    rpc: vi.fn(() => Promise.resolve({
+      data: [{ id: '1', make: 'Toyota' }],
+      error: null,
+    })),
+  })),
+}));
+
+describe('POST /api/search-vehicles', () => {
+  it('should call Supabase RPC with correct params', async () => {
+    const mockRequest = new NextRequest('http://localhost/api/search-vehicles', {
+      method: 'POST',
+      body: JSON.stringify({
+        userLat: 33.7490,
+        userLon: -84.3880,
+        make: 'Toyota',
+      }),
+    });
+
+    const response = await POST(mockRequest);
+    const data = await response.json();
+
+    expect(createClient).toHaveBeenCalled();
+    expect(data.vehicles).toBeDefined();
+  });
+});
+```
+
+### 3. Validation Testing (Zod Schemas)
+
+```typescript
+describe('POST /api/[endpoint] - Validation', () => {
+  it('should reject invalid request body', async () => {
+    const mockRequest = new NextRequest('http://localhost/api/endpoint', {
+      method: 'POST',
+      body: JSON.stringify({ invalid: 'field' }),
+    });
+
+    const response = await POST(mockRequest);
+    expect(response.status).toBe(400);
+    const data = await response.json();
+    expect(data.error).toContain('Validation failed');
+  });
+
+  it('should accept valid request body', async () => {
+    const mockRequest = new NextRequest('http://localhost/api/endpoint', {
+      method: 'POST',
+      body: JSON.stringify({
+        vehicleId: '123e4567-e89b-12d3-a456-426614174000',
+        dealerId: 'dealer123',
+        userId: 'user456',
+      }),
+    });
+
+    const response = await POST(mockRequest);
+    expect(response.status).toBe(200);
+  });
+
+  it('should reject missing required fields', async () => {
+    const mockRequest = new NextRequest('http://localhost/api/endpoint', {
+      method: 'POST',
+      body: JSON.stringify({ vehicleId: '123' }), // Missing dealerId, userId
+    });
+
+    const response = await POST(mockRequest);
+    expect(response.status).toBe(400);
+  });
+});
+```
+
+### 4. Error Scenario Testing
+
+```typescript
+describe('POST /api/[endpoint] - Error Handling', () => {
+  it('should return 401 for missing authorization', async () => {
+    const mockRequest = new NextRequest('http://localhost/api/cron/endpoint', {
+      method: 'GET',
+      // Missing Authorization header
+    });
+
+    const response = await GET(mockRequest);
+    expect(response.status).toBe(401);
+  });
+
+  it('should return 404 for non-existent resource', async () => {
+    // Mock Supabase to return no data
+    vi.mocked(createClient).mockReturnValueOnce({
+      from: vi.fn(() => ({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            single: vi.fn(() => Promise.resolve({
+              data: null,
+              error: { code: 'PGRST116', message: 'Not found' },
+            })),
+          })),
+        })),
+      })),
+    } as any);
+
+    const mockRequest = new NextRequest('http://localhost/api/endpoint', {
+      method: 'POST',
+      body: JSON.stringify({ id: 'non-existent' }),
+    });
+
+    const response = await POST(mockRequest);
+    expect(response.status).toBe(404);
+  });
+
+  it('should return 500 for database errors', async () => {
+    // Mock Supabase to return error
+    vi.mocked(createClient).mockReturnValueOnce({
+      from: vi.fn(() => ({
+        insert: vi.fn(() => Promise.resolve({
+          data: null,
+          error: { message: 'Database connection failed' },
+        })),
+      })),
+    } as any);
+
+    const mockRequest = new NextRequest('http://localhost/api/endpoint', {
+      method: 'POST',
+      body: JSON.stringify({ /* valid body */ }),
+    });
+
+    const response = await POST(mockRequest);
+    expect(response.status).toBe(500);
+    const data = await response.json();
+    expect(data.error).toContain('Internal server error');
+  });
+});
+```
+
+### 5. Revenue-Critical Testing Example
+
+```typescript
+// app/api/track-click/__tests__/route.test.ts
+describe('/api/track-click - Revenue Logic', () => {
   it('should mark first click as billable', async () => {
     const request = new NextRequest('http://localhost:3000/api/track-click', {
       method: 'POST',
@@ -252,8 +468,40 @@ describe('/api/track-click', () => {
 
     expect(data.billable).toBe(true);
   });
+
+  it('should mark duplicate dealer click as not billable', async () => {
+    const request = new NextRequest('http://localhost:3000/api/track-click', {
+      method: 'POST',
+      body: JSON.stringify({
+        vehicleId: 'vehicle-2',
+        dealerId: 'dealer-1', // Same dealer as previous test
+        userId: 'user-1',     // Same user
+        sessionId: 'session-1',
+      }),
+    });
+
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(data.billable).toBe(false); // NOT billable (duplicate dealer)
+  });
 });
 ```
+
+### Don't Forget
+
+1. **Rate limiting**: Test exhausting limits
+2. **Supabase mocking**: Mock all database calls
+3. **Validation**: Test invalid/missing fields
+4. **Error scenarios**: 400, 401, 404, 429, 500
+5. **Response format**: Verify JSON structure
+6. **Headers**: Check Content-Type, rate limit headers
+7. **Revenue logic**: Double-check billable calculations (track-click)
+
+**See also:**
+- `/docs/reference/testing.md` - Complete testing guide
+- `/docs/how-to/add-api-endpoint.md` - API endpoint pattern with testing
+- `/CLAUDE.md` - Testing requirements and phases
 
 ## Cron Endpoints (Vercel)
 

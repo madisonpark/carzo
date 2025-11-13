@@ -1,0 +1,39 @@
+# Cursor Rules for Carzo
+
+## Primary Context
+
+**See AGENTS.md for complete project context** (LLM-agnostic, works with all AI assistants).
+
+This file contains **Cursor-specific preferences** (placeholder for now).
+
+---
+
+## Cursor-Specific Settings (To Be Configured)
+
+When configuring Cursor for this project, consider:
+
+1. **Always read AGENTS.md first** for project context
+2. **Apply branch-based workflow** (never work on main)
+3. **Enforce testing requirements** (all code changes need tests)
+4. **Use semantic color tokens** (bg-primary, bg-brand, not hard-coded colors)
+5. **Mobile-first responsive design** (lg: breakpoint at 1024px)
+
+## Code Style Preferences
+
+- TypeScript strict mode
+- Server Components by default (Next.js 16)
+- Semantic color tokens (Tailwind v4)
+- cn() utility for conditional classes
+- React.forwardRef pattern for UI components
+
+## Testing Requirements
+
+- All new functions require tests
+- Revenue-critical files need 95%+ coverage
+- Use Vitest v4 for all tests
+- Mock external dependencies
+
+---
+
+**Last Updated:** 2025-11-12
+**See AGENTS.md for full project context**

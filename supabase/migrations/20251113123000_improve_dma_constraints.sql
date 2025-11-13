@@ -1,6 +1,9 @@
 -- Improve DMA column constraints and indexes
 
--- Add NOT NULL constraint to certified (safe because of DEFAULT false)
+-- Backfill any NULL certified values (shouldn't exist due to DEFAULT, but be safe)
+UPDATE vehicles SET certified = false WHERE certified IS NULL;
+
+-- Add NOT NULL constraint to certified (safe after backfill)
 ALTER TABLE vehicles ALTER COLUMN certified SET NOT NULL;
 
 -- Add CHECK constraint to dol (days on lot must be non-negative)

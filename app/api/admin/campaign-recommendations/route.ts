@@ -1,22 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { validateAdminAuth } from '@/lib/admin-auth';
+import type { MetroInventoryRow, CampaignRecommendation } from '@/lib/types/campaign-planning';
 
 export const dynamic = 'force-dynamic';
-
-interface CampaignRecommendation {
-  id: string;
-  name: string;
-  tier: 'tier1' | 'tier2' | 'tier3' | 'avoid';
-  metro: string;
-  category: string;
-  vehicles: number;
-  dealers: number;
-  dealer_concentration: number;
-  recommended_daily_budget: number;
-  trend: 'stable';
-  reason: string;
-}
 
 /**
  * Generate campaign recommendations based on current inventory
@@ -48,12 +35,12 @@ export async function GET(request: NextRequest) {
 
     // Calculate total inventory score (weight by dealer count for better distribution)
     const totalScore = metros.reduce(
-      (sum: number, metro: any) => sum + metro.vehicle_count * metro.dealer_count,
+      (sum: number, metro: MetroInventoryRow) => sum + metro.vehicle_count * metro.dealer_count,
       0
     );
 
     // Generate recommendations
-    for (const metro of metros) {
+    for (const metro of metros as MetroInventoryRow[]) {
       const inventoryScore = metro.vehicle_count * metro.dealer_count;
       const budgetProportion = inventoryScore / totalScore;
       const recommendedDailyBudget = Math.round((totalMonthlyBudget * budgetProportion) / 30);

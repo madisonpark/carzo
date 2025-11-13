@@ -93,6 +93,9 @@ interface DbVehicle {
   latitude: number | null;
   longitude: number | null;
   targeting_radius: number;
+  dma: string | null;
+  certified: boolean;
+  dol: number | null;
   is_active: boolean;
   last_sync: string;
 }
@@ -407,6 +410,9 @@ export class FeedSyncService {
       latitude: parseFloat(vehicle.Latitude) || null,
       longitude: parseFloat(vehicle.Longitude) || null,
       targeting_radius: parseInt(vehicle.Radius) || 30,
+      dma: vehicle.Dma || null,
+      certified: vehicle.Certified?.toLowerCase() === 'true' || vehicle.Certified === '1',
+      dol: parseInt(vehicle.Dol) || null,
       is_active: true,
       last_sync: new Date().toISOString(),
     };

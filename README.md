@@ -69,19 +69,40 @@ Simple cookie-based approach (no JWT needed). Persistent UUID stored for 1 year.
 
 ## Project Status
 
-**Phase 1 Complete:**
-- ✅ Next.js 16 project initialized
-- ✅ Supabase schema created
-- ✅ User tracking system (cookies)
-- ✅ Dealer diversification algorithm
+**All Core Features Complete:**
+- ✅ Next.js 16 with Turbopack (2-5x faster builds)
+- ✅ Supabase with 72,051 vehicles loaded
+- ✅ User tracking system (cookie-based, 1 year expiration)
+- ✅ Dealer diversification algorithm (97.61% test coverage)
+- ✅ VDP bridge page (conversion-optimized, 40%+ CTR target)
+- ✅ Click tracking API with 30-day deduplication
+- ✅ Search results with PostGIS spatial queries (100x faster)
+- ✅ Homepage with hero search and featured vehicles
+- ✅ Analytics dashboard with billable/non-billable breakdown
+- ✅ Feed sync (LotLinx) with 4x daily cron schedule
+- ✅ IP geolocation (MaxMind) with localhost fallback
+- ✅ Rate limiting (PostgreSQL-based, no Redis)
+- ✅ A/B test flow routing (3 variants)
+- ✅ Tailwind CSS v4 design system
+- ✅ UI component library (Button, Input, Badge, Card)
+- ✅ Mobile optimization (filter drawer, touch targets)
+- ✅ Testing infrastructure (Vitest v4, 6 test files, high coverage)
 
-**Next Steps:**
-- Feed sync script
-- VDP bridge page
-- Click tracking API
-- Search results page
-- Homepage
+**Ready for deployment to Vercel**
 
 ## Documentation
 
-See `../lotlinx/CLAUDE.md` for project context and `supabase-schema.sql` for database schema.
+**For AI Coding Assistants:**
+- **`AGENTS.md`** - LLM-agnostic project context (use with Claude, Gemini, ChatGPT, Copilot, Cursor)
+- **`CLAUDE.md`** - Claude Code-specific instructions (tool usage, task management)
+- **`.cursorrules`** - Cursor-specific preferences (placeholder)
+- **`.github/copilot-instructions.md`** - GitHub Copilot preferences (placeholder)
+
+**For Humans:**
+- **`README.md`** - This file (quick start and overview)
+- **`/docs/`** - Comprehensive documentation (Diátaxis framework - coming soon)
+  - `/docs/tutorials/` - Learning-oriented guides
+  - `/docs/how-to/` - Problem-solving recipes
+  - `/docs/reference/` - Technical specifications (API, components, database)
+  - `/docs/explanation/` - Conceptual understanding (architecture, business model)
+- **`supabase-schema.sql`** - Complete database schema

@@ -16,7 +16,7 @@ describe('robots.ts', () => {
     it('should allow crawling of homepage, search, and vehicles', () => {
       const result = robots();
 
-      expect(result.rules).toHaveLength(2);
+      expect(result.rules).toHaveLength(1);
       expect(result.rules[0].allow).toContain('/');
       expect(result.rules[0].allow).toContain('/search$');
       expect(result.rules[0].allow).toContain('/vehicles/');
@@ -42,12 +42,6 @@ describe('robots.ts', () => {
       expect(result.sitemap).toBe('https://carzo.net/sitemap.xml');
     });
 
-    it('should have Googlebot-specific rules', () => {
-      const result = robots();
-
-      expect(result.rules[1].userAgent).toBe('Googlebot');
-      expect(result.rules[1].crawlDelay).toBe(0);
-    });
   });
 
   describe('Staging environment (stage.carzo.net)', () => {
@@ -79,7 +73,7 @@ describe('robots.ts', () => {
       const result = robots();
 
       expect(result.sitemap).toBe('https://carzo.net/sitemap.xml');
-      expect(result.rules).toHaveLength(2);
+      expect(result.rules).toHaveLength(1);
     });
   });
 });

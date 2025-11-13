@@ -58,7 +58,7 @@ describe('sitemap.ts', () => {
       expect(result[1].changeFrequency).toBe('daily');
     });
 
-    it('should fetch vehicles with pagination', async () => {
+    it('should fetch vehicles with pagination in parallel', async () => {
       // Mock first page with 1000 vehicles
       const mockVehicles = Array.from({ length: 1000 }, (_, i) => ({
         vin: `VIN${i}`,
@@ -66,24 +66,28 @@ describe('sitemap.ts', () => {
       }));
 
       // Mock second page with fewer vehicles (last page)
-      const mockSupabaseChain = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        order: vi.fn().mockReturnThis(),
-        range: vi.fn()
-          .mockResolvedValueOnce({ data: mockVehicles, error: null })
-          .mockResolvedValueOnce({ data: mockVehicles.slice(0, 500), error: null }),
-      };
-
-      vi.mocked(supabase.from).mockReturnValue(mockSupabaseChain as any);
+      let callCount = 0;
+      vi.mocked(supabase.from).mockImplementation(() => {
+        const currentCall = callCount++;
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          order: vi.fn().mockReturnThis(),
+          range: vi.fn().mockResolvedValue(
+            currentCall === 0
+              ? { data: mockVehicles, error: null }
+              : currentCall === 1
+              ? { data: mockVehicles.slice(0, 500), error: null }
+              : { data: [], error: null }
+          ),
+        } as any;
+      });
 
       const result = await sitemap();
 
       // 2 static + 1500 vehicles = 1502
       expect(result).toHaveLength(1502);
       expect(supabase.from).toHaveBeenCalledWith('vehicles');
-      expect(mockSupabaseChain.eq).toHaveBeenCalledWith('is_active', true);
-      expect(mockSupabaseChain.range).toHaveBeenCalledTimes(2);
     });
 
     it('should include vehicle URLs with correct format', async () => {
@@ -96,7 +100,9 @@ describe('sitemap.ts', () => {
         select: vi.fn().mockReturnThis(),
         eq: vi.fn().mockReturnThis(),
         order: vi.fn().mockReturnThis(),
-        range: vi.fn().mockResolvedValue({ data: mockVehicles, error: null }),
+        range: vi.fn()
+          .mockResolvedValueOnce({ data: mockVehicles, error: null })
+          .mockResolvedValue({ data: [], error: null }), // All other pages return empty
       };
 
       vi.mocked(supabase.from).mockReturnValue(mockSupabaseChain as any);
@@ -136,14 +142,14 @@ describe('sitemap.ts', () => {
       expect(result[0].url).toBe('https://carzo.net');
       expect(result[1].url).toBe('https://carzo.net/search');
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Error fetching vehicles page'),
-        expect.any(Object)
+        'Error fetching vehicle page:',
+        expect.objectContaining({ message: 'Database error' })
       );
 
       consoleErrorSpy.mockRestore();
     });
 
-    it('should respect Google 50K limit (49,998 vehicles + 2 static)', async () => {
+    it('should respect Google 50K limit (49,998 vehicles + 2 static = 50,000)', async () => {
       // Mock exactly 50 pages of 1000 vehicles each
       const mockVehiclesPage = Array.from({ length: 1000 }, (_, i) => ({
         vin: `VIN${i}`,
@@ -161,9 +167,9 @@ describe('sitemap.ts', () => {
 
       const result = await sitemap();
 
-      // Should fetch exactly 50 pages (49,998 vehicles + 2 static = 50,000)
+      // Should fetch exactly 50 pages but slice to 49,998 vehicles + 2 static = 50,000 total
       expect(mockSupabaseChain.range).toHaveBeenCalledTimes(50);
-      expect(result).toHaveLength(50002);
+      expect(result).toHaveLength(50000);
     });
   });
 

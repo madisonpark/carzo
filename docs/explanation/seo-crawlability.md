@@ -171,7 +171,10 @@ const { data: vehicles } = await supabase
 3. **No stale data**: Feed sync (4x daily) updates database, sitemap reflects changes
 4. **Scalable**: Automatically paginates through entire inventory
 
-**Current implementation:** Fetches up to 50,000 vehicles (Google's recommended per-sitemap limit) using pagination with 1,000 records per batch.
+**Current implementation:**
+- Fetches vehicles in parallel using `Promise.all()` for performance
+- Paginates through up to 50 batches of 1,000 vehicles each
+- Slices result to exactly 49,998 vehicles + 2 static pages = 50,000 total URLs (Google's limit)
 
 ### Future: Sitemap Index (For Additional Scale)
 

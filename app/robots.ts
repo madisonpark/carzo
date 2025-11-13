@@ -35,21 +35,6 @@ export default function robots(): MetadataRoute.Robots {
           '/*.json$',   // Block JSON files
         ],
       },
-      {
-        userAgent: 'Googlebot',
-        allow: [
-          '/',
-          '/search$',
-          '/vehicles/',
-        ],
-        disallow: [
-          '/admin/',
-          '/api/',
-          '/search?*',
-          '/*?flow=*',
-        ],
-        crawlDelay: 0,  // No delay for Google
-      },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
   }

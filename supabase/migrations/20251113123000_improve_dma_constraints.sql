@@ -15,8 +15,6 @@ DROP INDEX IF EXISTS idx_vehicles_dma;
 DROP INDEX IF EXISTS idx_vehicles_dma_body_style;
 DROP INDEX IF EXISTS idx_vehicles_dma_make;
 
-CREATE INDEX idx_vehicles_dma ON vehicles(dma) WHERE dma IS NOT NULL;
-CREATE INDEX idx_vehicles_dma_body_style ON vehicles(dma, body_style) WHERE dma IS NOT NULL;
-CREATE INDEX idx_vehicles_dma_make ON vehicles(dma, make) WHERE dma IS NOT NULL;
-
-COMMENT ON CONSTRAINT check_dol_non_negative ON vehicles IS 'Days on lot cannot be negative';
+CREATE INDEX IF NOT EXISTS idx_vehicles_dma ON vehicles(dma) WHERE dma IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_vehicles_dma_body_style ON vehicles(dma, body_style) WHERE dma IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_vehicles_dma_make ON vehicles(dma, make) WHERE dma IS NOT NULL;

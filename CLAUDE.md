@@ -115,11 +115,29 @@ This file contains **Claude Code-specific instructions** for tool usage, task ma
 
 ### Git Workflow Enforcement
 
-**CRITICAL RULES:**
-- **NEVER commit to main branch directly**
-- **NEVER force push to main**
-- **All work on feature/fix branches**
-- **Create PR for all changes** (never merge directly)
+**CRITICAL RULES (ALWAYS ENFORCED):**
+
+1. **NEVER work on main branch directly**
+   - **ALL work must happen on a feature/fix/docs branch**
+   - Only exception: User explicitly says "work on main"
+   - Create branch BEFORE making any changes
+   - Check current branch with `git branch --show-current`
+
+2. **NEVER merge PRs without explicit user approval**
+   - Create PR and wait for user's "merge" command
+   - User reviews PR first (human + AI bots: gemini-code-assist, claude)
+   - **DO NOT auto-merge even if approved by bots**
+
+3. **ALWAYS respond to PR feedback with comments**
+   - When addressing feedback from gemini-code-assist or claude (AI reviewers)
+   - Add PR comment tagging the bot: `@gemini-code-assist` or `@claude`
+   - Describe what was changed and why
+   - Example: `@gemini-code-assist Fixed the type safety issue by adding explicit types to the function parameters as suggested.`
+   - If feedback NOT addressed, explain why: `@claude I did not implement X because...`
+
+4. **NEVER force push to main**
+   - `git push --force origin main` is FORBIDDEN
+   - Use force push only on feature branches if needed
 
 **Branch naming:**
 - `feature/` - New features
@@ -144,6 +162,14 @@ This file contains **Claude Code-specific instructions** for tool usage, task ma
 5. **Coverage thresholds met** (`npm run test:coverage`)
 6. No secrets committed (use SECRETS.md pattern)
 7. Descriptive commit message
+
+**PR Review Workflow:**
+1. Create PR on feature branch
+2. Wait for AI bot reviews (gemini-code-assist, claude)
+3. Address feedback with code changes
+4. Add PR comment tagging bot(s) explaining changes
+5. Wait for user's explicit "merge" command
+6. NEVER merge without user approval
 
 ### Testing Requirements (CRITICAL)
 

@@ -33,6 +33,7 @@
   "exclude": [
     "node_modules",
     "reference_vdp",
+    "scripts",
     "**/*.test.ts",
     "**/*.test.tsx",
     "**/*.spec.ts",

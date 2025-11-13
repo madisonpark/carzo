@@ -78,10 +78,10 @@ describe('FeedSyncService - DMA Fields Parsing', () => {
       expect(FeedSyncService.parseDol('abc')).toBe(null);
     });
 
-    it('should parse negative numbers as their value (DB has CHECK constraint to reject)', () => {
-      // parseDol returns the parsed value; DB constraint will reject negative values
-      expect(FeedSyncService.parseDol('-5')).toBe(-5);
-      // Note: Database has CHECK (dol >= 0) so negative values will be rejected at insert time
+    it('should reject negative numbers as invalid (returns null)', () => {
+      // Days on lot cannot be negative - parseDol validates this at parse time
+      expect(FeedSyncService.parseDol('-5')).toBe(null);
+      expect(FeedSyncService.parseDol('-100')).toBe(null);
     });
   });
 });

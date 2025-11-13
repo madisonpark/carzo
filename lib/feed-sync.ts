@@ -369,10 +369,11 @@ export class FeedSyncService {
   /**
    * Parse days on lot field from LotLinx feed
    * Critical: Preserves 0 (not null) for newly added vehicles
+   * Rejects negative values (days on lot cannot be negative)
    */
   public static parseDol(value: string | undefined): number | null {
-    const parsed = parseInt(value || '');
-    return !isNaN(parsed) ? parsed : null;
+    const parsed = parseInt(value || '', 10);
+    return !isNaN(parsed) && parsed >= 0 ? parsed : null;
   }
 
   /**

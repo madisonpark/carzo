@@ -411,8 +411,11 @@ export class FeedSyncService {
       longitude: parseFloat(vehicle.Longitude) || null,
       targeting_radius: parseInt(vehicle.Radius) || 30,
       dma: vehicle.Dma || null,
-      certified: vehicle.Certified?.toLowerCase() === 'true' || vehicle.Certified === '1',
-      dol: parseInt(vehicle.Dol) || null,
+      certified: ['true', '1', 'yes'].includes(vehicle.Certified?.toLowerCase() || ''),
+      dol: (() => {
+        const parsed = parseInt(vehicle.Dol);
+        return !isNaN(parsed) ? parsed : null;
+      })(),
       is_active: true,
       last_sync: new Date().toISOString(),
     };

@@ -72,6 +72,8 @@ This file contains **Claude Code-specific instructions** for tool usage, task ma
 - Create new task for blockers/issues
 - Never mark completed if:
   - Tests are failing
+  - **Tests not written for new code**
+  - **Coverage below threshold** (80% general, 95% revenue-critical)
   - Implementation is partial
   - Unresolved errors exist
   - Missing files/dependencies
@@ -138,8 +140,10 @@ This file contains **Claude Code-specific instructions** for tool usage, task ma
 1. Verify on feature/fix branch (not main)
 2. Code builds (`npm run build`)
 3. No TypeScript errors
-4. No secrets committed (use SECRETS.md pattern)
-5. Descriptive commit message
+4. **Tests written and passing** (`npm test`)
+5. **Coverage thresholds met** (`npm run test:coverage`)
+6. No secrets committed (use SECRETS.md pattern)
+7. Descriptive commit message
 
 ### Testing Requirements (CRITICAL)
 
@@ -189,6 +193,51 @@ npm run test:coverage   # Coverage report
 npm run test:ui         # Vitest UI (visual debugger)
 npm test path/to/test   # Run specific test
 ```
+
+### Testing Phases Status
+
+**Phase 1 COMPLETE** (Testing Infrastructure):
+- ✅ Vitest v4 configuration with happy-dom
+- ✅ @testing-library/react v16 (React 19 compatible)
+- ✅ tests/setup.ts with all mocks (window, storage, fetch, observers)
+- ✅ Coverage thresholds enforced in vitest.config.ts
+- ✅ Test utilities and helpers
+
+**Phase 2 COMPLETE** (Revenue-Critical Unit Tests):
+- ✅ lib/dealer-diversity.ts (97.61% coverage, 35 tests)
+- ✅ lib/user-tracking.ts (100% coverage, 48 tests)
+- ✅ lib/flow-detection.ts (100% coverage, 61 tests)
+- ✅ lib/rate-limit.ts (88.9% coverage)
+- ✅ lib/geolocation.ts (92.3% coverage)
+- ✅ lib/utils.ts (100% coverage)
+
+**Phase 3 COMPLETE** (API Route Tests):
+- ✅ app/api/track-click/route.test.ts
+- ✅ app/api/track-impression/route.test.ts
+- ✅ app/api/zipcode-lookup/route.test.ts
+- ⏳ Remaining routes (search-vehicles, filter-options, etc.)
+
+**Phase 4 COMPLETE** (UI Component Tests):
+- ✅ components/ui/Button.test.tsx
+- ✅ components/ui/Input.test.tsx
+- ✅ components/ui/Badge.test.tsx
+- ✅ components/ui/Card.test.tsx
+- ⏳ Feature components (VehicleCard, FilterSidebar, etc.)
+
+**Phase 5 PLANNED** (Integration Tests):
+- ⏳ End-to-end dealer click flow
+- ⏳ Feed sync workflow
+- ⏳ Search → VDP → Click flow
+
+**Phase 6 PLANNED** (E2E Tests with Playwright):
+- ⏳ Critical user journeys
+- ⏳ A/B test flow variants
+- ⏳ Mobile responsiveness
+
+**Phase 7 PLANNED** (CI/CD Integration):
+- ⏳ GitHub Actions workflow
+- ⏳ Pre-commit hooks (Husky)
+- ⏳ Automated coverage enforcement
 
 ### Mobile-First Development
 

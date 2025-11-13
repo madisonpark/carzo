@@ -135,11 +135,11 @@ Allow: /vehicles/
     <changefreq>weekly</changefreq>
     <lastmod>2025-11-12T06:46:17Z</lastmod>
   </url>
-  <!-- ... 999 more vehicles ... -->
+  <!-- ... thousands more vehicles ... -->
 </urlset>
 ```
 
-**Total:** 1,002 URLs (2 static + 1,000 vehicles)
+**Total:** 2 static pages + vehicle inventory (up to Google's 50K per-sitemap limit)
 
 ### Priority Levels Explained
 
@@ -169,11 +169,13 @@ const { data: vehicles } = await supabase
 1. **Always current**: Vehicles sold/removed are automatically excluded
 2. **Accurate lastmod**: Uses `last_sync` timestamp from database
 3. **No stale data**: Feed sync (4x daily) updates database, sitemap reflects changes
-4. **Scalable**: Works with 1,000 or 100,000 vehicles
+4. **Scalable**: Automatically paginates through entire inventory
 
-### Future: Sitemap Index (If We Scale to 50,000+ Vehicles)
+**Current implementation:** Fetches up to 50,000 vehicles (Google's recommended per-sitemap limit) using pagination with 1,000 records per batch.
 
-When vehicle count exceeds **50,000**, we'll split into multiple sitemaps:
+### Future: Sitemap Index (For Additional Scale)
+
+If we need to include more than Google's 50K per-sitemap limit, we'll split into multiple sitemaps:
 
 ```xml
 <!-- sitemap_index.xml -->
@@ -195,7 +197,7 @@ When vehicle count exceeds **50,000**, we'll split into multiple sitemaps:
 - Max **50MB uncompressed** per sitemap file
 - Sitemap index allows unlimited total URLs
 
-**Not needed yet** - we're at 1,000 vehicles (2% of limit).
+**Current status:** Single sitemap handles our inventory within Google's limits. Will implement sitemap index if inventory grows beyond 50K active vehicles.
 
 ## Implementation Details
 

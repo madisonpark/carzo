@@ -68,8 +68,8 @@ export interface Vehicle {
   longitude?: number;
   targeting_radius?: number;
   dma?: string;
-  certified?: boolean;
-  dol?: number;
+  certified: boolean; // NOT NULL DEFAULT false in DB
+  dol?: number; // Nullable, CHECK (dol >= 0)
 }
 
 // PostGIS spatial query response (includes distance calculation)

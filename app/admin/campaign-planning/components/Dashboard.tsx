@@ -25,6 +25,7 @@ export function CampaignPlanningDashboard() {
   const [makes, setMakes] = useState<Make[]>([]);
   const [makeBodyCombos, setMakeBodyCombos] = useState<Combination[]>([]);
   const [makeModelCombos, setMakeModelCombos] = useState<Combination[]>([]);
+  const [totalVehicles, setTotalVehicles] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -57,6 +58,7 @@ export function CampaignPlanningDashboard() {
         setMakes(makeArray);
         setMakeBodyCombos(combinations.make_bodystyle || []);
         setMakeModelCombos(combinations.make_model || []);
+        setTotalVehicles(snapshot.total_vehicles || 0);
         setLoading(false);
       })
       .catch(error => {
@@ -65,13 +67,23 @@ export function CampaignPlanningDashboard() {
       });
   }, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <p>Loading inventory data...</p>
+  // Skeleton loader component
+  const SkeletonCard = ({ items = 5 }: { items?: number }) => (
+    <div className="bg-white rounded-xl border border-slate-200 p-6">
+      <div className="h-6 w-32 bg-slate-200 rounded animate-pulse mb-4" />
+      <div className="h-4 w-48 bg-slate-100 rounded animate-pulse mb-4" />
+      <div className="space-y-2">
+        {Array.from({ length: items }).map((_, i) => (
+          <div key={i} className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+            <div className="flex justify-between items-center">
+              <div className="h-4 w-20 bg-slate-200 rounded animate-pulse" />
+              <div className="h-6 w-16 bg-slate-200 rounded animate-pulse" />
+            </div>
+          </div>
+        ))}
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -84,7 +96,14 @@ export function CampaignPlanningDashboard() {
                 <ArrowLeft className="w-5 h-5" />
               </Link>
               <div>
-                <h1 className="text-3xl font-bold text-slate-900">Campaign Planning</h1>
+                <div className="flex items-baseline gap-3">
+                  <h1 className="text-3xl font-bold text-slate-900">Campaign Planning</h1>
+                  {!loading && (
+                    <span className="text-lg text-slate-600">
+                      {totalVehicles.toLocaleString()} vehicles available
+                    </span>
+                  )}
+                </div>
                 <p className="text-slate-600 mt-1">
                   Decide what to advertise, then where to advertise it
                 </p>
@@ -109,7 +128,15 @@ export function CampaignPlanningDashboard() {
             Choose campaign type based on inventory depth nationwide
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <SkeletonCard items={5} />
+              <SkeletonCard items={10} />
+              <SkeletonCard items={10} />
+              <SkeletonCard items={10} />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Body Styles */}
             <div className="bg-white rounded-xl border border-slate-200 p-6">
               <h3 className="text-lg font-bold text-slate-900 mb-4">By Body Style</h3>
@@ -236,6 +263,7 @@ export function CampaignPlanningDashboard() {
               </div>
             </div>
           </div>
+          )}
         </div>
 
         {/* Step 2: Where to Advertise */}

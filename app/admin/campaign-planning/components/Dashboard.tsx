@@ -96,14 +96,7 @@ export function CampaignPlanningDashboard() {
                 <ArrowLeft className="w-5 h-5" />
               </Link>
               <div>
-                <div className="flex items-baseline gap-3">
-                  <h1 className="text-3xl font-bold text-slate-900">Campaign Planning</h1>
-                  {!loading && (
-                    <span className="text-lg text-slate-600">
-                      {totalVehicles.toLocaleString()} vehicles available
-                    </span>
-                  )}
-                </div>
+                <h1 className="text-3xl font-bold text-slate-900">Campaign Planning</h1>
                 <p className="text-slate-600 mt-1">
                   Decide what to advertise, then where to advertise it
                 </p>
@@ -124,9 +117,15 @@ export function CampaignPlanningDashboard() {
         {/* Step 1: What to Advertise */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-slate-900 mb-2">Step 1: What Should I Advertise?</h2>
-          <p className="text-slate-600 mb-6">
+          <p className="text-slate-600">
             Choose campaign type based on inventory depth nationwide
           </p>
+          {!loading && (
+            <p className="text-lg font-semibold text-slate-700 mt-2 mb-6">
+              {totalVehicles.toLocaleString()} vehicles available
+            </p>
+          )}
+          {loading && <div className="h-7 w-48 bg-slate-200 rounded animate-pulse mt-2 mb-6" />}
 
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

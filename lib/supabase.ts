@@ -67,6 +67,12 @@ export interface Vehicle {
   latitude?: number;
   longitude?: number;
   targeting_radius?: number;
+  /** Designated Marketing Area from LotLinx (consolidates 414 cities to ~50 DMAs) */
+  dma?: string;
+  /** Certified Pre-Owned status from LotLinx (NOT NULL DEFAULT false in DB) */
+  certified: boolean;
+  /** Days on lot from LotLinx (0 = newly added, null = unknown, validated >= 0 by parser) */
+  dol?: number;
 }
 
 // PostGIS spatial query response (includes distance calculation)

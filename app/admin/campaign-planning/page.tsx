@@ -1,22 +1,32 @@
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+'use client';
+
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
-export const dynamic = 'force-dynamic';
+export default function CampaignPlanningPage() {
+  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-export const metadata = {
-  title: 'Campaign Planning | Carzo Admin',
-  description: 'Plan advertising campaigns based on inventory availability',
-};
+  useEffect(() => {
+    // Check authentication cookie
+    const authCookie = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('carzo_admin_auth='));
 
-export default async function CampaignPlanningPage() {
-  // Check authentication
-  const cookieStore = await cookies();
-  const authCookie = cookieStore.get('carzo_admin_auth');
+    if (!authCookie) {
+      router.push('/admin/login');
+      return;
+    }
 
-  if (!authCookie || authCookie.value !== process.env.ADMIN_PASSWORD) {
-    redirect('/admin/login');
+    setIsAuthenticated(true);
+  }, [router]);
+
+  if (!isAuthenticated) {
+    return <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <p>Checking authentication...</p>
+    </div>;
   }
 
   return (
@@ -124,20 +134,44 @@ export default async function CampaignPlanningPage() {
                   </code>
                 </div>
                 <div className="flex gap-2">
-                  <a
-                    href='/api/admin/export-targeting?metro=Tampa,%20FL&platform=facebook&_auth=test'
-                    download="tampa-facebook.csv"
+                  <button
+                    onClick={() => {
+                      // Download Facebook targeting CSV
+                      fetch('/api/admin/export-targeting?metro=Tampa,%20FL&platform=facebook', {
+                        headers: { Authorization: 'Bearer carzo2024admin' }
+                      })
+                        .then(res => res.blob())
+                        .then(blob => {
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = 'tampa-facebook.csv';
+                          a.click();
+                        });
+                    }}
                     className="px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     Facebook
-                  </a>
-                  <a
-                    href='/api/admin/export-targeting?metro=Tampa,%20FL&platform=google&_auth=test'
-                    download="tampa-google.csv"
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Download Google targeting CSV
+                      fetch('/api/admin/export-targeting?metro=Tampa,%20FL&platform=google', {
+                        headers: { Authorization: 'Bearer carzo2024admin' }
+                      })
+                        .then(res => res.blob())
+                        .then(blob => {
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = 'tampa-google.csv';
+                          a.click();
+                        });
+                    }}
                     className="px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
                   >
                     Google
-                  </a>
+                  </button>
                 </div>
               </div>
             </div>

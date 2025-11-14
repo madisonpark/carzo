@@ -2,8 +2,60 @@
 
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { useEffect, useState } from 'react';
+
+interface BodyStyle {
+  body_style: string;
+  vehicle_count: number;
+}
+
+interface Make {
+  make: string;
+  vehicle_count: number;
+}
 
 export function CampaignPlanningDashboard() {
+  const [bodyStyles, setBodyStyles] = useState<BodyStyle[]>([]);
+  const [makes, setMakes] = useState<Make[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Fetch real inventory data from database
+    Promise.all([
+      fetch('/api/admin/inventory-snapshot', {
+        headers: { Authorization: 'Bearer carzo2024admin' },
+      }).then(r => r.json()),
+    ])
+      .then(([snapshot]) => {
+        // Convert object to array and sort
+        const bodyStyleArray = Object.entries(snapshot.by_body_style || {}).map(([name, count]) => ({
+          body_style: name,
+          vehicle_count: count as number,
+        })).sort((a, b) => b.vehicle_count - a.vehicle_count);
+
+        const makeArray = Object.entries(snapshot.by_make || {}).map(([name, count]) => ({
+          make: name,
+          vehicle_count: count as number,
+        })).sort((a, b) => b.vehicle_count - a.vehicle_count);
+
+        setBodyStyles(bodyStyleArray);
+        setMakes(makeArray);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error('Error loading inventory:', error);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <p>Loading inventory data...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
@@ -45,27 +97,31 @@ export function CampaignPlanningDashboard() {
             <div className="bg-white rounded-xl border border-slate-200 p-6">
               <h3 className="text-lg font-bold text-slate-900 mb-4">By Body Style</h3>
               <p className="text-sm text-slate-600 mb-4">Category campaigns (broadest reach)</p>
-              <div className="space-y-3">
-                <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold">SUVs</span>
-                    <span className="text-2xl font-bold text-green-600">41,000</span>
+              <div className="space-y-2">
+                {bodyStyles.slice(0, 5).map((bs, i) => (
+                  <div
+                    key={bs.body_style}
+                    className={`p-3 rounded-lg ${
+                      i === 0
+                        ? 'bg-green-50 border border-green-200'
+                        : i === 1
+                        ? 'bg-blue-50 border border-blue-200'
+                        : 'bg-slate-50 border border-slate-200'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold capitalize">{bs.body_style}</span>
+                      <span
+                        className={`text-2xl font-bold ${
+                          i === 0 ? 'text-green-600' : i === 1 ? 'text-blue-600' : ''
+                        }`}
+                      >
+                        {bs.vehicle_count.toLocaleString()}
+                      </span>
+                    </div>
+                    {i === 0 && <p className="text-xs text-slate-500 mt-1">Best: Largest inventory</p>}
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">Best: Huge inventory</p>
-                </div>
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold">Trucks</span>
-                    <span className="text-2xl font-bold text-blue-600">12,456</span>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">Good depth</p>
-                </div>
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold">Sedans</span>
-                    <span className="text-2xl font-bold">15,678</span>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
 
@@ -73,26 +129,31 @@ export function CampaignPlanningDashboard() {
             <div className="bg-white rounded-xl border border-slate-200 p-6">
               <h3 className="text-lg font-bold text-slate-900 mb-4">By Make</h3>
               <p className="text-sm text-slate-600 mb-4">Brand-specific campaigns</p>
-              <div className="space-y-3">
-                <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold">Kia</span>
-                    <span className="text-2xl font-bold text-green-600">13,174</span>
+              <div className="space-y-2">
+                {makes.slice(0, 5).map((make, i) => (
+                  <div
+                    key={make.make}
+                    className={`p-3 rounded-lg ${
+                      i === 0
+                        ? 'bg-green-50 border border-green-200'
+                        : i === 1
+                        ? 'bg-blue-50 border border-blue-200'
+                        : 'bg-slate-50 border border-slate-200'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold">{make.make}</span>
+                      <span
+                        className={`text-2xl font-bold ${
+                          i === 0 ? 'text-green-600' : i === 1 ? 'text-blue-600' : ''
+                        }`}
+                      >
+                        {make.vehicle_count.toLocaleString()}
+                      </span>
+                    </div>
+                    {i === 0 && <p className="text-xs text-slate-500 mt-1">Best: Top make</p>}
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">Best: Top make</p>
-                </div>
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold">Toyota</span>
-                    <span className="text-2xl font-bold text-blue-600">8,234</span>
-                  </div>
-                </div>
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold">Ford</span>
-                    <span className="text-2xl font-bold">6,456</span>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
 

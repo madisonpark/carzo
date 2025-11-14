@@ -9,6 +9,26 @@ export const metadata = {
   description: 'Plan advertising campaigns based on inventory availability',
 };
 
+async function fetchInventoryData() {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+
+  const [snapshotResponse, combinationsResponse] = await Promise.all([
+    fetch(`${baseUrl}/api/admin/inventory-snapshot`, {
+      headers: { Authorization: `Bearer ${process.env.ADMIN_PASSWORD}` },
+      cache: 'no-store',
+    }),
+    fetch(`${baseUrl}/api/admin/combinations`, {
+      headers: { Authorization: `Bearer ${process.env.ADMIN_PASSWORD}` },
+      cache: 'no-store',
+    }),
+  ]);
+
+  const snapshot = await snapshotResponse.json();
+  const combinations = await combinationsResponse.json();
+
+  return { snapshot, combinations };
+}
+
 export default async function CampaignPlanningPage() {
   // Check authentication (server-side)
   const cookieStore = await cookies();
@@ -18,5 +38,8 @@ export default async function CampaignPlanningPage() {
     redirect('/admin/login');
   }
 
-  return <CampaignPlanningDashboard />;
+  // Fetch data server-side (password never exposed to client)
+  const data = await fetchInventoryData();
+
+  return <CampaignPlanningDashboard initialData={data} />;
 }

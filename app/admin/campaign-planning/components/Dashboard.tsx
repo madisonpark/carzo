@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { formatBodyStyle } from '@/lib/format-body-style';
 
 interface BodyStyle {
@@ -20,70 +20,43 @@ interface Combination {
   vehicle_count: number;
 }
 
-export function CampaignPlanningDashboard() {
-  const [bodyStyles, setBodyStyles] = useState<BodyStyle[]>([]);
-  const [makes, setMakes] = useState<Make[]>([]);
-  const [makeBodyCombos, setMakeBodyCombos] = useState<Combination[]>([]);
-  const [makeModelCombos, setMakeModelCombos] = useState<Combination[]>([]);
-  const [totalVehicles, setTotalVehicles] = useState<number>(0);
-  const [loading, setLoading] = useState(true);
+interface DashboardProps {
+  initialData: {
+    snapshot: {
+      total_vehicles: number;
+      by_body_style: Record<string, number>;
+      by_make: Record<string, number>;
+    };
+    combinations: {
+      make_bodystyle: Combination[];
+      make_model: Combination[];
+    };
+  };
+}
 
-  useEffect(() => {
-    // Fetch ALL real inventory data from database
-    Promise.all([
-      fetch('/api/admin/inventory-snapshot', {
-        headers: { Authorization: 'Bearer carzo2024admin' },
-      }).then(r => r.json()),
-      fetch('/api/admin/combinations', {
-        headers: { Authorization: 'Bearer carzo2024admin' },
-      }).then(r => r.json()),
-    ])
-      .then(([snapshot, combinations]) => {
-        // Convert object to array and sort
-        const bodyStyleArray = Object.entries(snapshot.by_body_style || {})
-          .map(([name, count]) => ({
-            body_style: name,
-            vehicle_count: count as number,
-          }))
-          .sort((a, b) => b.vehicle_count - a.vehicle_count);
+export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
+  // Process server-side data (no client-side fetching, no exposed password)
+  const bodyStyles = useMemo(() => {
+    return Object.entries(initialData.snapshot.by_body_style || {})
+      .map(([name, count]) => ({
+        body_style: name,
+        vehicle_count: count as number,
+      }))
+      .sort((a, b) => b.vehicle_count - a.vehicle_count);
+  }, [initialData]);
 
-        const makeArray = Object.entries(snapshot.by_make || {})
-          .map(([name, count]) => ({
-            make: name,
-            vehicle_count: count as number,
-          }))
-          .sort((a, b) => b.vehicle_count - a.vehicle_count);
+  const makes = useMemo(() => {
+    return Object.entries(initialData.snapshot.by_make || {})
+      .map(([name, count]) => ({
+        make: name,
+        vehicle_count: count as number,
+      }))
+      .sort((a, b) => b.vehicle_count - a.vehicle_count);
+  }, [initialData]);
 
-        setBodyStyles(bodyStyleArray);
-        setMakes(makeArray);
-        setMakeBodyCombos(combinations.make_bodystyle || []);
-        setMakeModelCombos(combinations.make_model || []);
-        setTotalVehicles(snapshot.total_vehicles || 0);
-        setLoading(false);
-      })
-      .catch(error => {
-        console.error('Error loading inventory:', error);
-        setLoading(false);
-      });
-  }, []);
-
-  // Skeleton loader component
-  const SkeletonCard = ({ items = 5 }: { items?: number }) => (
-    <div className="bg-white rounded-xl border border-slate-200 p-6">
-      <div className="h-6 w-32 bg-slate-200 rounded animate-pulse mb-4" />
-      <div className="h-4 w-48 bg-slate-100 rounded animate-pulse mb-4" />
-      <div className="space-y-2">
-        {Array.from({ length: items }).map((_, i) => (
-          <div key={i} className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-            <div className="flex justify-between items-center">
-              <div className="h-4 w-20 bg-slate-200 rounded animate-pulse" />
-              <div className="h-6 w-16 bg-slate-200 rounded animate-pulse" />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  const makeBodyCombos = initialData.combinations.make_bodystyle || [];
+  const makeModelCombos = initialData.combinations.make_model || [];
+  const totalVehicles = initialData.snapshot.total_vehicles || 0;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -120,22 +93,11 @@ export function CampaignPlanningDashboard() {
           <p className="text-slate-600">
             Choose campaign type based on inventory depth nationwide
           </p>
-          {!loading && (
-            <p className="text-lg font-semibold text-slate-700 mt-2 mb-6">
-              {totalVehicles.toLocaleString()} vehicles available
-            </p>
-          )}
-          {loading && <div className="h-7 w-48 bg-slate-200 rounded animate-pulse mt-2 mb-6" />}
+          <p className="text-lg font-semibold text-slate-700 mt-2 mb-6">
+            {totalVehicles.toLocaleString()} vehicles available
+          </p>
 
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <SkeletonCard items={5} />
-              <SkeletonCard items={10} />
-              <SkeletonCard items={10} />
-              <SkeletonCard items={10} />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Body Styles */}
             <div className="bg-white rounded-xl border border-slate-200 p-6">
               <h3 className="text-lg font-bold text-slate-900 mb-4">Body Style</h3>
@@ -264,7 +226,6 @@ export function CampaignPlanningDashboard() {
               </div>
             </div>
           </div>
-          )}
         </div>
 
         {/* Step 2: Where to Advertise */}

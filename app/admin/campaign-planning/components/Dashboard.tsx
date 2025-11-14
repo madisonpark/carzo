@@ -14,32 +14,48 @@ interface Make {
   vehicle_count: number;
 }
 
+interface Combination {
+  combo_name: string;
+  vehicle_count: number;
+}
+
 export function CampaignPlanningDashboard() {
   const [bodyStyles, setBodyStyles] = useState<BodyStyle[]>([]);
   const [makes, setMakes] = useState<Make[]>([]);
+  const [makeBodyCombos, setMakeBodyCombos] = useState<Combination[]>([]);
+  const [makeModelCombos, setMakeModelCombos] = useState<Combination[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch real inventory data from database
+    // Fetch ALL real inventory data from database
     Promise.all([
       fetch('/api/admin/inventory-snapshot', {
         headers: { Authorization: 'Bearer carzo2024admin' },
       }).then(r => r.json()),
+      fetch('/api/admin/combinations', {
+        headers: { Authorization: 'Bearer carzo2024admin' },
+      }).then(r => r.json()),
     ])
-      .then(([snapshot]) => {
+      .then(([snapshot, combinations]) => {
         // Convert object to array and sort
-        const bodyStyleArray = Object.entries(snapshot.by_body_style || {}).map(([name, count]) => ({
-          body_style: name,
-          vehicle_count: count as number,
-        })).sort((a, b) => b.vehicle_count - a.vehicle_count);
+        const bodyStyleArray = Object.entries(snapshot.by_body_style || {})
+          .map(([name, count]) => ({
+            body_style: name,
+            vehicle_count: count as number,
+          }))
+          .sort((a, b) => b.vehicle_count - a.vehicle_count);
 
-        const makeArray = Object.entries(snapshot.by_make || {}).map(([name, count]) => ({
-          make: name,
-          vehicle_count: count as number,
-        })).sort((a, b) => b.vehicle_count - a.vehicle_count);
+        const makeArray = Object.entries(snapshot.by_make || {})
+          .map(([name, count]) => ({
+            make: name,
+            vehicle_count: count as number,
+          }))
+          .sort((a, b) => b.vehicle_count - a.vehicle_count);
 
         setBodyStyles(bodyStyleArray);
         setMakes(makeArray);
+        setMakeBodyCombos(combinations.make_bodystyle || []);
+        setMakeModelCombos(combinations.make_model || []);
         setLoading(false);
       })
       .catch(error => {
@@ -92,7 +108,7 @@ export function CampaignPlanningDashboard() {
             Choose campaign type based on inventory depth nationwide
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Body Styles */}
             <div className="bg-white rounded-xl border border-slate-200 p-6">
               <h3 className="text-lg font-bold text-slate-900 mb-4">By Body Style</h3>
@@ -128,9 +144,9 @@ export function CampaignPlanningDashboard() {
             {/* Makes */}
             <div className="bg-white rounded-xl border border-slate-200 p-6">
               <h3 className="text-lg font-bold text-slate-900 mb-4">By Make</h3>
-              <p className="text-sm text-slate-600 mb-4">Brand-specific campaigns</p>
+              <p className="text-sm text-slate-600 mb-4">Brand-specific campaigns (top 10)</p>
               <div className="space-y-2">
-                {makes.slice(0, 5).map((make, i) => (
+                {makes.slice(0, 10).map((make, i) => (
                   <div
                     key={make.make}
                     className={`p-3 rounded-lg ${
@@ -157,46 +173,65 @@ export function CampaignPlanningDashboard() {
               </div>
             </div>
 
-            {/* Combinations */}
+            {/* Make + Body Style Combos */}
             <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h3 className="text-lg font-bold text-slate-900 mb-4">Top Combinations</h3>
-              <p className="text-sm text-slate-600 mb-4">Make + Body Style or Make + Model</p>
+              <h3 className="text-lg font-bold text-slate-900 mb-4">Make + Body Style</h3>
+              <p className="text-sm text-slate-600 mb-4">Combined campaigns (top 10)</p>
               <div className="space-y-2">
-                <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold text-sm">Toyota SUVs</span>
-                    <span className="text-xl font-bold text-green-600">2,345</span>
+                {makeBodyCombos.slice(0, 10).map((combo, i) => (
+                  <div
+                    key={combo.combo_name}
+                    className={`p-3 rounded-lg ${
+                      i === 0
+                        ? 'bg-green-50 border border-green-200'
+                        : i === 1
+                        ? 'bg-blue-50 border border-blue-200'
+                        : 'bg-slate-50 border border-slate-200'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold text-sm">{combo.combo_name}</span>
+                      <span
+                        className={`text-xl font-bold ${
+                          i === 0 ? 'text-green-600' : i === 1 ? 'text-blue-600' : ''
+                        }`}
+                      >
+                        {combo.vehicle_count.toLocaleString()}
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">Make + Body Style</p>
-                </div>
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold text-sm">Ford Trucks</span>
-                    <span className="text-xl font-bold text-blue-600">2,156</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Make + Model Combos */}
+            <div className="bg-white rounded-xl border border-slate-200 p-6">
+              <h3 className="text-lg font-bold text-slate-900 mb-4">Make + Model</h3>
+              <p className="text-sm text-slate-600 mb-4">Specific models (top 10)</p>
+              <div className="space-y-2">
+                {makeModelCombos.slice(0, 10).map((combo, i) => (
+                  <div
+                    key={combo.combo_name}
+                    className={`p-3 rounded-lg ${
+                      i === 0
+                        ? 'bg-green-50 border border-green-200'
+                        : i === 1
+                        ? 'bg-blue-50 border border-blue-200'
+                        : 'bg-slate-50 border border-slate-200'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold text-sm">{combo.combo_name}</span>
+                      <span
+                        className={`text-xl font-bold ${
+                          i === 0 ? 'text-green-600' : i === 1 ? 'text-blue-600' : ''
+                        }`}
+                      >
+                        {combo.vehicle_count.toLocaleString()}
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">Make + Body Style</p>
-                </div>
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold text-sm">Kia SUVs</span>
-                    <span className="text-xl font-bold">1,543</span>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">Make + Body Style</p>
-                </div>
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold text-sm">Jeep Grand Cherokee</span>
-                    <span className="text-xl font-bold">892</span>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">Specific Model</p>
-                </div>
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <span className="font-semibold text-sm">Kia Sorento</span>
-                    <span className="text-xl font-bold">734</span>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">Specific Model</p>
-                </div>
+                ))}
               </div>
             </div>
           </div>

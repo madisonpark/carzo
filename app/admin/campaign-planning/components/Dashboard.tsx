@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { formatBodyStyle } from '@/lib/format-body-style';
 
 interface BodyStyle {
   body_style: string;
@@ -126,7 +127,7 @@ export function CampaignPlanningDashboard() {
                     }`}
                   >
                     <div className="flex justify-between items-center">
-                      <span className="font-semibold capitalize">{bs.body_style}</span>
+                      <span className="font-semibold">{formatBodyStyle(bs.body_style)}</span>
                       <span
                         className={`text-2xl font-bold ${
                           i === 0 ? 'text-green-600' : i === 1 ? 'text-blue-600' : ''

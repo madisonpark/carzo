@@ -205,19 +205,26 @@ export function CampaignPlanningDashboard() {
               <h3 className="text-lg font-bold text-slate-900 mb-4">Make + Body Style</h3>
               <p className="text-sm text-slate-600 mb-4">Combined campaigns (top 10)</p>
               <div className="space-y-2">
-                {makeBodyCombos.slice(0, 10).map((combo, i) => (
-                  <div
-                    key={combo.combo_name}
-                    className={`p-3 rounded-lg ${
-                      i === 0
-                        ? 'bg-green-50 border border-green-200'
-                        : i === 1
-                        ? 'bg-blue-50 border border-blue-200'
-                        : 'bg-slate-50 border border-slate-200'
-                    }`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <span className="font-semibold text-sm">{combo.combo_name}</span>
+                {makeBodyCombos.slice(0, 10).map((combo, i) => {
+                  // Format body style in combination (e.g., "Kia suv" → "Kia SUV")
+                  const parts = combo.combo_name.split(' ');
+                  const make = parts[0];
+                  const bodyStyle = parts.slice(1).join(' ');
+                  const formatted = `${make} ${formatBodyStyle(bodyStyle)}`;
+
+                  return (
+                    <div
+                      key={combo.combo_name}
+                      className={`p-3 rounded-lg ${
+                        i === 0
+                          ? 'bg-green-50 border border-green-200'
+                          : i === 1
+                          ? 'bg-blue-50 border border-blue-200'
+                          : 'bg-slate-50 border border-slate-200'
+                      }`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold text-sm">{formatted}</span>
                       <span
                         className={`text-xl font-bold ${
                           i === 0 ? 'text-green-600' : i === 1 ? 'text-blue-600' : ''
@@ -227,7 +234,8 @@ export function CampaignPlanningDashboard() {
                       </span>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

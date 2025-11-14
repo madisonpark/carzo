@@ -138,8 +138,7 @@ export function CampaignPlanningDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Body Styles */}
             <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h3 className="text-lg font-bold text-slate-900 mb-4">By Body Style</h3>
-              <p className="text-sm text-slate-600 mb-4">Category campaigns (broadest reach)</p>
+              <h3 className="text-lg font-bold text-slate-900 mb-4">Body Style</h3>
               <div className="space-y-2">
                 {bodyStyles.slice(0, 5).map((bs, i) => (
                   <div
@@ -162,7 +161,6 @@ export function CampaignPlanningDashboard() {
                         {bs.vehicle_count.toLocaleString()}
                       </span>
                     </div>
-                    {i === 0 && <p className="text-xs text-slate-500 mt-1">Best: Largest inventory</p>}
                   </div>
                 ))}
               </div>
@@ -170,8 +168,7 @@ export function CampaignPlanningDashboard() {
 
             {/* Makes */}
             <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h3 className="text-lg font-bold text-slate-900 mb-4">By Make</h3>
-              <p className="text-sm text-slate-600 mb-4">Brand-specific campaigns (top 10)</p>
+              <h3 className="text-lg font-bold text-slate-900 mb-4">Make</h3>
               <div className="space-y-2">
                 {makes.slice(0, 10).map((make, i) => (
                   <div
@@ -194,7 +191,6 @@ export function CampaignPlanningDashboard() {
                         {make.vehicle_count.toLocaleString()}
                       </span>
                     </div>
-                    {i === 0 && <p className="text-xs text-slate-500 mt-1">Best: Top make</p>}
                   </div>
                 ))}
               </div>
@@ -203,7 +199,6 @@ export function CampaignPlanningDashboard() {
             {/* Make + Body Style Combos */}
             <div className="bg-white rounded-xl border border-slate-200 p-6">
               <h3 className="text-lg font-bold text-slate-900 mb-4">Make + Body Style</h3>
-              <p className="text-sm text-slate-600 mb-4">Combined campaigns (top 10)</p>
               <div className="space-y-2">
                 {makeBodyCombos.slice(0, 10).map((combo, i) => {
                   // Format body style in combination (e.g., "Kia suv" → "Kia SUV")
@@ -242,7 +237,6 @@ export function CampaignPlanningDashboard() {
             {/* Make + Model Combos */}
             <div className="bg-white rounded-xl border border-slate-200 p-6">
               <h3 className="text-lg font-bold text-slate-900 mb-4">Make + Model</h3>
-              <p className="text-sm text-slate-600 mb-4">Specific models (top 10)</p>
               <div className="space-y-2">
                 {makeModelCombos.slice(0, 10).map((combo, i) => (
                   <div

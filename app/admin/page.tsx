@@ -265,12 +265,20 @@ export default async function AdminDashboard() {
               <h1 className="text-3xl font-bold text-slate-900">Carzo Analytics</h1>
               <p className="text-slate-600 mt-1">Revenue tracking and performance metrics</p>
             </div>
-            <a
-              href="/api/admin/logout"
-              className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg transition-colors"
-            >
-              Logout
-            </a>
+            <div className="flex items-center gap-4">
+              <a
+                href="/admin/campaign-planning"
+                className="px-4 py-2 bg-brand hover:bg-brand-hover text-white rounded-lg transition-colors"
+              >
+                Campaign Planning
+              </a>
+              <a
+                href="/api/admin/logout"
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg transition-colors"
+              >
+                Logout
+              </a>
+            </div>
           </div>
         </div>
       </div>

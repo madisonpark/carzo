@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Download } from 'lucide-react';
 import { useMemo } from 'react';
 import { formatBodyStyle } from '@/lib/format-body-style';
 
@@ -115,13 +115,33 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
                   >
                     <div className="flex justify-between items-center">
                       <span className="font-semibold">{formatBodyStyle(bs.body_style)}</span>
-                      <span
-                        className={`text-2xl font-bold ${
-                          i === 0 ? 'text-green-600' : i === 1 ? 'text-blue-600' : ''
-                        }`}
-                      >
-                        {bs.vehicle_count.toLocaleString()}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`text-2xl font-bold ${
+                            i === 0 ? 'text-green-600' : i === 1 ? 'text-blue-600' : ''
+                          }`}
+                        >
+                          {bs.vehicle_count.toLocaleString()}
+                        </span>
+                        <div className="flex gap-1">
+                          <a
+                            href={`/api/admin/export-targeting-combined?campaign_type=body_style&campaign_value=${encodeURIComponent(bs.body_style)}&platform=facebook&min_vehicles=6`}
+                            download
+                            className="p-1.5 hover:bg-blue-100 rounded-lg transition-colors"
+                            title="Download Facebook targeting (multi-metro)"
+                          >
+                            <Download className="w-4 h-4 text-blue-600" />
+                          </a>
+                          <a
+                            href={`/api/admin/export-targeting-combined?campaign_type=body_style&campaign_value=${encodeURIComponent(bs.body_style)}&platform=google&min_vehicles=6`}
+                            download
+                            className="p-1.5 hover:bg-green-100 rounded-lg transition-colors"
+                            title="Download Google targeting (multi-metro)"
+                          >
+                            <Download className="w-4 h-4 text-green-600" />
+                          </a>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -145,13 +165,33 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
                   >
                     <div className="flex justify-between items-center">
                       <span className="font-semibold">{make.make}</span>
-                      <span
-                        className={`text-2xl font-bold ${
-                          i === 0 ? 'text-green-600' : i === 1 ? 'text-blue-600' : ''
-                        }`}
-                      >
-                        {make.vehicle_count.toLocaleString()}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`text-2xl font-bold ${
+                            i === 0 ? 'text-green-600' : i === 1 ? 'text-blue-600' : ''
+                          }`}
+                        >
+                          {make.vehicle_count.toLocaleString()}
+                        </span>
+                        <div className="flex gap-1">
+                          <a
+                            href={`/api/admin/export-targeting-combined?campaign_type=make&campaign_value=${encodeURIComponent(make.make)}&platform=facebook&min_vehicles=6`}
+                            download
+                            className="p-1.5 hover:bg-blue-100 rounded-lg transition-colors"
+                            title="Download Facebook targeting (multi-metro)"
+                          >
+                            <Download className="w-4 h-4 text-blue-600" />
+                          </a>
+                          <a
+                            href={`/api/admin/export-targeting-combined?campaign_type=make&campaign_value=${encodeURIComponent(make.make)}&platform=google&min_vehicles=6`}
+                            download
+                            className="p-1.5 hover:bg-green-100 rounded-lg transition-colors"
+                            title="Download Google targeting (multi-metro)"
+                          >
+                            <Download className="w-4 h-4 text-green-600" />
+                          </a>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -182,13 +222,33 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
                     >
                       <div className="flex justify-between items-center">
                         <span className="font-semibold text-sm">{formatted}</span>
-                      <span
-                        className={`text-xl font-bold ${
-                          i === 0 ? 'text-green-600' : i === 1 ? 'text-blue-600' : ''
-                        }`}
-                      >
-                        {combo.vehicle_count.toLocaleString()}
-                      </span>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`text-xl font-bold ${
+                              i === 0 ? 'text-green-600' : i === 1 ? 'text-blue-600' : ''
+                            }`}
+                          >
+                            {combo.vehicle_count.toLocaleString()}
+                          </span>
+                          <div className="flex gap-1">
+                            <a
+                              href={`/api/admin/export-targeting-combined?campaign_type=make_body_style&campaign_value=${encodeURIComponent(combo.combo_name)}&platform=facebook&min_vehicles=6`}
+                              download
+                              className="p-1.5 hover:bg-blue-100 rounded-lg transition-colors"
+                              title="Download Facebook targeting (multi-metro)"
+                            >
+                              <Download className="w-3.5 h-3.5 text-blue-600" />
+                            </a>
+                            <a
+                              href={`/api/admin/export-targeting-combined?campaign_type=make_body_style&campaign_value=${encodeURIComponent(combo.combo_name)}&platform=google&min_vehicles=6`}
+                              download
+                              className="p-1.5 hover:bg-green-100 rounded-lg transition-colors"
+                              title="Download Google targeting (multi-metro)"
+                            >
+                              <Download className="w-3.5 h-3.5 text-green-600" />
+                            </a>
+                          </div>
+                        </div>
                     </div>
                   </div>
                   );
@@ -213,13 +273,33 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
                   >
                     <div className="flex justify-between items-center">
                       <span className="font-semibold text-sm">{combo.combo_name}</span>
-                      <span
-                        className={`text-xl font-bold ${
-                          i === 0 ? 'text-green-600' : i === 1 ? 'text-blue-600' : ''
-                        }`}
-                      >
-                        {combo.vehicle_count.toLocaleString()}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`text-xl font-bold ${
+                            i === 0 ? 'text-green-600' : i === 1 ? 'text-blue-600' : ''
+                          }`}
+                        >
+                          {combo.vehicle_count.toLocaleString()}
+                        </span>
+                        <div className="flex gap-1">
+                          <a
+                            href={`/api/admin/export-targeting-combined?campaign_type=make_model&campaign_value=${encodeURIComponent(combo.combo_name)}&platform=facebook&min_vehicles=6`}
+                            download
+                            className="p-1.5 hover:bg-blue-100 rounded-lg transition-colors"
+                            title="Download Facebook targeting (multi-metro)"
+                          >
+                            <Download className="w-3.5 h-3.5 text-blue-600" />
+                          </a>
+                          <a
+                            href={`/api/admin/export-targeting-combined?campaign_type=make_model&campaign_value=${encodeURIComponent(combo.combo_name)}&platform=google&min_vehicles=6`}
+                            download
+                            className="p-1.5 hover:bg-green-100 rounded-lg transition-colors"
+                            title="Download Google targeting (multi-metro)"
+                          >
+                            <Download className="w-3.5 h-3.5 text-green-600" />
+                          </a>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}

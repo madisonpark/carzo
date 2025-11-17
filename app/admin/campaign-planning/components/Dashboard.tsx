@@ -2,23 +2,8 @@
 
 import Link from 'next/link';
 import { ArrowLeft, Download } from 'lucide-react';
-import { useMemo } from 'react';
+import { useState } from 'react';
 import { formatBodyStyle } from '@/lib/format-body-style';
-
-interface BodyStyle {
-  body_style: string;
-  vehicle_count: number;
-}
-
-interface Make {
-  make: string;
-  vehicle_count: number;
-}
-
-interface Combination {
-  combo_name: string;
-  vehicle_count: number;
-}
 
 interface DashboardProps {
   initialData: {
@@ -28,49 +13,81 @@ interface DashboardProps {
       by_make: Record<string, number>;
     };
     combinations: {
-      make_bodystyle: Combination[];
-      make_model: Combination[];
+      make_bodystyle: Array<{ combo_name: string; vehicle_count: number }>;
+      make_model: Array<{ combo_name: string; vehicle_count: number }>;
     };
   };
 }
 
+interface Campaign {
+  name: string;
+  type: string;
+  vehicles: number;
+  campaignType: string;
+  campaignValue: string;
+}
+
 export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
-  // Process server-side data (no client-side fetching, no exposed password)
-  const bodyStyles = useMemo(() => {
-    return Object.entries(initialData.snapshot.by_body_style || {})
+  const [selectedPlatform, setSelectedPlatform] = useState<'facebook' | 'google'>('facebook');
+  const [downloading, setDownloading] = useState<string | null>(null);
+
+  // Combine all campaigns into one sortable list
+  const allCampaigns: Campaign[] = [
+    // Body styles
+    ...Object.entries(initialData.snapshot.by_body_style || {}).map(([name, count]) => ({
+      name: formatBodyStyle(name),
+      type: 'Body Style',
+      vehicles: count,
+      campaignType: 'body_style',
+      campaignValue: name,
+    })),
+
+    // Makes
+    ...Object.entries(initialData.snapshot.by_make || {})
+      .slice(0, 10)
       .map(([name, count]) => ({
-        body_style: name,
-        vehicle_count: count as number,
-      }))
-      .sort((a, b) => b.vehicle_count - a.vehicle_count);
-  }, [initialData]);
+        name: name,
+        type: 'Make',
+        vehicles: count,
+        campaignType: 'make',
+        campaignValue: name,
+      })),
 
-  const makes = useMemo(() => {
-    return Object.entries(initialData.snapshot.by_make || {})
-      .map(([name, count]) => ({
-        make: name,
-        vehicle_count: count as number,
-      }))
-      .sort((a, b) => b.vehicle_count - a.vehicle_count);
-  }, [initialData]);
+    // Make + Body Style combos
+    ...(initialData.combinations.make_bodystyle || []).slice(0, 10).map((combo) => {
+      const parts = combo.combo_name.split(' ');
+      const make = parts[0];
+      const bodyStyle = parts.slice(1).join(' ');
+      return {
+        name: `${make} ${formatBodyStyle(bodyStyle)}`,
+        type: 'Make + Body',
+        vehicles: combo.vehicle_count,
+        campaignType: 'make_body_style',
+        campaignValue: combo.combo_name,
+      };
+    }),
 
-  const makeBodyCombos = initialData.combinations.make_bodystyle || [];
-  const makeModelCombos = initialData.combinations.make_model || [];
-  const totalVehicles = initialData.snapshot.total_vehicles || 0;
+    // Make + Model combos
+    ...(initialData.combinations.make_model || []).slice(0, 10).map((combo) => ({
+      name: combo.combo_name,
+      type: 'Make + Model',
+      vehicles: combo.vehicle_count,
+      campaignType: 'make_model',
+      campaignValue: combo.combo_name,
+    })),
+  ].sort((a, b) => b.vehicles - a.vehicles); // Sort by vehicle count descending
 
-  // Client-side download handler with auth
-  const handleDownload = async (campaignType: string, campaignValue: string, platform: string) => {
+  const handleDownload = async (campaign: Campaign) => {
+    setDownloading(campaign.campaignValue);
+
     try {
-      const url = `/api/admin/export-targeting-combined?campaign_type=${campaignType}&campaign_value=${encodeURIComponent(campaignValue)}&platform=${platform}&min_vehicles=6`;
+      const url = `/api/admin/export-targeting-combined?campaign_type=${campaign.campaignType}&campaign_value=${encodeURIComponent(campaign.campaignValue)}&platform=${selectedPlatform}&min_vehicles=6`;
 
-      const response = await fetch(url, {
-        headers: {
-          // Cookie-based auth (carzo_admin_auth) is sent automatically
-        },
-      });
+      const response = await fetch(url);
 
       if (!response.ok) {
         alert(`Download failed: ${response.statusText}`);
+        setDownloading(null);
         return;
       }
 
@@ -78,12 +95,14 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
       const downloadUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = downloadUrl;
-      a.download = `${platform}-targeting-${campaignValue.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.csv`;
+      a.download = `${selectedPlatform}-targeting-${campaign.campaignValue.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.csv`;
       a.click();
       window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
       console.error('Download error:', error);
       alert('Failed to download targeting file');
+    } finally {
+      setDownloading(null);
     }
   };
 
@@ -100,7 +119,7 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
               <div>
                 <h1 className="text-3xl font-bold text-slate-900">Campaign Planning</h1>
                 <p className="text-slate-600 mt-1">
-                  Decide what to advertise, then where to advertise it
+                  Multi-metro targeting for advertising campaigns
                 </p>
               </div>
             </div>
@@ -116,306 +135,122 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Step 1: What to Advertise */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">Step 1: What Should I Advertise?</h2>
-          <p className="text-slate-600">
-            Choose campaign type based on inventory depth nationwide
-          </p>
-          <p className="text-lg font-semibold text-slate-700 mt-2 mb-6">
-            {totalVehicles.toLocaleString()} vehicles available
-          </p>
+        {/* Platform Selector */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 mb-1">Select Ad Platform</h2>
+              <p className="text-sm text-slate-600">
+                Choose which platform you're creating campaigns for
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setSelectedPlatform('facebook')}
+                className={`px-8 py-3 rounded-lg font-semibold transition-all ${
+                  selectedPlatform === 'facebook'
+                    ? 'bg-blue-600 text-white shadow-lg'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                Facebook
+              </button>
+              <button
+                onClick={() => setSelectedPlatform('google')}
+                className={`px-8 py-3 rounded-lg font-semibold transition-all ${
+                  selectedPlatform === 'google'
+                    ? 'bg-green-600 text-white shadow-lg'
+                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                Google
+              </button>
+            </div>
+          </div>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Body Styles */}
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h3 className="text-lg font-bold text-slate-900 mb-4">Body Style</h3>
-              <div className="space-y-3">
-                {bodyStyles.slice(0, 5).map((bs, i) => (
-                  <div
-                    key={bs.body_style}
-                    className={`rounded-lg border ${
-                      i === 0
-                        ? 'border-green-200 bg-green-50'
-                        : i === 1
-                        ? 'border-blue-200 bg-blue-50'
-                        : 'border-slate-200 bg-slate-50'
-                    }`}
+        {/* Campaigns Table */}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="p-6 border-b border-slate-200">
+            <h2 className="text-xl font-bold text-slate-900 mb-1">Available Campaigns</h2>
+            <p className="text-sm text-slate-600">
+              {initialData.snapshot.total_vehicles.toLocaleString()} vehicles • Click to download
+              multi-metro targeting
+            </p>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th className="text-left py-3 px-6 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    Campaign
+                  </th>
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    Type
+                  </th>
+                  <th className="text-right py-3 px-4 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    Vehicles
+                  </th>
+                  <th className="text-center py-3 px-6 text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                    Download
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {allCampaigns.slice(0, 20).map((campaign, i) => (
+                  <tr
+                    key={`${campaign.campaignType}-${campaign.campaignValue}`}
+                    className="hover:bg-slate-50 transition-colors"
                   >
-                    <div className="p-3 flex justify-between items-center">
-                      <span className="font-semibold">{formatBodyStyle(bs.body_style)}</span>
-                      <span
-                        className={`text-2xl font-bold ${
-                          i === 0 ? 'text-green-600' : i === 1 ? 'text-blue-600' : 'text-slate-900'
-                        }`}
-                      >
-                        {bs.vehicle_count.toLocaleString()}
+                    <td className="py-4 px-6">
+                      <span className="font-semibold text-slate-900">{campaign.name}</span>
+                    </td>
+                    <td className="py-4 px-4">
+                      <span className="text-sm text-slate-600">{campaign.type}</span>
+                    </td>
+                    <td className="py-4 px-4 text-right">
+                      <span className="text-lg font-bold text-slate-900">
+                        {campaign.vehicles.toLocaleString()}
                       </span>
-                    </div>
-                    <div className="px-3 pb-3 flex gap-2">
+                    </td>
+                    <td className="py-4 px-6 text-center">
                       <button
-                        onClick={() => handleDownload('body_style', bs.body_style, 'facebook')}
-                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition-colors"
+                        onClick={() => handleDownload(campaign)}
+                        disabled={downloading === campaign.campaignValue}
+                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                          selectedPlatform === 'facebook'
+                            ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                            : 'bg-green-600 hover:bg-green-700 text-white'
+                        } disabled:opacity-50 disabled:cursor-not-allowed`}
                       >
-                        <Download className="w-3 h-3" />
-                        Facebook
+                        <Download className="w-4 h-4" />
+                        {downloading === campaign.campaignValue
+                          ? 'Downloading...'
+                          : `Download ${selectedPlatform === 'facebook' ? 'Facebook' : 'Google'}`}
                       </button>
-                      <button
-                        onClick={() => handleDownload('body_style', bs.body_style, 'google')}
-                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs rounded-lg transition-colors"
-                      >
-                        <Download className="w-3 h-3" />
-                        Google
-                      </button>
-                    </div>
-                  </div>
+                    </td>
+                  </tr>
                 ))}
-              </div>
-            </div>
-
-            {/* Makes */}
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h3 className="text-lg font-bold text-slate-900 mb-4">Make</h3>
-              <div className="space-y-2">
-                {makes.slice(0, 10).map((make, i) => (
-                  <div
-                    key={make.make}
-                    className={`p-3 rounded-lg ${
-                      i === 0
-                        ? 'bg-green-50 border border-green-200'
-                        : i === 1
-                        ? 'bg-blue-50 border border-blue-200'
-                        : 'bg-slate-50 border border-slate-200'
-                    }`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <span className="font-semibold">{make.make}</span>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`text-2xl font-bold ${
-                            i === 0 ? 'text-green-600' : i === 1 ? 'text-blue-600' : ''
-                          }`}
-                        >
-                          {make.vehicle_count.toLocaleString()}
-                        </span>
-                        <div className="flex gap-1">
-                          <a
-                            href={`/api/admin/export-targeting-combined?campaign_type=make&campaign_value=${encodeURIComponent(make.make)}&platform=facebook&min_vehicles=6`}
-                            download
-                            className="p-1.5 hover:bg-blue-100 rounded-lg transition-colors"
-                            title="Download Facebook targeting (multi-metro)"
-                          >
-                            <Download className="w-4 h-4 text-blue-600" />
-                          </a>
-                          <a
-                            href={`/api/admin/export-targeting-combined?campaign_type=make&campaign_value=${encodeURIComponent(make.make)}&platform=google&min_vehicles=6`}
-                            download
-                            className="p-1.5 hover:bg-green-100 rounded-lg transition-colors"
-                            title="Download Google targeting (multi-metro)"
-                          >
-                            <Download className="w-4 h-4 text-green-600" />
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Make + Body Style Combos */}
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h3 className="text-lg font-bold text-slate-900 mb-4">Make + Body Style</h3>
-              <div className="space-y-2">
-                {makeBodyCombos.slice(0, 10).map((combo, i) => {
-                  // Format body style in combination (e.g., "Kia suv" → "Kia SUV")
-                  const parts = combo.combo_name.split(' ');
-                  const make = parts[0];
-                  const bodyStyle = parts.slice(1).join(' ');
-                  const formatted = `${make} ${formatBodyStyle(bodyStyle)}`;
-
-                  return (
-                    <div
-                      key={combo.combo_name}
-                      className={`p-3 rounded-lg ${
-                        i === 0
-                          ? 'bg-green-50 border border-green-200'
-                          : i === 1
-                          ? 'bg-blue-50 border border-blue-200'
-                          : 'bg-slate-50 border border-slate-200'
-                      }`}
-                    >
-                      <div className="flex justify-between items-center">
-                        <span className="font-semibold text-sm">{formatted}</span>
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`text-xl font-bold ${
-                              i === 0 ? 'text-green-600' : i === 1 ? 'text-blue-600' : ''
-                            }`}
-                          >
-                            {combo.vehicle_count.toLocaleString()}
-                          </span>
-                          <div className="flex gap-1">
-                            <a
-                              href={`/api/admin/export-targeting-combined?campaign_type=make_body_style&campaign_value=${encodeURIComponent(combo.combo_name)}&platform=facebook&min_vehicles=6`}
-                              download
-                              className="p-1.5 hover:bg-blue-100 rounded-lg transition-colors"
-                              title="Download Facebook targeting (multi-metro)"
-                            >
-                              <Download className="w-3.5 h-3.5 text-blue-600" />
-                            </a>
-                            <a
-                              href={`/api/admin/export-targeting-combined?campaign_type=make_body_style&campaign_value=${encodeURIComponent(combo.combo_name)}&platform=google&min_vehicles=6`}
-                              download
-                              className="p-1.5 hover:bg-green-100 rounded-lg transition-colors"
-                              title="Download Google targeting (multi-metro)"
-                            >
-                              <Download className="w-3.5 h-3.5 text-green-600" />
-                            </a>
-                          </div>
-                        </div>
-                    </div>
-                  </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Make + Model Combos */}
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h3 className="text-lg font-bold text-slate-900 mb-4">Make + Model</h3>
-              <div className="space-y-2">
-                {makeModelCombos.slice(0, 10).map((combo, i) => (
-                  <div
-                    key={combo.combo_name}
-                    className={`p-3 rounded-lg ${
-                      i === 0
-                        ? 'bg-green-50 border border-green-200'
-                        : i === 1
-                        ? 'bg-blue-50 border border-blue-200'
-                        : 'bg-slate-50 border border-slate-200'
-                    }`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <span className="font-semibold text-sm">{combo.combo_name}</span>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`text-xl font-bold ${
-                            i === 0 ? 'text-green-600' : i === 1 ? 'text-blue-600' : ''
-                          }`}
-                        >
-                          {combo.vehicle_count.toLocaleString()}
-                        </span>
-                        <div className="flex gap-1">
-                          <a
-                            href={`/api/admin/export-targeting-combined?campaign_type=make_model&campaign_value=${encodeURIComponent(combo.combo_name)}&platform=facebook&min_vehicles=6`}
-                            download
-                            className="p-1.5 hover:bg-blue-100 rounded-lg transition-colors"
-                            title="Download Facebook targeting (multi-metro)"
-                          >
-                            <Download className="w-3.5 h-3.5 text-blue-600" />
-                          </a>
-                          <a
-                            href={`/api/admin/export-targeting-combined?campaign_type=make_model&campaign_value=${encodeURIComponent(combo.combo_name)}&platform=google&min_vehicles=6`}
-                            download
-                            className="p-1.5 hover:bg-green-100 rounded-lg transition-colors"
-                            title="Download Google targeting (multi-metro)"
-                          >
-                            <Download className="w-3.5 h-3.5 text-green-600" />
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+              </tbody>
+            </table>
           </div>
+
+          {allCampaigns.length > 20 && (
+            <div className="p-4 border-t border-slate-200 text-center">
+              <p className="text-sm text-slate-600">
+                Showing top 20 campaigns • {allCampaigns.length - 20} more available
+              </p>
+            </div>
+          )}
         </div>
 
-        {/* Step 2: Where to Advertise */}
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">Step 2: Where Should I Run This Campaign?</h2>
-          <p className="text-slate-600 mb-6">
-            Top metros for your chosen campaign type (showing generic metro view - select category above to see filtered)
+        {/* Help Text */}
+        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-xl p-4">
+          <p className="text-sm text-slate-700">
+            <strong>💡 How it works:</strong> Select your platform above, then click Download to get multi-metro targeting
+            covering all metros with 6+ vehicles for that campaign type.
           </p>
-
-          <div className="bg-white rounded-xl border border-slate-200 p-6">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-slate-200">
-                    <th className="text-left py-3 px-4 font-semibold text-slate-900">Metro</th>
-                    <th className="text-right py-3 px-4 font-semibold text-slate-900">Vehicles</th>
-                    <th className="text-right py-3 px-4 font-semibold text-slate-900">Dealers</th>
-                    <th className="text-right py-3 px-4 font-semibold text-slate-900">Top Category</th>
-                    <th className="text-center py-3 px-4 font-semibold text-slate-900">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-b border-slate-100">
-                    <td className="py-3 px-4 font-medium">Tampa, FL</td>
-                    <td className="text-right py-3 px-4">1,337</td>
-                    <td className="text-right py-3 px-4">19</td>
-                    <td className="text-right py-3 px-4 text-sm text-slate-600">699 SUVs</td>
-                    <td className="text-center py-3 px-4">
-                      <a
-                        href="/api/admin/export-targeting?metro=Tampa,%20FL&platform=facebook"
-                        download
-                        className="text-sm text-brand hover:underline"
-                      >
-                        Download
-                      </a>
-                    </td>
-                  </tr>
-                  <tr className="border-b border-slate-100">
-                    <td className="py-3 px-4 font-medium">Dallas, TX</td>
-                    <td className="text-right py-3 px-4">612</td>
-                    <td className="text-right py-3 px-4">15</td>
-                    <td className="text-right py-3 px-4 text-sm text-slate-600">234 SUVs</td>
-                    <td className="text-center py-3 px-4">
-                      <a
-                        href="/api/admin/export-targeting?metro=Dallas,%20TX&platform=facebook"
-                        download
-                        className="text-sm text-brand hover:underline"
-                      >
-                        Download
-                      </a>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td colSpan={5} className="py-6 text-center text-slate-500">
-                      <p className="mb-2">Full interactive dashboard coming soon</p>
-                      <p className="text-sm">For now, use the API endpoints below</p>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        {/* API Documentation */}
-        <div className="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-6">
-          <h3 className="text-lg font-bold text-slate-900 mb-4">API Endpoints (Full Data)</h3>
-
-          <div className="space-y-3">
-            <div>
-              <p className="font-semibold text-slate-900 mb-1">Get all metros with inventory:</p>
-              <code className="block bg-white px-3 py-2 rounded text-sm">
-                curl -H "Authorization: Bearer carzo2024admin" http://localhost:3000/api/admin/campaign-recommendations
-              </code>
-            </div>
-
-            <div>
-              <p className="font-semibold text-slate-900 mb-1">Download targeting for specific metro:</p>
-              <code className="block bg-white px-3 py-2 rounded text-sm">
-                curl -H "Authorization: Bearer carzo2024admin" \<br/>
-                &nbsp;&nbsp;"http://localhost:3000/api/admin/export-targeting?metro=Tampa,%20FL&platform=facebook" \<br/>
-                &nbsp;&nbsp;--output tampa-facebook.csv
-              </code>
-            </div>
-          </div>
         </div>
       </div>
     </div>

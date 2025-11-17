@@ -108,40 +108,29 @@ export async function GET(request: NextRequest) {
 
     // Export based on platform
     if (platform === 'facebook') {
-      // Get unique dealers with their vehicle counts
-      const dealerMap = new Map<
-        string,
-        { latitude: number; longitude: number; dealer_name: string; metro: string; count: number }
-      >();
+      // Get metro-level targeting (one row per metro with centroid + radius)
+      // Facebook will target everyone within radius_miles of each metro centroid
+      const metroLocations = qualifyingMetros.map(([metro, vehicles]) => {
+        // Calculate centroid of all dealers in this metro
+        const dealersInMetro = vehicles.filter(v => v.latitude && v.longitude);
+        const avgLat = dealersInMetro.reduce((sum, v) => sum + v.latitude, 0) / dealersInMetro.length;
+        const avgLon = dealersInMetro.reduce((sum, v) => sum + v.longitude, 0) / dealersInMetro.length;
 
-      for (const v of qualifyingVehicles) {
-        if (!dealerMap.has(v.dealer_id)) {
-          dealerMap.set(v.dealer_id, {
-            latitude: v.latitude,
-            longitude: v.longitude,
-            dealer_name: v.dealer_name,
-            metro: v.dma || `${v.dealer_city}, ${v.dealer_state}`,
-            count: 0,
-          });
-        }
-        dealerMap.get(v.dealer_id)!.count++;
-      }
-
-      // Format as Facebook CSV
-      const rows = Array.from(dealerMap.values()).map((d) => ({
-        latitude: d.latitude,
-        longitude: d.longitude,
-        radius_miles: 25,
-        metro: d.metro,
-        dealer_name: d.dealer_name,
-        vehicle_count: d.count,
-      }));
+        return {
+          metro: metro,
+          latitude: avgLat,
+          longitude: avgLon,
+          radius_miles: 30, // Covers all dealers in metro + surrounding area
+          vehicles: vehicles.length,
+          dealers: new Set(vehicles.map(v => v.dealer_id)).size,
+        };
+      });
 
       const csv = [
-        'latitude,longitude,radius_miles,metro,dealer_name,vehicle_count',
-        ...rows.map(
-          (r) =>
-            `${r.latitude},${r.longitude},${r.radius_miles},"${r.metro}","${r.dealer_name}",${r.vehicle_count}`
+        'metro,latitude,longitude,radius_miles,vehicles,dealers',
+        ...metroLocations.map(
+          (m) =>
+            `"${m.metro}",${m.latitude.toFixed(4)},${m.longitude.toFixed(4)},${m.radius_miles},${m.vehicles},${m.dealers}`
         ),
       ].join('\n');
 

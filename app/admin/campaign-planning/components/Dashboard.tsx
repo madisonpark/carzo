@@ -58,6 +58,35 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
   const makeModelCombos = initialData.combinations.make_model || [];
   const totalVehicles = initialData.snapshot.total_vehicles || 0;
 
+  // Client-side download handler with auth
+  const handleDownload = async (campaignType: string, campaignValue: string, platform: string) => {
+    try {
+      const url = `/api/admin/export-targeting-combined?campaign_type=${campaignType}&campaign_value=${encodeURIComponent(campaignValue)}&platform=${platform}&min_vehicles=6`;
+
+      const response = await fetch(url, {
+        headers: {
+          // Cookie-based auth (carzo_admin_auth) is sent automatically
+        },
+      });
+
+      if (!response.ok) {
+        alert(`Download failed: ${response.statusText}`);
+        return;
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = `${platform}-targeting-${campaignValue.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Failed to download targeting file');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
@@ -101,47 +130,43 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
             {/* Body Styles */}
             <div className="bg-white rounded-xl border border-slate-200 p-6">
               <h3 className="text-lg font-bold text-slate-900 mb-4">Body Style</h3>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {bodyStyles.slice(0, 5).map((bs, i) => (
                   <div
                     key={bs.body_style}
-                    className={`p-3 rounded-lg ${
+                    className={`rounded-lg border ${
                       i === 0
-                        ? 'bg-green-50 border border-green-200'
+                        ? 'border-green-200 bg-green-50'
                         : i === 1
-                        ? 'bg-blue-50 border border-blue-200'
-                        : 'bg-slate-50 border border-slate-200'
+                        ? 'border-blue-200 bg-blue-50'
+                        : 'border-slate-200 bg-slate-50'
                     }`}
                   >
-                    <div className="flex justify-between items-center">
+                    <div className="p-3 flex justify-between items-center">
                       <span className="font-semibold">{formatBodyStyle(bs.body_style)}</span>
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`text-2xl font-bold ${
-                            i === 0 ? 'text-green-600' : i === 1 ? 'text-blue-600' : ''
-                          }`}
-                        >
-                          {bs.vehicle_count.toLocaleString()}
-                        </span>
-                        <div className="flex gap-1">
-                          <a
-                            href={`/api/admin/export-targeting-combined?campaign_type=body_style&campaign_value=${encodeURIComponent(bs.body_style)}&platform=facebook&min_vehicles=6`}
-                            download
-                            className="p-1.5 hover:bg-blue-100 rounded-lg transition-colors"
-                            title="Download Facebook targeting (multi-metro)"
-                          >
-                            <Download className="w-4 h-4 text-blue-600" />
-                          </a>
-                          <a
-                            href={`/api/admin/export-targeting-combined?campaign_type=body_style&campaign_value=${encodeURIComponent(bs.body_style)}&platform=google&min_vehicles=6`}
-                            download
-                            className="p-1.5 hover:bg-green-100 rounded-lg transition-colors"
-                            title="Download Google targeting (multi-metro)"
-                          >
-                            <Download className="w-4 h-4 text-green-600" />
-                          </a>
-                        </div>
-                      </div>
+                      <span
+                        className={`text-2xl font-bold ${
+                          i === 0 ? 'text-green-600' : i === 1 ? 'text-blue-600' : 'text-slate-900'
+                        }`}
+                      >
+                        {bs.vehicle_count.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="px-3 pb-3 flex gap-2">
+                      <button
+                        onClick={() => handleDownload('body_style', bs.body_style, 'facebook')}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition-colors"
+                      >
+                        <Download className="w-3 h-3" />
+                        Facebook
+                      </button>
+                      <button
+                        onClick={() => handleDownload('body_style', bs.body_style, 'google')}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs rounded-lg transition-colors"
+                      >
+                        <Download className="w-3 h-3" />
+                        Google
+                      </button>
                     </div>
                   </div>
                 ))}

@@ -54,16 +54,32 @@ export async function validateAdminAuth(request: NextRequest): Promise<AdminAuth
     };
   }
 
-  // 3. Validate password
+  // 3. Validate password (Bearer token OR cookie)
   const authHeader = request.headers.get('authorization');
   const expectedAuth = `Bearer ${adminPassword}`;
 
-  if (!authHeader || authHeader !== expectedAuth) {
-    return {
-      authorized: false,
-      response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
-    };
+  // Check Bearer token first
+  if (authHeader && authHeader === expectedAuth) {
+    return { authorized: true };
   }
 
-  return { authorized: true };
+  // Check cookie auth (for browser requests from admin dashboard)
+  const cookieHeader = request.headers.get('cookie');
+  if (cookieHeader) {
+    const authCookie = cookieHeader
+      .split('; ')
+      .find(row => row.startsWith('carzo_admin_auth='));
+
+    if (authCookie) {
+      const cookieValue = authCookie.split('=')[1];
+      if (cookieValue === adminPassword) {
+        return { authorized: true };
+      }
+    }
+  }
+
+  return {
+    authorized: false,
+    response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+  };
 }

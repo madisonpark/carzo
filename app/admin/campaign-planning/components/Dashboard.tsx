@@ -5,6 +5,10 @@ import { ArrowLeft, Download } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { formatBodyStyle } from '@/lib/format-body-style';
 
+const TOP_CAMPAIGNS_LIMIT = 20; // Maximum campaigns to display in table
+const TOP_MAKES_LIMIT = 10; // Top makes to show
+const TOP_COMBOS_LIMIT = 10; // Top combos (make+body, make+model) to show
+
 interface DashboardProps {
   initialData: {
     snapshot: {
@@ -42,10 +46,10 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
       campaignValue: name,
     })),
 
-    // Makes (sort by count, then take top 10)
+    // Makes (sort by count, then take top N)
     ...Object.entries(initialData.snapshot.by_make || {})
       .sort((a, b) => (b[1] as number) - (a[1] as number)) // Sort by vehicle count FIRST
-      .slice(0, 10) // Then take top 10
+      .slice(0, TOP_MAKES_LIMIT) // Then take top N
       .map(([name, count]) => ({
         name: name,
         type: 'Make',
@@ -54,10 +58,10 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
         campaignValue: name,
       })),
 
-    // Make + Body Style combos (sort by count, then take top 10)
+    // Make + Body Style combos (sort by count, then take top N)
     ...(initialData.combinations.make_bodystyle || [])
       .sort((a, b) => b.vehicle_count - a.vehicle_count) // Sort by vehicle count FIRST
-      .slice(0, 10) // Then take top 10
+      .slice(0, TOP_COMBOS_LIMIT) // Then take top N
       .map((combo) => {
         const parts = combo.combo_name.split(' ');
         const make = parts[0];
@@ -71,10 +75,10 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
         };
       }),
 
-    // Make + Model combos (sort by count, then take top 10)
+    // Make + Model combos (sort by count, then take top N)
     ...(initialData.combinations.make_model || [])
       .sort((a, b) => b.vehicle_count - a.vehicle_count) // Sort by vehicle count FIRST
-      .slice(0, 10) // Then take top 10
+      .slice(0, TOP_COMBOS_LIMIT) // Then take top N
       .map((combo) => ({
         name: combo.combo_name,
         type: 'Make + Model',
@@ -232,7 +236,7 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {allCampaigns.slice(0, 20).map((campaign, i) => (
+                {allCampaigns.slice(0, TOP_CAMPAIGNS_LIMIT).map((campaign, i) => (
                   <tr
                     key={`${campaign.campaignType}-${campaign.campaignValue}`}
                     className="hover:bg-slate-50 transition-colors"
@@ -251,7 +255,7 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
                     <td className="py-4 px-6 text-center">
                       <button
                         onClick={() => handleDownload(campaign)}
-                        disabled={downloading === campaign.campaignValue}
+                        disabled={downloading !== null} // Disable ALL buttons during ANY download
                         className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
                           selectedPlatform === 'facebook'
                             ? 'bg-blue-600 hover:bg-blue-700 text-white'
@@ -270,10 +274,10 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
             </table>
           </div>
 
-          {allCampaigns.length > 20 && (
+          {allCampaigns.length > TOP_CAMPAIGNS_LIMIT && (
             <div className="p-4 border-t border-slate-200 text-center">
               <p className="text-sm text-slate-600">
-                Showing top 20 campaigns • {allCampaigns.length - 20} more available
+                Showing top {TOP_CAMPAIGNS_LIMIT} campaigns • {allCampaigns.length - TOP_CAMPAIGNS_LIMIT} more available
               </p>
             </div>
           )}

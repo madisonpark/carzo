@@ -86,7 +86,26 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
       const response = await fetch(url);
 
       if (!response.ok) {
-        alert(`Download failed: ${response.statusText}`);
+        // Parse error message from API
+        let errorMessage = 'Download failed';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          errorMessage = `Download failed: ${response.statusText}`;
+        }
+
+        // Show specific error based on status code
+        if (response.status === 401) {
+          alert('Unauthorized: Please log in again');
+        } else if (response.status === 404) {
+          alert(`No metros found with sufficient vehicles for ${campaign.name}`);
+        } else if (response.status === 429) {
+          alert('Rate limit exceeded. Please wait a moment and try again');
+        } else {
+          alert(errorMessage);
+        }
+
         setDownloading(null);
         return;
       }
@@ -100,7 +119,11 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
       window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
       console.error('Download error:', error);
-      alert('Failed to download targeting file');
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        alert('Network error: Please check your connection and try again');
+      } else {
+        alert('Failed to download targeting file. Please try again');
+      }
     } finally {
       setDownloading(null);
     }
@@ -144,9 +167,11 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
                 Choose which platform you're creating campaigns for
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3" role="group" aria-label="Platform selector">
               <button
                 onClick={() => setSelectedPlatform('facebook')}
+                aria-label="Select Facebook platform"
+                aria-pressed={selectedPlatform === 'facebook'}
                 className={`px-8 py-3 rounded-lg font-semibold transition-all ${
                   selectedPlatform === 'facebook'
                     ? 'bg-blue-600 text-white shadow-lg'
@@ -157,6 +182,8 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
               </button>
               <button
                 onClick={() => setSelectedPlatform('google')}
+                aria-label="Select Google platform"
+                aria-pressed={selectedPlatform === 'google'}
                 className={`px-8 py-3 rounded-lg font-semibold transition-all ${
                   selectedPlatform === 'google'
                     ? 'bg-green-600 text-white shadow-lg'

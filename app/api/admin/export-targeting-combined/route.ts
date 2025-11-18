@@ -7,6 +7,9 @@ export const dynamic = 'force-dynamic';
 const VALID_CAMPAIGN_TYPES = ['body_style', 'make', 'make_body_style', 'make_model'] as const;
 const VALID_PLATFORMS = ['facebook', 'google'] as const;
 
+type CampaignType = typeof VALID_CAMPAIGN_TYPES[number];
+type Platform = typeof VALID_PLATFORMS[number];
+
 /**
  * Sanitize field for CSV export to prevent formula injection
  */
@@ -47,31 +50,43 @@ export async function GET(request: NextRequest) {
   }
 
   const { searchParams } = new URL(request.url);
-  const campaignType = searchParams.get('campaign_type');
+  const rawCampaignType = searchParams.get('campaign_type');
   const campaignValue = searchParams.get('campaign_value');
-  const platform = searchParams.get('platform') || 'facebook';
+  const rawPlatform = searchParams.get('platform') || 'facebook';
   const minVehicles = parseInt(searchParams.get('min_vehicles') || '6');
   const maxMetros = parseInt(searchParams.get('max_metros') || '100');
 
   // Validate required params
-  if (!campaignType || !campaignValue) {
+  if (!rawCampaignType || !campaignValue) {
     return NextResponse.json(
       { error: 'campaign_type and campaign_value are required' },
       { status: 400 }
     );
   }
 
-  if (!VALID_CAMPAIGN_TYPES.includes(campaignType as any)) {
+  // Normalize and validate campaign type (case-insensitive)
+  const campaignType = rawCampaignType.toLowerCase() as CampaignType;
+  if (!VALID_CAMPAIGN_TYPES.includes(campaignType)) {
     return NextResponse.json(
       { error: `Invalid campaign_type. Must be one of: ${VALID_CAMPAIGN_TYPES.join(', ')}` },
       { status: 400 }
     );
   }
 
-  // Validate platform early (before data processing)
-  if (!VALID_PLATFORMS.includes(platform as any)) {
+  // Normalize and validate platform (case-insensitive)
+  const platform = rawPlatform.toLowerCase() as Platform;
+  if (!VALID_PLATFORMS.includes(platform)) {
     return NextResponse.json(
       { error: `Invalid platform. Must be one of: ${VALID_PLATFORMS.join(', ')}` },
+      { status: 400 }
+    );
+  }
+
+  // Validate campaign_value is not empty after trimming
+  const trimmedCampaignValue = campaignValue.trim();
+  if (!trimmedCampaignValue) {
+    return NextResponse.json(
+      { error: 'campaign_value cannot be empty' },
       { status: 400 }
     );
   }
@@ -86,17 +101,54 @@ export async function GET(request: NextRequest) {
     let query = supabase.from('vehicles').select('*').eq('is_active', true);
 
     if (campaignType === 'body_style') {
-      query = query.eq('body_style', campaignValue);
+      query = query.eq('body_style', trimmedCampaignValue);
     } else if (campaignType === 'make') {
-      query = query.eq('make', campaignValue);
+      query = query.eq('make', trimmedCampaignValue);
     } else if (campaignType === 'make_body_style') {
-      const parts = campaignValue.split(' ');
+      const parts = trimmedCampaignValue.split(' ');
+
+      // Validate we have at least 2 parts (make + body_style)
+      if (parts.length < 2) {
+        return NextResponse.json(
+          { error: 'make_body_style requires format: "Make BodyStyle" (e.g., "Kia suv")' },
+          { status: 400 }
+        );
+      }
+
       const make = parts[0];
       const bodyStyle = parts.slice(1).join(' '); // Handle multi-word body styles
+
+      // Validate neither part is empty
+      if (!make || !bodyStyle) {
+        return NextResponse.json(
+          { error: 'make_body_style format invalid: both make and body_style are required' },
+          { status: 400 }
+        );
+      }
+
       query = query.eq('make', make).eq('body_style', bodyStyle);
     } else if (campaignType === 'make_model') {
-      const [make, ...modelParts] = campaignValue.split(' ');
-      const model = modelParts.join(' ');
+      const parts = trimmedCampaignValue.split(' ');
+
+      // Validate we have at least 2 parts (make + model)
+      if (parts.length < 2) {
+        return NextResponse.json(
+          { error: 'make_model requires format: "Make Model" (e.g., "Jeep Wrangler")' },
+          { status: 400 }
+        );
+      }
+
+      const make = parts[0];
+      const model = parts.slice(1).join(' '); // Handle multi-word models
+
+      // Validate neither part is empty
+      if (!make || !model) {
+        return NextResponse.json(
+          { error: 'make_model format invalid: both make and model are required' },
+          { status: 400 }
+        );
+      }
+
       query = query.eq('make', make).eq('model', model);
     }
 
@@ -176,7 +228,7 @@ export async function GET(request: NextRequest) {
         ),
       ].join('\n');
 
-      const filename = `facebook-targeting-${campaignValue.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${qualifyingMetros.length}-metros.csv`;
+      const filename = `facebook-targeting-${trimmedCampaignValue.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${qualifyingMetros.length}-metros.csv`;
 
       return new NextResponse(csv, {
         headers: {
@@ -185,20 +237,43 @@ export async function GET(request: NextRequest) {
         },
       });
     } else if (platform === 'google') {
-      // Get all metros, query ZIP codes in bulk
-      const metros = qualifyingMetros.map(([metro]) => {
-        const [city, state] = metro.split(', ');
-        return { city, state };
-      });
+      // Google Ads supports lat/long + radius targeting (same as Facebook)
+      // ZIP code targeting would require pre-computed metro→ZIP mappings (future enhancement)
 
-      // For now, return simple metro list (ZIP lookup would be too slow for multiple metros)
-      // In production, would batch ZIP lookups or pre-compute
+      // Get metro-level targeting (one row per metro with centroid + radius)
+      const metroLocations = qualifyingMetros
+        .map(([metro, vehicles]) => {
+          // Calculate centroid of all dealers in this metro
+          const dealersInMetro = vehicles.filter(v => v.latitude && v.longitude);
+
+          // Skip metros with no valid coordinates (prevent division by zero)
+          if (dealersInMetro.length === 0) {
+            return null;
+          }
+
+          const avgLat = dealersInMetro.reduce((sum, v) => sum + v.latitude, 0) / dealersInMetro.length;
+          const avgLon = dealersInMetro.reduce((sum, v) => sum + v.longitude, 0) / dealersInMetro.length;
+
+          return {
+            metro: metro,
+            latitude: avgLat,
+            longitude: avgLon,
+            radius_miles: 30, // Covers all dealers in metro + surrounding area
+            vehicles: vehicles.length,
+            dealers: new Set(vehicles.map(v => v.dealer_id)).size,
+          };
+        })
+        .filter((m): m is NonNullable<typeof m> => m !== null); // Remove nulls
+
       const csv = [
-        'metro,vehicles',
-        ...qualifyingMetros.map(([metro, vehicles]) => `${sanitizeCsvField(metro)},${vehicles.length}`),
+        'metro,latitude,longitude,radius_miles,vehicles,dealers',
+        ...metroLocations.map(
+          (m) =>
+            `${sanitizeCsvField(m.metro)},${m.latitude.toFixed(4)},${m.longitude.toFixed(4)},${m.radius_miles},${m.vehicles},${m.dealers}`
+        ),
       ].join('\n');
 
-      const filename = `google-targeting-${campaignValue.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${qualifyingMetros.length}-metros.csv`;
+      const filename = `google-targeting-${trimmedCampaignValue.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${qualifyingMetros.length}-metros.csv`;
 
       return new NextResponse(csv, {
         headers: {

@@ -31,8 +31,8 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
   const [selectedPlatform, setSelectedPlatform] = useState<'facebook' | 'google'>('facebook');
   const [downloading, setDownloading] = useState<string | null>(null);
 
-  // Combine all campaigns into one sortable list
-  const allCampaigns: Campaign[] = [
+  // Combine all campaigns into one sortable list (memoized for performance)
+  const allCampaigns = useMemo<Campaign[]>(() => [
     // Body styles
     ...Object.entries(initialData.snapshot.by_body_style || {}).map(([name, count]) => ({
       name: formatBodyStyle(name),
@@ -75,7 +75,7 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
       campaignType: 'make_model',
       campaignValue: combo.combo_name,
     })),
-  ].sort((a, b) => b.vehicles - a.vehicles); // Sort by vehicle count descending
+  ].sort((a, b) => b.vehicles - a.vehicles), [initialData]); // Sort by vehicle count descending
 
   const handleDownload = async (campaign: Campaign) => {
     setDownloading(campaign.campaignValue);

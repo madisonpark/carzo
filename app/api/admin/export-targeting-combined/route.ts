@@ -4,6 +4,8 @@ import { validateAdminAuth } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
+const VALID_CAMPAIGN_TYPES = ['body_style', 'make', 'make_body_style', 'make_model'] as const;
+
 /**
  * Export combined multi-metro targeting for a campaign type
  * Returns ONE CSV with all metros that have sufficient inventory
@@ -37,9 +39,9 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  if (!['body_style', 'make', 'make_body_style', 'make_model'].includes(campaignType)) {
+  if (!VALID_CAMPAIGN_TYPES.includes(campaignType as any)) {
     return NextResponse.json(
-      { error: 'Invalid campaign_type. Must be: body_style, make, make_body_style, or make_model' },
+      { error: `Invalid campaign_type. Must be one of: ${VALID_CAMPAIGN_TYPES.join(', ')}` },
       { status: 400 }
     );
   }
@@ -58,7 +60,9 @@ export async function GET(request: NextRequest) {
     } else if (campaignType === 'make') {
       query = query.eq('make', campaignValue);
     } else if (campaignType === 'make_body_style') {
-      const [make, bodyStyle] = campaignValue.split(' ');
+      const parts = campaignValue.split(' ');
+      const make = parts[0];
+      const bodyStyle = parts.slice(1).join(' '); // Handle multi-word body styles
       query = query.eq('make', make).eq('body_style', bodyStyle);
     } else if (campaignType === 'make_model') {
       const [make, ...modelParts] = campaignValue.split(' ');
@@ -110,21 +114,29 @@ export async function GET(request: NextRequest) {
     if (platform === 'facebook') {
       // Get metro-level targeting (one row per metro with centroid + radius)
       // Facebook will target everyone within radius_miles of each metro centroid
-      const metroLocations = qualifyingMetros.map(([metro, vehicles]) => {
-        // Calculate centroid of all dealers in this metro
-        const dealersInMetro = vehicles.filter(v => v.latitude && v.longitude);
-        const avgLat = dealersInMetro.reduce((sum, v) => sum + v.latitude, 0) / dealersInMetro.length;
-        const avgLon = dealersInMetro.reduce((sum, v) => sum + v.longitude, 0) / dealersInMetro.length;
+      const metroLocations = qualifyingMetros
+        .map(([metro, vehicles]) => {
+          // Calculate centroid of all dealers in this metro
+          const dealersInMetro = vehicles.filter(v => v.latitude && v.longitude);
 
-        return {
-          metro: metro,
-          latitude: avgLat,
-          longitude: avgLon,
-          radius_miles: 30, // Covers all dealers in metro + surrounding area
-          vehicles: vehicles.length,
-          dealers: new Set(vehicles.map(v => v.dealer_id)).size,
-        };
-      });
+          // Skip metros with no valid coordinates (prevent division by zero)
+          if (dealersInMetro.length === 0) {
+            return null;
+          }
+
+          const avgLat = dealersInMetro.reduce((sum, v) => sum + v.latitude, 0) / dealersInMetro.length;
+          const avgLon = dealersInMetro.reduce((sum, v) => sum + v.longitude, 0) / dealersInMetro.length;
+
+          return {
+            metro: metro,
+            latitude: avgLat,
+            longitude: avgLon,
+            radius_miles: 30, // Covers all dealers in metro + surrounding area
+            vehicles: vehicles.length,
+            dealers: new Set(vehicles.map(v => v.dealer_id)).size,
+          };
+        })
+        .filter((m): m is NonNullable<typeof m> => m !== null); // Remove nulls
 
       const csv = [
         'metro,latitude,longitude,radius_miles,vehicles,dealers',

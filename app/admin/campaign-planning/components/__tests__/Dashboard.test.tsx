@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { CampaignPlanningDashboard } from '../Dashboard';
 
 const mockInitialData = {
@@ -38,37 +39,47 @@ describe('CampaignPlanningDashboard', () => {
 
   it('displays total vehicle count', () => {
     render(<CampaignPlanningDashboard initialData={mockInitialData} />);
-    expect(screen.getByText('56,417 vehicles available')).toBeInTheDocument();
+    expect(screen.getByText(/56,417 vehicles/)).toBeInTheDocument();
   });
 
-  it('displays Step 1 heading', () => {
+  it('displays platform selector', () => {
     render(<CampaignPlanningDashboard initialData={mockInitialData} />);
-    expect(screen.getByText('Step 1: What Should I Advertise?')).toBeInTheDocument();
+    expect(screen.getByText('Select Ad Platform')).toBeInTheDocument();
+    expect(screen.getByText('Facebook')).toBeInTheDocument();
+    expect(screen.getByText('Google')).toBeInTheDocument();
   });
 
-  it('displays Step 2 heading', () => {
+  it('displays campaigns table header', () => {
     render(<CampaignPlanningDashboard initialData={mockInitialData} />);
-    expect(screen.getByText('Step 2: Where Should I Run This Campaign?')).toBeInTheDocument();
+    expect(screen.getByText('Available Campaigns')).toBeInTheDocument();
+    expect(screen.getByText('Campaign')).toBeInTheDocument();
+    expect(screen.getByText('Type')).toBeInTheDocument();
+    expect(screen.getByText('Vehicles')).toBeInTheDocument();
+    expect(screen.getByText('Download')).toBeInTheDocument();
   });
 
-  it('displays body style column header', () => {
+  it('displays body style campaign type', () => {
     render(<CampaignPlanningDashboard initialData={mockInitialData} />);
-    expect(screen.getByText('Body Style')).toBeInTheDocument();
+    const bodyStyleElements = screen.getAllByText('Body Style');
+    expect(bodyStyleElements.length).toBeGreaterThan(0);
   });
 
-  it('displays make column header', () => {
+  it('displays make campaign type', () => {
     render(<CampaignPlanningDashboard initialData={mockInitialData} />);
-    expect(screen.getByText('Make')).toBeInTheDocument();
+    const makeElements = screen.getAllByText('Make');
+    expect(makeElements.length).toBeGreaterThan(0);
   });
 
-  it('displays make+body style column header', () => {
+  it('displays make+body style campaign type', () => {
     render(<CampaignPlanningDashboard initialData={mockInitialData} />);
-    expect(screen.getByText('Make + Body Style')).toBeInTheDocument();
+    const elements = screen.getAllByText('Make + Body');
+    expect(elements.length).toBeGreaterThan(0);
   });
 
-  it('displays make+model column header', () => {
+  it('displays make+model campaign type', () => {
     render(<CampaignPlanningDashboard initialData={mockInitialData} />);
-    expect(screen.getByText('Make + Model')).toBeInTheDocument();
+    const elements = screen.getAllByText('Make + Model');
+    expect(elements.length).toBeGreaterThan(0);
   });
 
   describe('Body Styles', () => {
@@ -169,7 +180,207 @@ describe('CampaignPlanningDashboard', () => {
       };
 
       render(<CampaignPlanningDashboard initialData={emptyData} />);
-      expect(screen.getByText('0 vehicles available')).toBeInTheDocument();
+      expect(screen.getByText(/0 vehicles/)).toBeInTheDocument();
+    });
+  });
+
+  describe('Download Functionality', () => {
+    beforeEach(() => {
+      // Mock fetch globally
+      global.fetch = vi.fn();
+
+      // Mock URL.createObjectURL and revokeObjectURL
+      global.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
+      global.URL.revokeObjectURL = vi.fn();
+
+      // Mock window.alert
+      global.alert = vi.fn();
+
+      // Mock HTMLAnchorElement.click
+      HTMLAnchorElement.prototype.click = vi.fn();
+    });
+
+    it('should construct correct API URL with campaign params', async () => {
+      const user = userEvent.setup();
+      render(<CampaignPlanningDashboard initialData={mockInitialData} />);
+
+      vi.mocked(global.fetch).mockResolvedValueOnce(
+        new Response('metro,lat,lon\n', {
+          status: 200,
+          headers: { 'Content-Type': 'text/csv' },
+        })
+      );
+
+      const downloadButton = screen.getAllByText(/Download/)[0];
+      await user.click(downloadButton);
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/admin/export-targeting-combined')
+      );
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('campaign_type=body_style')
+      );
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('platform=facebook')
+      );
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('min_vehicles=6')
+      );
+    });
+
+    it('should display error alert on 401 unauthorized', async () => {
+      const user = userEvent.setup();
+      render(<CampaignPlanningDashboard initialData={mockInitialData} />);
+
+      vi.mocked(global.fetch).mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      );
+
+      const downloadButton = screen.getAllByText(/Download/)[0];
+      await user.click(downloadButton);
+
+      await vi.waitFor(() => {
+        expect(global.alert).toHaveBeenCalledWith('Unauthorized: Please log in again');
+      });
+    });
+
+    it('should display error alert on 404 not found', async () => {
+      const user = userEvent.setup();
+      render(<CampaignPlanningDashboard initialData={mockInitialData} />);
+
+      vi.mocked(global.fetch).mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: 'No metros found' }), {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      );
+
+      const downloadButton = screen.getAllByText(/Download/)[0];
+      await user.click(downloadButton);
+
+      await vi.waitFor(() => {
+        expect(global.alert).toHaveBeenCalledWith(
+          expect.stringContaining('No metros found')
+        );
+      });
+    });
+
+    it('should display error alert on 429 rate limit', async () => {
+      const user = userEvent.setup();
+      render(<CampaignPlanningDashboard initialData={mockInitialData} />);
+
+      vi.mocked(global.fetch).mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
+          status: 429,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      );
+
+      const downloadButton = screen.getAllByText(/Download/)[0];
+      await user.click(downloadButton);
+
+      await vi.waitFor(() => {
+        expect(global.alert).toHaveBeenCalledWith('Rate limit exceeded. Please wait a moment and try again');
+      });
+    });
+
+    it('should handle network errors gracefully', async () => {
+      const user = userEvent.setup();
+      render(<CampaignPlanningDashboard initialData={mockInitialData} />);
+
+      vi.mocked(global.fetch).mockRejectedValueOnce(new TypeError('Failed to fetch'));
+
+      const downloadButton = screen.getAllByText(/Download/)[0];
+      await user.click(downloadButton);
+
+      await vi.waitFor(() => {
+        expect(global.alert).toHaveBeenCalledWith('Network error: Please check your connection and try again');
+      });
+    });
+
+    it('should download CSV with correct filename', async () => {
+      const user = userEvent.setup();
+      render(<CampaignPlanningDashboard initialData={mockInitialData} />);
+
+      const csvContent = 'metro,lat,lon\nTampa,27.9,-82.4\n';
+      vi.mocked(global.fetch).mockResolvedValueOnce(
+        new Response(csvContent, {
+          status: 200,
+          headers: { 'Content-Type': 'text/csv' },
+        })
+      );
+
+      const downloadButton = screen.getAllByText(/Download/)[0];
+      await user.click(downloadButton);
+
+      await vi.waitFor(() => {
+        expect(global.URL.createObjectURL).toHaveBeenCalled();
+
+        // Find the <a> element that was created
+        const link = document.querySelector('a[download]');
+        expect(link).toBeTruthy();
+        expect(link?.getAttribute('download')).toMatch(/^facebook-targeting-.*\.csv$/);
+        expect(HTMLAnchorElement.prototype.click).toHaveBeenCalled();
+        expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
+      });
+    });
+
+    it('should switch platform and use correct platform in URL', async () => {
+      const user = userEvent.setup();
+      render(<CampaignPlanningDashboard initialData={mockInitialData} />);
+
+      vi.mocked(global.fetch).mockResolvedValueOnce(
+        new Response('metro,lat,lon\n', {
+          status: 200,
+          headers: { 'Content-Type': 'text/csv' },
+        })
+      );
+
+      // Click Google platform button
+      const googleButton = screen.getByText('Google');
+      await user.click(googleButton);
+
+      // Click download
+      const downloadButton = screen.getAllByText(/Download/)[0];
+      await user.click(downloadButton);
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('platform=google')
+      );
+    });
+
+    it('should show downloading state during download', async () => {
+      const user = userEvent.setup();
+      render(<CampaignPlanningDashboard initialData={mockInitialData} />);
+
+      let resolvePromise: (value: Response) => void;
+      const fetchPromise = new Promise<Response>((resolve) => {
+        resolvePromise = resolve;
+      });
+
+      vi.mocked(global.fetch).mockReturnValueOnce(fetchPromise as any);
+
+      const downloadButton = screen.getAllByText(/Download/)[0];
+      await user.click(downloadButton);
+
+      // Should show "Downloading..." text
+      expect(screen.getByText(/Downloading\.\.\./)).toBeInTheDocument();
+
+      // Resolve the promise
+      resolvePromise!(
+        new Response('metro,lat,lon\n', {
+          status: 200,
+          headers: { 'Content-Type': 'text/csv' },
+        })
+      );
+
+      // Wait for download to complete
+      await vi.waitFor(() => {
+        expect(screen.queryByText(/Downloading\.\.\./)).not.toBeInTheDocument();
+      });
     });
   });
 });

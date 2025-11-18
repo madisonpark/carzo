@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowLeft, Download } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { formatBodyStyle } from '@/lib/format-body-style';
 
 interface DashboardProps {

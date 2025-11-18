@@ -5,6 +5,7 @@ import { validateAdminAuth } from '@/lib/admin-auth';
 export const dynamic = 'force-dynamic';
 
 const VALID_CAMPAIGN_TYPES = ['body_style', 'make', 'make_body_style', 'make_model'] as const;
+const VALID_PLATFORMS = ['facebook', 'google'] as const;
 
 /**
  * Export combined multi-metro targeting for a campaign type
@@ -42,6 +43,14 @@ export async function GET(request: NextRequest) {
   if (!VALID_CAMPAIGN_TYPES.includes(campaignType as any)) {
     return NextResponse.json(
       { error: `Invalid campaign_type. Must be one of: ${VALID_CAMPAIGN_TYPES.join(', ')}` },
+      { status: 400 }
+    );
+  }
+
+  // Validate platform early (before data processing)
+  if (!VALID_PLATFORMS.includes(platform as any)) {
+    return NextResponse.json(
+      { error: `Invalid platform. Must be one of: ${VALID_PLATFORMS.join(', ')}` },
       { status: 400 }
     );
   }

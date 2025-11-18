@@ -6,9 +6,19 @@ export const dynamic = 'force-dynamic';
 
 const VALID_CAMPAIGN_TYPES = ['body_style', 'make', 'make_body_style', 'make_model'] as const;
 const VALID_PLATFORMS = ['facebook', 'google'] as const;
+const METRO_RADIUS_MILES = 30; // Default radius to cover all dealers in metro + surrounding area
 
 type CampaignType = typeof VALID_CAMPAIGN_TYPES[number];
 type Platform = typeof VALID_PLATFORMS[number];
+
+interface MetroLocation {
+  metro: string;
+  latitude: number;
+  longitude: number;
+  radius_miles: number;
+  vehicles: number;
+  dealers: number;
+}
 
 /**
  * Sanitize field for CSV export to prevent formula injection
@@ -29,6 +39,42 @@ function sanitizeCsvField(value: string): string {
   sanitized = sanitized.replace(/[\r\n]/g, ' ');
 
   return `"${sanitized}"`;
+}
+
+/**
+ * Calculate metro-level targeting locations from qualifying metros
+ * Groups vehicles by metro and calculates centroid + stats for each metro
+ */
+function calculateMetroLocations(
+  qualifyingMetros: Array<[string, any[]]>
+): MetroLocation[] {
+  return qualifyingMetros
+    .map(([metro, vehicles]) => {
+      // Calculate centroid of all dealers in this metro
+      const dealersInMetro = vehicles.filter((v: any) => v.latitude && v.longitude);
+
+      // Skip metros with no valid coordinates (prevent division by zero)
+      if (dealersInMetro.length === 0) {
+        return null;
+      }
+
+      const avgLat =
+        dealersInMetro.reduce((sum: number, v: any) => sum + v.latitude, 0) /
+        dealersInMetro.length;
+      const avgLon =
+        dealersInMetro.reduce((sum: number, v: any) => sum + v.longitude, 0) /
+        dealersInMetro.length;
+
+      return {
+        metro: metro,
+        latitude: avgLat,
+        longitude: avgLon,
+        radius_miles: METRO_RADIUS_MILES,
+        vehicles: vehicles.length,
+        dealers: new Set(vehicles.map((v: any) => v.dealer_id)).size,
+      };
+    })
+    .filter((m): m is MetroLocation => m !== null); // Remove nulls
 }
 
 /**
@@ -192,98 +238,26 @@ export async function GET(request: NextRequest) {
     // Flatten to all vehicles in qualifying metros
     const qualifyingVehicles = qualifyingMetros.flatMap(([_, vehicles]) => vehicles);
 
-    // Export based on platform
-    if (platform === 'facebook') {
-      // Get metro-level targeting (one row per metro with centroid + radius)
-      // Facebook will target everyone within radius_miles of each metro centroid
-      const metroLocations = qualifyingMetros
-        .map(([metro, vehicles]) => {
-          // Calculate centroid of all dealers in this metro
-          const dealersInMetro = vehicles.filter(v => v.latitude && v.longitude);
+    // Calculate metro-level targeting locations (used by both platforms)
+    const metroLocations = calculateMetroLocations(qualifyingMetros);
 
-          // Skip metros with no valid coordinates (prevent division by zero)
-          if (dealersInMetro.length === 0) {
-            return null;
-          }
+    // Generate CSV with lat/long + radius targeting
+    const csv = [
+      'metro,latitude,longitude,radius_miles,vehicles,dealers',
+      ...metroLocations.map(
+        (m) =>
+          `${sanitizeCsvField(m.metro)},${m.latitude.toFixed(4)},${m.longitude.toFixed(4)},${m.radius_miles},${m.vehicles},${m.dealers}`
+      ),
+    ].join('\n');
 
-          const avgLat = dealersInMetro.reduce((sum, v) => sum + v.latitude, 0) / dealersInMetro.length;
-          const avgLon = dealersInMetro.reduce((sum, v) => sum + v.longitude, 0) / dealersInMetro.length;
+    const filename = `${platform}-targeting-${trimmedCampaignValue.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${qualifyingMetros.length}-metros.csv`;
 
-          return {
-            metro: metro,
-            latitude: avgLat,
-            longitude: avgLon,
-            radius_miles: 30, // Covers all dealers in metro + surrounding area
-            vehicles: vehicles.length,
-            dealers: new Set(vehicles.map(v => v.dealer_id)).size,
-          };
-        })
-        .filter((m): m is NonNullable<typeof m> => m !== null); // Remove nulls
-
-      const csv = [
-        'metro,latitude,longitude,radius_miles,vehicles,dealers',
-        ...metroLocations.map(
-          (m) =>
-            `${sanitizeCsvField(m.metro)},${m.latitude.toFixed(4)},${m.longitude.toFixed(4)},${m.radius_miles},${m.vehicles},${m.dealers}`
-        ),
-      ].join('\n');
-
-      const filename = `facebook-targeting-${trimmedCampaignValue.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${qualifyingMetros.length}-metros.csv`;
-
-      return new NextResponse(csv, {
-        headers: {
-          'Content-Type': 'text/csv',
-          'Content-Disposition': `attachment; filename="${filename}"`,
-        },
-      });
-    } else if (platform === 'google') {
-      // Google Ads supports lat/long + radius targeting (same as Facebook)
-      // ZIP code targeting would require pre-computed metro→ZIP mappings (future enhancement)
-
-      // Get metro-level targeting (one row per metro with centroid + radius)
-      const metroLocations = qualifyingMetros
-        .map(([metro, vehicles]) => {
-          // Calculate centroid of all dealers in this metro
-          const dealersInMetro = vehicles.filter(v => v.latitude && v.longitude);
-
-          // Skip metros with no valid coordinates (prevent division by zero)
-          if (dealersInMetro.length === 0) {
-            return null;
-          }
-
-          const avgLat = dealersInMetro.reduce((sum, v) => sum + v.latitude, 0) / dealersInMetro.length;
-          const avgLon = dealersInMetro.reduce((sum, v) => sum + v.longitude, 0) / dealersInMetro.length;
-
-          return {
-            metro: metro,
-            latitude: avgLat,
-            longitude: avgLon,
-            radius_miles: 30, // Covers all dealers in metro + surrounding area
-            vehicles: vehicles.length,
-            dealers: new Set(vehicles.map(v => v.dealer_id)).size,
-          };
-        })
-        .filter((m): m is NonNullable<typeof m> => m !== null); // Remove nulls
-
-      const csv = [
-        'metro,latitude,longitude,radius_miles,vehicles,dealers',
-        ...metroLocations.map(
-          (m) =>
-            `${sanitizeCsvField(m.metro)},${m.latitude.toFixed(4)},${m.longitude.toFixed(4)},${m.radius_miles},${m.vehicles},${m.dealers}`
-        ),
-      ].join('\n');
-
-      const filename = `google-targeting-${trimmedCampaignValue.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${qualifyingMetros.length}-metros.csv`;
-
-      return new NextResponse(csv, {
-        headers: {
-          'Content-Type': 'text/csv',
-          'Content-Disposition': `attachment; filename="${filename}"`,
-        },
-      });
-    }
-
-    return NextResponse.json({ error: 'Invalid platform' }, { status: 400 });
+    return new NextResponse(csv, {
+      headers: {
+        'Content-Type': 'text/csv',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+      },
+    });
   } catch (error: any) {
     console.error('Error exporting combined targeting:', error);
     return NextResponse.json(

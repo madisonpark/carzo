@@ -33,7 +33,7 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
 
   // Combine all campaigns into one sortable list (memoized for performance)
   const allCampaigns = useMemo<Campaign[]>(() => [
-    // Body styles
+    // Body styles (all of them, will be globally sorted)
     ...Object.entries(initialData.snapshot.by_body_style || {}).map(([name, count]) => ({
       name: formatBodyStyle(name),
       type: 'Body Style',
@@ -42,9 +42,10 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
       campaignValue: name,
     })),
 
-    // Makes
+    // Makes (sort by count, then take top 10)
     ...Object.entries(initialData.snapshot.by_make || {})
-      .slice(0, 10)
+      .sort((a, b) => (b[1] as number) - (a[1] as number)) // Sort by vehicle count FIRST
+      .slice(0, 10) // Then take top 10
       .map(([name, count]) => ({
         name: name,
         type: 'Make',
@@ -53,29 +54,35 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
         campaignValue: name,
       })),
 
-    // Make + Body Style combos
-    ...(initialData.combinations.make_bodystyle || []).slice(0, 10).map((combo) => {
-      const parts = combo.combo_name.split(' ');
-      const make = parts[0];
-      const bodyStyle = parts.slice(1).join(' ');
-      return {
-        name: `${make} ${formatBodyStyle(bodyStyle)}`,
-        type: 'Make + Body',
-        vehicles: combo.vehicle_count,
-        campaignType: 'make_body_style',
-        campaignValue: combo.combo_name,
-      };
-    }),
+    // Make + Body Style combos (sort by count, then take top 10)
+    ...(initialData.combinations.make_bodystyle || [])
+      .sort((a, b) => b.vehicle_count - a.vehicle_count) // Sort by vehicle count FIRST
+      .slice(0, 10) // Then take top 10
+      .map((combo) => {
+        const parts = combo.combo_name.split(' ');
+        const make = parts[0];
+        const bodyStyle = parts.slice(1).join(' ');
+        return {
+          name: `${make} ${formatBodyStyle(bodyStyle)}`,
+          type: 'Make + Body',
+          vehicles: combo.vehicle_count,
+          campaignType: 'make_body_style',
+          campaignValue: combo.combo_name,
+        };
+      }),
 
-    // Make + Model combos
-    ...(initialData.combinations.make_model || []).slice(0, 10).map((combo) => ({
-      name: combo.combo_name,
-      type: 'Make + Model',
-      vehicles: combo.vehicle_count,
-      campaignType: 'make_model',
-      campaignValue: combo.combo_name,
-    })),
-  ].sort((a, b) => b.vehicles - a.vehicles), [initialData]); // Sort by vehicle count descending
+    // Make + Model combos (sort by count, then take top 10)
+    ...(initialData.combinations.make_model || [])
+      .sort((a, b) => b.vehicle_count - a.vehicle_count) // Sort by vehicle count FIRST
+      .slice(0, 10) // Then take top 10
+      .map((combo) => ({
+        name: combo.combo_name,
+        type: 'Make + Model',
+        vehicles: combo.vehicle_count,
+        campaignType: 'make_model',
+        campaignValue: combo.combo_name,
+      })),
+  ].sort((a, b) => b.vehicles - a.vehicles), [initialData]); // Sort all campaigns by vehicle count descending
 
   const handleDownload = async (campaign: Campaign) => {
     setDownloading(campaign.campaignValue);

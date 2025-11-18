@@ -46,6 +46,8 @@ export async function GET(request: NextRequest) {
   const metro = searchParams.get('metro'); // e.g., "Tampa, FL"
   const platform = searchParams.get('platform') || 'facebook';
   const format = searchParams.get('format') || 'csv';
+  const make = searchParams.get('make');
+  const bodyStyle = searchParams.get('bodyStyle');
 
   if (!metro) {
     return NextResponse.json({ error: 'metro parameter required' }, { status: 400 });
@@ -62,12 +64,22 @@ export async function GET(request: NextRequest) {
 
     if (platform === 'facebook') {
       // Export lat/long radius targeting for Facebook
-      const { data: dealers, error } = await supabase
+      let query = supabase
         .from('vehicles')
         .select('latitude, longitude, dealer_name, dealer_id')
         .eq('dealer_city', city)
         .eq('dealer_state', state)
         .eq('is_active', true);
+
+      if (make) {
+        query = query.eq('make', make);
+      }
+
+      if (bodyStyle) {
+        query = query.eq('body_style', bodyStyle);
+      }
+
+      const { data: dealers, error } = await query;
 
       if (error) throw error;
 
@@ -130,6 +142,8 @@ export async function GET(request: NextRequest) {
         p_city: city,
         p_state: state,
         p_radius_miles: 25,
+        p_make: make || null,
+        p_body_style: bodyStyle || null,
       });
 
       if (zipError) throw zipError;

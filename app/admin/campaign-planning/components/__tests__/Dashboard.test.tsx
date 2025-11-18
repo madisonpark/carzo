@@ -38,37 +38,47 @@ describe('CampaignPlanningDashboard', () => {
 
   it('displays total vehicle count', () => {
     render(<CampaignPlanningDashboard initialData={mockInitialData} />);
-    expect(screen.getByText('56,417 vehicles available')).toBeInTheDocument();
+    expect(screen.getByText(/56,417 vehicles/)).toBeInTheDocument();
   });
 
-  it('displays Step 1 heading', () => {
+  it('displays platform selector', () => {
     render(<CampaignPlanningDashboard initialData={mockInitialData} />);
-    expect(screen.getByText('Step 1: What Should I Advertise?')).toBeInTheDocument();
+    expect(screen.getByText('Select Ad Platform')).toBeInTheDocument();
+    expect(screen.getByText('Facebook')).toBeInTheDocument();
+    expect(screen.getByText('Google')).toBeInTheDocument();
   });
 
-  it('displays Step 2 heading', () => {
+  it('displays campaigns table header', () => {
     render(<CampaignPlanningDashboard initialData={mockInitialData} />);
-    expect(screen.getByText('Step 2: Where Should I Run This Campaign?')).toBeInTheDocument();
+    expect(screen.getByText('Available Campaigns')).toBeInTheDocument();
+    expect(screen.getByText('Campaign')).toBeInTheDocument();
+    expect(screen.getByText('Type')).toBeInTheDocument();
+    expect(screen.getByText('Vehicles')).toBeInTheDocument();
+    expect(screen.getByText('Download')).toBeInTheDocument();
   });
 
-  it('displays body style column header', () => {
+  it('displays body style campaign type', () => {
     render(<CampaignPlanningDashboard initialData={mockInitialData} />);
-    expect(screen.getByText('Body Style')).toBeInTheDocument();
+    const bodyStyleElements = screen.getAllByText('Body Style');
+    expect(bodyStyleElements.length).toBeGreaterThan(0);
   });
 
-  it('displays make column header', () => {
+  it('displays make campaign type', () => {
     render(<CampaignPlanningDashboard initialData={mockInitialData} />);
-    expect(screen.getByText('Make')).toBeInTheDocument();
+    const makeElements = screen.getAllByText('Make');
+    expect(makeElements.length).toBeGreaterThan(0);
   });
 
-  it('displays make+body style column header', () => {
+  it('displays make+body style campaign type', () => {
     render(<CampaignPlanningDashboard initialData={mockInitialData} />);
-    expect(screen.getByText('Make + Body Style')).toBeInTheDocument();
+    const elements = screen.getAllByText('Make + Body');
+    expect(elements.length).toBeGreaterThan(0);
   });
 
-  it('displays make+model column header', () => {
+  it('displays make+model campaign type', () => {
     render(<CampaignPlanningDashboard initialData={mockInitialData} />);
-    expect(screen.getByText('Make + Model')).toBeInTheDocument();
+    const elements = screen.getAllByText('Make + Model');
+    expect(elements.length).toBeGreaterThan(0);
   });
 
   describe('Body Styles', () => {
@@ -169,7 +179,7 @@ describe('CampaignPlanningDashboard', () => {
       };
 
       render(<CampaignPlanningDashboard initialData={emptyData} />);
-      expect(screen.getByText('0 vehicles available')).toBeInTheDocument();
+      expect(screen.getByText(/0 vehicles/)).toBeInTheDocument();
     });
   });
 });

@@ -8,6 +8,27 @@ const VALID_CAMPAIGN_TYPES = ['body_style', 'make', 'make_body_style', 'make_mod
 const VALID_PLATFORMS = ['facebook', 'google'] as const;
 
 /**
+ * Sanitize field for CSV export to prevent formula injection
+ */
+function sanitizeCsvField(value: string): string {
+  if (!value) return '""';
+
+  // Prevent formula injection (leading =, +, -, @, tab, carriage return)
+  let sanitized = value;
+  if (/^[=+\-@\t\r]/.test(sanitized)) {
+    sanitized = `'${sanitized}`; // Prefix with single quote
+  }
+
+  // Escape double quotes
+  sanitized = sanitized.replace(/"/g, '""');
+
+  // Remove newlines
+  sanitized = sanitized.replace(/[\r\n]/g, ' ');
+
+  return `"${sanitized}"`;
+}
+
+/**
  * Export combined multi-metro targeting for a campaign type
  * Returns ONE CSV with all metros that have sufficient inventory
  *
@@ -151,7 +172,7 @@ export async function GET(request: NextRequest) {
         'metro,latitude,longitude,radius_miles,vehicles,dealers',
         ...metroLocations.map(
           (m) =>
-            `"${m.metro}",${m.latitude.toFixed(4)},${m.longitude.toFixed(4)},${m.radius_miles},${m.vehicles},${m.dealers}`
+            `${sanitizeCsvField(m.metro)},${m.latitude.toFixed(4)},${m.longitude.toFixed(4)},${m.radius_miles},${m.vehicles},${m.dealers}`
         ),
       ].join('\n');
 
@@ -174,7 +195,7 @@ export async function GET(request: NextRequest) {
       // In production, would batch ZIP lookups or pre-compute
       const csv = [
         'metro,vehicles',
-        ...qualifyingMetros.map(([metro, vehicles]) => `"${metro}",${vehicles.length}`),
+        ...qualifyingMetros.map(([metro, vehicles]) => `${sanitizeCsvField(metro)},${vehicles.length}`),
       ].join('\n');
 
       const filename = `google-targeting-${campaignValue.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${qualifyingMetros.length}-metros.csv`;

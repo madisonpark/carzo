@@ -212,9 +212,14 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error;
 
-    const vehicles = vehiclesData as Vehicle[] | null;
+    // Runtime validation: Ensure query returns expected array format
+    if (!vehiclesData || !Array.isArray(vehiclesData)) {
+      throw new Error('Unexpected response format from vehicles query');
+    }
 
-    if (!vehicles || vehicles.length === 0) {
+    const vehicles: Vehicle[] = vehiclesData;
+
+    if (vehicles.length === 0) {
       return NextResponse.json(
         { error: `No active vehicles found for campaign: ${campaignValue}` },
         { status: 404 }
@@ -246,9 +251,6 @@ export async function GET(request: NextRequest) {
         { status: 404 }
       );
     }
-
-    // Flatten to all vehicles in qualifying metros
-    // const qualifyingVehicles = qualifyingMetros.flatMap(([, vehicles]) => vehicles);
 
     // Calculate metro-level targeting locations (used by both platforms)
     const metroLocations = calculateMetroLocations(qualifyingMetros);

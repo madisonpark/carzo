@@ -8,8 +8,6 @@ import {
   clearTrackingData,
 } from '../user-tracking';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 // Helper to restore window
 function restoreWindow() {
   delete (global as any).window;

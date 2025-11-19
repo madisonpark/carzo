@@ -1,8 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import robots from '../robots';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 describe('robots.ts', () => {
   const originalEnv = process.env.NEXT_PUBLIC_SITE_URL;
 

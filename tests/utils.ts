@@ -2,8 +2,6 @@ import { render, RenderOptions } from '@testing-library/react';
 import { ReactElement } from 'react';
 import { vi, expect } from 'vitest';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 /**
  * Custom render function that wraps components with common providers
  */

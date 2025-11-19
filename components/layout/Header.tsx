@@ -2,7 +2,9 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { useTheme } from 'next-themes';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from './ThemeToggle';
@@ -28,11 +30,18 @@ import { cn } from '@/lib/utils';
  */
 export function Header() {
   const pathname = usePathname();
+  const { theme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [mounted, setMounted] = React.useState(false);
 
   // Focus Mode Detection: Search results and VDP pages
   const isFocusMode =
     pathname?.startsWith('/search') || pathname?.startsWith('/vehicles/');
+
+  // Prevent hydration mismatch
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Close mobile menu when route changes
   React.useEffect(() => {
@@ -67,13 +76,23 @@ export function Header() {
           <Link
             href="/"
             className={cn(
-              'text-2xl font-bold text-foreground',
               'transition-smooth hover:opacity-80',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-md',
-              isFocusMode ? 'text-xl' : 'text-2xl'
+              'flex items-center'
             )}
           >
-            Carzo
+            {mounted ? (
+              <Image
+                src={theme === 'dark' ? '/logos/carzo-light.svg' : '/logos/carzo-dark.svg'}
+                alt="Carzo"
+                width={isFocusMode ? 100 : 120}
+                height={isFocusMode ? 28 : 32}
+                priority
+                className="transition-all duration-300"
+              />
+            ) : (
+              <div className={cn(isFocusMode ? 'h-7 w-[100px]' : 'h-8 w-[120px]')} />
+            )}
           </Link>
 
           {/* Desktop Navigation - Hidden in Focus Mode */}

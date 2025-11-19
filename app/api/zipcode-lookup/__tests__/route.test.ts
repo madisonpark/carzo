@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
 import { GET } from '../route';
 import { NextRequest } from 'next/server';
 
@@ -27,12 +27,12 @@ function createMockRequest(queryParams: Record<string, string>): NextRequest {
 }
 
 describe('GET /api/zipcode-lookup', () => {
-  let zipcodesLookup: any;
+  let zipcodesLookup: Mock;
 
   beforeEach(async () => {
     vi.clearAllMocks();
     const zipcodes = await import('zipcodes');
-    zipcodesLookup = zipcodes.default.lookup;
+    zipcodesLookup = zipcodes.default.lookup as unknown as Mock;
   });
 
   describe('Request Validation', () => {

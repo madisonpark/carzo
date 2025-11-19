@@ -11,6 +11,17 @@ const METRO_RADIUS_MILES = 30; // Default radius to cover all dealers in metro +
 type CampaignType = typeof VALID_CAMPAIGN_TYPES[number];
 type Platform = typeof VALID_PLATFORMS[number];
 
+interface Vehicle {
+  id: string;
+  latitude: number;
+  longitude: number;
+  dealer_id: string;
+  dma?: string;
+  dealer_city?: string;
+  dealer_state?: string;
+  [key: string]: unknown; // Allow other fields from select('*')
+}
+
 interface MetroLocation {
   metro: string;
   latitude: number;
@@ -46,12 +57,12 @@ function sanitizeCsvField(value: string): string {
  * Groups vehicles by metro and calculates centroid + stats for each metro
  */
 function calculateMetroLocations(
-  qualifyingMetros: Array<[string, any[]]>
+  qualifyingMetros: Array<[string, Vehicle[]]>
 ): MetroLocation[] {
   return qualifyingMetros
     .map(([metro, vehicles]) => {
       // Calculate centroid of all dealers in this metro
-      const dealersInMetro = vehicles.filter((v: any) => v.latitude && v.longitude);
+      const dealersInMetro = vehicles.filter((v) => v.latitude && v.longitude);
 
       // Skip metros with no valid coordinates (prevent division by zero)
       if (dealersInMetro.length === 0) {
@@ -59,10 +70,10 @@ function calculateMetroLocations(
       }
 
       const avgLat =
-        dealersInMetro.reduce((sum: number, v: any) => sum + v.latitude, 0) /
+        dealersInMetro.reduce((sum: number, v: Vehicle) => sum + (v.latitude as number), 0) /
         dealersInMetro.length;
       const avgLon =
-        dealersInMetro.reduce((sum: number, v: any) => sum + v.longitude, 0) /
+        dealersInMetro.reduce((sum: number, v: Vehicle) => sum + (v.longitude as number), 0) /
         dealersInMetro.length;
 
       return {
@@ -71,7 +82,7 @@ function calculateMetroLocations(
         longitude: avgLon,
         radius_miles: METRO_RADIUS_MILES,
         vehicles: vehicles.length,
-        dealers: new Set(vehicles.map((v: any) => v.dealer_id)).size,
+        dealers: new Set(vehicles.map((v: Vehicle) => v.dealer_id)).size,
       };
     })
     .filter((m): m is MetroLocation => m !== null); // Remove nulls
@@ -198,9 +209,11 @@ export async function GET(request: NextRequest) {
       query = query.eq('make', make).eq('model', model);
     }
 
-    const { data: vehicles, error } = await query;
+    const { data: vehiclesData, error } = await query;
 
     if (error) throw error;
+
+    const vehicles = vehiclesData as Vehicle[] | null;
 
     if (!vehicles || vehicles.length === 0) {
       return NextResponse.json(
@@ -210,7 +223,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Group by metro, count vehicles
-    const metroMap = new Map<string, typeof vehicles>();
+    const metroMap = new Map<string, Vehicle[]>();
     for (const vehicle of vehicles) {
       const metro = vehicle.dma || `${vehicle.dealer_city}, ${vehicle.dealer_state}`;
       if (!metroMap.has(metro)) {
@@ -221,8 +234,8 @@ export async function GET(request: NextRequest) {
 
     // Filter metros with >= minVehicles
     const qualifyingMetros = Array.from(metroMap.entries())
-      .filter(([_, vehicles]) => vehicles.length >= minVehicles)
-      .sort(([_, a], [__, b]) => b.length - a.length) // Sort by vehicle count descending
+      .filter(([, vehicles]) => vehicles.length >= minVehicles)
+      .sort(([, a], [, b]) => b.length - a.length) // Sort by vehicle count descending
       .slice(0, maxMetros); // Limit to maxMetros
 
     if (qualifyingMetros.length === 0) {
@@ -236,7 +249,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Flatten to all vehicles in qualifying metros
-    const qualifyingVehicles = qualifyingMetros.flatMap(([_, vehicles]) => vehicles);
+    // const qualifyingVehicles = qualifyingMetros.flatMap(([, vehicles]) => vehicles);
 
     // Calculate metro-level targeting locations (used by both platforms)
     const metroLocations = calculateMetroLocations(qualifyingMetros);
@@ -258,10 +271,11 @@ export async function GET(request: NextRequest) {
         'Content-Disposition': `attachment; filename="${filename}"`,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error exporting combined targeting:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Failed to export targeting', details: error.message },
+      { error: 'Failed to export targeting', details: errorMessage },
       { status: 500 }
     );
   }

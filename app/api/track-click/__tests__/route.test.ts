@@ -27,7 +27,7 @@ vi.mock('@/lib/supabase', () => ({
 }));
 
 // Helper to create mock NextRequest
-function createMockRequest(body: any): NextRequest {
+function createMockRequest(body: unknown): NextRequest {
   const request = {
     text: vi.fn().mockResolvedValue(JSON.stringify(body)),
     json: vi.fn().mockResolvedValue(body),
@@ -56,7 +56,7 @@ describe('POST /api/track-click', () => {
     vi.clearAllMocks();
     // Get mocked Supabase instance
     const { supabaseAdmin } = await import('@/lib/supabase');
-    mockSupabase = supabaseAdmin as MockSupabaseClient;
+    mockSupabase = supabaseAdmin as unknown as MockSupabaseClient;
   });
 
   // Helper function to mock no click history (billable scenario)

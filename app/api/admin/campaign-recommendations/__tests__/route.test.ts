@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET } from '../route';
 import { NextRequest } from 'next/server';
 import * as adminAuth from '@/lib/admin-auth';
+import { SupabaseClient } from '@supabase/supabase-js';
+import type { CampaignRecommendation } from '@/lib/types/campaign-planning';
 
 vi.mock('@/lib/admin-auth');
 vi.mock('@supabase/supabase-js', () => ({
@@ -112,7 +114,7 @@ describe('GET /api/admin/campaign-recommendations', () => {
     const data = await response.json();
 
     const allCampaigns = [...data.tier1, ...data.tier2, ...data.tier3];
-    const totalDailyBudget = allCampaigns.reduce((sum: number, c: any) => sum + c.recommended_daily_budget, 0);
+    const totalDailyBudget = allCampaigns.reduce((sum: number, c: CampaignRecommendation) => sum + c.recommended_daily_budget, 0);
     const totalMonthlyBudget = totalDailyBudget * 30;
 
     // Should be close to 7500 (within rounding)
@@ -124,7 +126,7 @@ describe('GET /api/admin/campaign-recommendations', () => {
     const { createClient } = await import('@supabase/supabase-js');
     vi.mocked(createClient).mockReturnValue({
       rpc: vi.fn(() => Promise.resolve({ data: null, error: { message: 'DB error' } })),
-    } as any);
+    } as unknown as SupabaseClient<unknown, never, never>);
 
     const request = new NextRequest('http://localhost/api/admin/campaign-recommendations');
     const response = await GET(request);

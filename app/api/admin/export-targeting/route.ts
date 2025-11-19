@@ -35,6 +35,10 @@ function sanitizeCsvField(value: string): string {
  *
  * @returns CSV or JSON download
  */
+interface ZipResult {
+  zip_code: string;
+}
+
 export async function GET(request: NextRequest) {
   // Validate auth and rate limiting
   const authResult = await validateAdminAuth(request);
@@ -138,7 +142,7 @@ export async function GET(request: NextRequest) {
     } else if (platform === 'google') {
       // Export ZIP codes within 25 miles of dealers
       // Uses bulk function to avoid N+1 query problem
-      const { data: zipCodes, error: zipError } = await supabase.rpc('get_zips_for_metro', {
+      const { data: zipCodesData, error: zipError } = await supabase.rpc('get_zips_for_metro', {
         p_city: city,
         p_state: state,
         p_radius_miles: 25,
@@ -148,6 +152,8 @@ export async function GET(request: NextRequest) {
 
       if (zipError) throw zipError;
 
+      const zipCodes = zipCodesData as ZipResult[] | null;
+
       if (!zipCodes || zipCodes.length === 0) {
         return NextResponse.json(
           { error: `No ZIP codes found for metro: ${metro}. This metro may not have active dealers.` },
@@ -155,7 +161,7 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      const rows = (zipCodes || []).map((z: any) => ({ zip_code: z.zip_code }));
+      const rows = (zipCodes || []).map((z: ZipResult) => ({ zip_code: z.zip_code }));
 
       if (format === 'csv') {
         const csv = ['zip_code', ...rows.map((r: { zip_code: string }) => r.zip_code)].join('\n');
@@ -188,10 +194,11 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ error: 'Invalid platform' }, { status: 400 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error exporting targeting:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Failed to export targeting', details: error.message },
+      { error: 'Failed to export targeting', details: errorMessage },
       { status: 500 }
     );
   }

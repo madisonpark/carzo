@@ -2,13 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET } from '../route';
 import { NextRequest } from 'next/server';
 import * as adminAuth from '@/lib/admin-auth';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 vi.mock('@/lib/admin-auth');
 vi.mock('@supabase/supabase-js', () => ({
   createClient: vi.fn(() => ({
     from: vi.fn(() => ({
       select: vi.fn(() => ({
-        eq: vi.fn(function (this: any) {
+        eq: vi.fn(function (this: { eq: unknown }) {
           return this;
         }),
       })),
@@ -128,7 +129,7 @@ describe('GET /api/admin/export-targeting-combined', () => {
           })),
         })),
       })),
-    } as any);
+      } as unknown as SupabaseClient<unknown, never, never>);
 
     const request = new NextRequest('http://localhost/api/admin/export-targeting-combined?campaign_type=body_style&campaign_value=suv&platform=facebook');
     const response = await GET(request);
@@ -171,7 +172,7 @@ describe('GET /api/admin/export-targeting-combined', () => {
             })),
           })),
         })),
-      } as any);
+        } as unknown as SupabaseClient<unknown, never, never>);
 
       const request = new NextRequest('http://localhost/api/admin/export-targeting-combined?campaign_type=body_style&campaign_value=suv&platform=facebook&min_vehicles=3');
       const response = await GET(request);
@@ -225,7 +226,7 @@ describe('GET /api/admin/export-targeting-combined', () => {
             })),
           })),
         })),
-      } as any);
+        } as unknown as SupabaseClient<unknown, never, never>);
 
       const request = new NextRequest('http://localhost/api/admin/export-targeting-combined?campaign_type=body_style&campaign_value=suv&platform=facebook&min_vehicles=6');
       const response = await GET(request);
@@ -276,7 +277,7 @@ describe('GET /api/admin/export-targeting-combined', () => {
             })),
           })),
         })),
-      } as any);
+        } as unknown as SupabaseClient<unknown, never, never>);
 
       const request = new NextRequest('http://localhost/api/admin/export-targeting-combined?campaign_type=body_style&campaign_value=suv&platform=facebook&min_vehicles=6');
       const response = await GET(request);
@@ -316,7 +317,7 @@ describe('GET /api/admin/export-targeting-combined', () => {
             })),
           })),
         })),
-      } as any);
+        } as unknown as SupabaseClient<unknown, never, never>);
 
       const request = new NextRequest('http://localhost/api/admin/export-targeting-combined?campaign_type=body_style&campaign_value=suv&platform=facebook&min_vehicles=6&max_metros=3');
       const response = await GET(request);
@@ -370,7 +371,7 @@ describe('GET /api/admin/export-targeting-combined', () => {
             })),
           })),
         })),
-      } as any);
+        } as unknown as SupabaseClient<unknown, never, never>);
 
       const request = new NextRequest('http://localhost/api/admin/export-targeting-combined?campaign_type=body_style&campaign_value=suv&platform=facebook&min_vehicles=2');
       const response = await GET(request);
@@ -421,7 +422,7 @@ describe('GET /api/admin/export-targeting-combined', () => {
             })),
           })),
         })),
-      } as any);
+        } as unknown as SupabaseClient<unknown, never, never>);
 
       const request = new NextRequest('http://localhost/api/admin/export-targeting-combined?campaign_type=body_style&campaign_value=suv&platform=facebook&min_vehicles=6');
       const response = await GET(request);
@@ -457,7 +458,7 @@ describe('GET /api/admin/export-targeting-combined', () => {
             })),
           })),
         })),
-      } as any);
+      } as unknown as SupabaseClient<unknown, never, never>);
 
       const request = new NextRequest('http://localhost/api/admin/export-targeting-combined?campaign_type=body_style&campaign_value=suv&platform=facebook&min_vehicles=6');
       const response = await GET(request);

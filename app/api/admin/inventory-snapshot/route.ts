@@ -10,6 +10,13 @@ export const dynamic = 'force-dynamic';
  *
  * @returns Total counts by metro, body style, and make
  */
+interface InventoryCount {
+  body_style?: string;
+  make?: string;
+  metro?: string;
+  vehicle_count: number;
+}
+
 export async function GET(request: NextRequest) {
   // Validate auth and rate limiting
   const authResult = await validateAdminAuth(request);
@@ -35,8 +42,8 @@ export async function GET(request: NextRequest) {
     if (makeResult.error) throw makeResult.error;
 
     // Calculate totals
-    const totalVehicles = metroResult.data?.reduce(
-      (sum: number, m: any) => sum + Number(m.vehicle_count),
+    const totalVehicles = (metroResult.data as InventoryCount[] | null)?.reduce(
+      (sum: number, m: InventoryCount) => sum + Number(m.vehicle_count),
       0
     ) || 0;
 
@@ -51,17 +58,17 @@ export async function GET(request: NextRequest) {
 
     // Format by_metro as simple object
     const byMetro = Object.fromEntries(
-      (metroResult.data || []).slice(0, 10).map((m: any) => [m.metro, Number(m.vehicle_count)])
+      ((metroResult.data as InventoryCount[] | null) || []).slice(0, 10).map((m: InventoryCount) => [m.metro, Number(m.vehicle_count)])
     );
 
     // Format by_body_style
     const byBodyStyle = Object.fromEntries(
-      (bodyStyleResult.data || []).map((b: any) => [b.body_style, Number(b.vehicle_count)])
+      ((bodyStyleResult.data as InventoryCount[] | null) || []).map((b: InventoryCount) => [b.body_style, Number(b.vehicle_count)])
     );
 
     // Format by_make (top 15)
     const byMake = Object.fromEntries(
-      (makeResult.data || []).slice(0, 15).map((m: any) => [m.make, Number(m.vehicle_count)])
+      ((makeResult.data as InventoryCount[] | null) || []).slice(0, 15).map((m: InventoryCount) => [m.make, Number(m.vehicle_count)])
     );
 
     return NextResponse.json({
@@ -72,10 +79,11 @@ export async function GET(request: NextRequest) {
       by_make: byMake,
       updated_at: new Date().toISOString(),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching inventory snapshot:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Failed to fetch inventory snapshot', details: error.message },
+      { error: 'Failed to fetch inventory snapshot', details: errorMessage },
       { status: 500 }
     );
   }

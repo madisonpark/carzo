@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
  */
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0a0a0a] py-12 px-4 sm:px-6 lg:px-8">
+    <div className="py-12 px-4 sm:px-6 lg:px-8">
       <article className="max-w-4xl mx-auto prose prose-slate dark:prose-invert">
         <h1 className="text-4xl font-bold text-foreground mb-4">Terms of Service</h1>
         <p className="text-sm text-muted-foreground mb-8">Last Updated: January 2025</p>
@@ -96,12 +97,12 @@ export default function TermsPage() {
         <Section title="8. User Data and Privacy">
           <p>
             Your use of the Platform is also governed by our{' '}
-            <a
+            <Link
               href="/privacy"
               className="text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-md"
             >
               Privacy Policy
-            </a>
+            </Link>
             . Please review our Privacy Policy to understand our data collection and usage
             practices.
           </p>
@@ -120,10 +121,10 @@ export default function TermsPage() {
           <p>
             If you have any questions about these Terms of Service, please contact us at{' '}
             <a
-              href="mailto:[email protected]"
+              href="mailto:support@carzo.com"
               className="text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-md"
             >
-              [email protected]
+              support@carzo.com
             </a>
             .
           </p>

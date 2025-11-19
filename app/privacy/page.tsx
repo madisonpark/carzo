@@ -15,7 +15,7 @@ export const metadata: Metadata = {
  */
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0a0a0a] py-12 px-4 sm:px-6 lg:px-8">
+    <div className="py-12 px-4 sm:px-6 lg:px-8">
       <article className="max-w-4xl mx-auto prose prose-slate dark:prose-invert">
         <h1 className="text-4xl font-bold text-foreground mb-4">Privacy Policy</h1>
         <p className="text-sm text-muted-foreground mb-8">Last Updated: November 13, 2025</p>
@@ -143,10 +143,10 @@ export default function PrivacyPage() {
             <li>
               <strong>Data Inquiries:</strong> Contact us at{' '}
               <a
-                href="mailto:[email protected]"
+                href="mailto:privacy@carzo.com"
                 className="text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-md"
               >
-                [email protected]
+                privacy@carzo.com
               </a>{' '}
               for data-related questions
             </li>
@@ -192,10 +192,10 @@ export default function PrivacyPage() {
           <p>
             For privacy-related inquiries, please contact us at{' '}
             <a
-              href="mailto:[email protected]"
+              href="mailto:privacy@carzo.com"
               className="text-brand hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand rounded-md"
             >
-              [email protected]
+              privacy@carzo.com
             </a>
             .
           </p>

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { CheckCircle2, Shield, Users, Zap } from 'lucide-react';
 
 export const metadata: Metadata = {
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
  */
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0a0a0a]">
+    <div>
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-brand to-brand-hover text-white py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
@@ -106,12 +107,12 @@ export default function AboutPage() {
           <p className="text-lg text-muted-foreground mb-8">
             Start browsing thousands of quality vehicles from trusted dealerships today.
           </p>
-          <a
+          <Link
             href="/search"
             className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg transition-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
             Search Vehicles
-          </a>
+          </Link>
         </div>
       </section>
     </div>
@@ -131,7 +132,7 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <div className="p-6 bg-white dark:bg-muted/5 rounded-lg border border-border hover:border-brand/50 transition-smooth">
+    <div className="p-6 bg-background rounded-lg border border-border hover:border-brand/50 transition-smooth">
       <div className="mb-4">{icon}</div>
       <h3 className="text-xl font-bold text-foreground mb-3">{title}</h3>
       <p className="text-muted-foreground leading-relaxed">{description}</p>

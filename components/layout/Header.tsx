@@ -43,9 +43,11 @@ export function Header() {
     setMounted(true);
   }, []);
 
-  // Close mobile menu when route changes
+  // Close mobile menu when route changes (includes cleanup for scroll lock)
   React.useEffect(() => {
     setMobileMenuOpen(false);
+    // Restore scroll when route changes (edge case: browser back button)
+    document.body.style.overflow = '';
   }, [pathname]);
 
   // Prevent scroll when mobile menu is open
@@ -65,7 +67,7 @@ export function Header() {
     <header
       className={cn(
         'sticky top-0 z-50 w-full border-b border-border',
-        'bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md',
+        'bg-background/80 backdrop-blur-md',
         'transition-all duration-300',
         isFocusMode ? 'h-14' : 'h-16'
       )}
@@ -83,7 +85,7 @@ export function Header() {
           >
             {mounted ? (
               <Image
-                src={theme === 'dark' ? '/logos/carzo-light.svg' : '/logos/carzo-dark.svg'}
+                src={theme === 'dark' ? '/logos/carzo-light.png' : '/logos/carzo-dark.png'}
                 alt="Carzo"
                 width={isFocusMode ? 100 : 120}
                 height={isFocusMode ? 28 : 32}
@@ -134,7 +136,7 @@ export function Header() {
         <div
           className={cn(
             'lg:hidden absolute top-16 left-0 w-full',
-            'bg-white dark:bg-[#0a0a0a] border-b border-border',
+            'bg-background border-b border-border',
             'shadow-lg',
             'animate-fade-in'
           )}

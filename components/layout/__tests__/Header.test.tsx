@@ -54,7 +54,9 @@ describe('Header', () => {
 
       const logo = screen.getByAltText('Carzo');
       expect(logo).toBeInTheDocument();
-      expect(logo).toHaveAttribute('src', '/logos/carzo-dark.svg');
+      // Next.js Image component optimizes the src with URL encoding
+      expect(logo).toHaveAttribute('src');
+      expect(logo.getAttribute('src')).toContain('carzo-dark.png');
 
       // Check that logo is wrapped in link
       const logoLink = logo.closest('a');

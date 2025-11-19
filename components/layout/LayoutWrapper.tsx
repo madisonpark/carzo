@@ -20,8 +20,8 @@ import { Footer } from './Footer';
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  // Exclude Header/Footer from admin pages
-  const isAdminPage = pathname?.startsWith('/admin');
+  // Exclude Header/Footer from admin pages (precise matching)
+  const isAdminPage = pathname === '/admin' || pathname?.startsWith('/admin/');
 
   if (isAdminPage) {
     // Admin pages use their own layout (app/admin/layout.tsx)

@@ -275,9 +275,7 @@ describe('POST /api/track-click', () => {
       mockNoClickHistory();
 
       // Mock successful inserts
-      let insertCallCount = 0;
       mockSupabase.insert.mockImplementation(() => {
-        insertCallCount++;
         return Promise.resolve({ error: null });
       });
 

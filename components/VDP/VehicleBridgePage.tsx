@@ -71,9 +71,9 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-slate-900 text-white py-3 px-4 sm:px-6">
+      <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 text-white py-3 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <MapPin className="w-4 h-4 text-brand" />
@@ -89,14 +89,14 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-2">
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-2">
           {condition} {vehicle.year} {vehicle.make} {vehicle.model} {vehicle.trim || ''}
         </h1>
 
         <div className="grid lg:grid-cols-2 gap-6 lg:gap-12 mt-8">
           {/* Left Column - Visual */}
           <div>
-            <div className="relative rounded-xl overflow-hidden shadow-2xl border border-slate-200 mb-4">
+            <div className="relative rounded-xl overflow-hidden shadow-2xl dark:shadow-brand/20 border border-border mb-4">
               <img
                 src={(vehicle.primary_image_url && vehicle.primary_image_url.trim()) || '/placeholder-vehicle.svg'}
                 alt={`${vehicle.year} ${vehicle.make} ${vehicle.model} ${vehicle.trim || ''}`}
@@ -109,7 +109,7 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
 
             {/* Photo Gallery Teaser - CSS Blur Effect */}
             <div className="grid grid-cols-3 gap-3">
-              <div className="relative aspect-video bg-slate-200 rounded-lg overflow-hidden">
+              <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
                 <img
                   src={(vehicle.primary_image_url && vehicle.primary_image_url.trim()) || '/placeholder-vehicle.svg'}
                   alt="Thumbnail"
@@ -119,7 +119,7 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
                   }}
                 />
               </div>
-              <div className="relative aspect-video bg-slate-200 rounded-lg overflow-hidden">
+              <div className="relative aspect-video bg-muted rounded-lg overflow-hidden">
                 <img
                   src={(vehicle.primary_image_url && vehicle.primary_image_url.trim()) || '/placeholder-vehicle.svg'}
                   alt="Thumbnail"
@@ -165,16 +165,16 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
 
           {/* Right Column - Action */}
           <div>
-            <div className="bg-slate-50 rounded-2xl p-6 sm:p-8 border-2 border-slate-200 mb-6">
+            <div className="bg-muted/30 dark:bg-muted/10 rounded-2xl p-6 sm:p-8 border-2 border-border mb-6">
               <div className="mb-6">
-                <p className="text-slate-600 text-sm font-medium mb-1">Price</p>
-                <p className="text-4xl sm:text-5xl font-bold text-slate-900">{formattedPrice}</p>
+                <p className="text-muted-foreground text-sm font-medium mb-1">Price</p>
+                <p className="text-4xl sm:text-5xl font-bold text-foreground">{formattedPrice}</p>
               </div>
 
               {formattedMileage && (
                 <div className="mb-6">
-                  <p className="text-slate-600 text-sm font-medium mb-1">Mileage</p>
-                  <p className="text-3xl font-bold text-slate-900">{formattedMileage} Miles</p>
+                  <p className="text-muted-foreground text-sm font-medium mb-1">Mileage</p>
+                  <p className="text-3xl font-bold text-foreground">{formattedMileage} Miles</p>
                 </div>
               )}
 
@@ -201,7 +201,7 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
                 </a>
               </Button>
 
-              <p className="text-center text-sm text-slate-500 mb-6">
+              <p className="text-center text-sm text-muted-foreground mb-6">
                 Act fast - this vehicle may sell quickly
               </p>
 
@@ -216,13 +216,13 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
                     dealerId: vehicle.dealer_id,
                     ctaClicked: 'history',
                   })}
-                  className="w-full flex items-center justify-between bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-brand text-slate-900 font-semibold px-5 py-4 rounded-lg transition-all duration-300 group"
+                  className="w-full flex items-center justify-between bg-background hover:bg-muted/30 dark:hover:bg-muted/20 border-2 border-border hover:border-brand text-foreground font-semibold px-5 py-4 rounded-lg transition-all duration-300 group"
                 >
                   <div className="flex items-center gap-3">
                     <Shield className="w-5 h-5 text-brand" />
                     <span>View FREE Vehicle History Report</span>
                   </div>
-                  <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-brand group-hover:translate-x-1 transition-all" />
+                  <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-brand group-hover:translate-x-1 transition-all" />
                 </a>
 
                 <a
@@ -234,23 +234,23 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
                     dealerId: vehicle.dealer_id,
                     ctaClicked: 'payment',
                   })}
-                  className="w-full flex items-center justify-between bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-brand text-slate-900 font-semibold px-5 py-4 rounded-lg transition-all duration-300 group"
+                  className="w-full flex items-center justify-between bg-background hover:bg-muted/30 dark:hover:bg-muted/20 border-2 border-border hover:border-brand text-foreground font-semibold px-5 py-4 rounded-lg transition-all duration-300 group"
                 >
                   <div className="flex items-center gap-3">
                     <Calculator className="w-5 h-5 text-brand" />
                     <span>Estimate Monthly Payments</span>
                   </div>
-                  <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-brand group-hover:translate-x-1 transition-all" />
+                  <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-brand group-hover:translate-x-1 transition-all" />
                 </a>
               </div>
             </div>
 
             {/* Trust Signals */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
+            <div className="bg-brand/10 dark:bg-brand/20 border border-brand/30 dark:border-brand/40 rounded-lg p-4 flex items-start gap-3">
               <Star className="w-5 h-5 text-brand flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold text-slate-900 text-sm">Verified Listing</p>
-                <p className="text-xs text-slate-600 mt-1">
+                <p className="font-semibold text-foreground text-sm">Verified Listing</p>
+                <p className="text-xs text-muted-foreground mt-1">
                   This vehicle is offered by {vehicle.dealer_name} in {vehicle.dealer_city},{' '}
                   {vehicle.dealer_state}
                 </p>
@@ -263,13 +263,13 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
         <div className="mt-12 sm:mt-16 grid lg:grid-cols-3 gap-8">
           {/* Key Features */}
           <div className="lg:col-span-2">
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-6">Key Features</h2>
-            <div className="bg-white rounded-xl border-2 border-slate-200 p-6 sm:p-8 mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-6">Key Features</h2>
+            <div className="bg-background rounded-xl border-2 border-border p-6 sm:p-8 mb-8">
               <ul className="space-y-4">
                 {keyFeatures.map((feature, index) => (
                   <li key={index} className="flex items-center gap-3">
                     <div className="w-2 h-2 bg-brand rounded-full flex-shrink-0"></div>
-                    <span className="text-lg text-slate-700 font-medium">{feature}</span>
+                    <span className="text-lg text-foreground font-medium">{feature}</span>
                   </li>
                 ))}
               </ul>
@@ -291,11 +291,11 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
             </div>
 
             {/* Vehicle Description Teaser */}
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-6">
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-6">
               Vehicle Description
             </h2>
-            <div className="bg-white rounded-xl border-2 border-slate-200 p-6 sm:p-8">
-              <p className="text-slate-700 text-lg leading-relaxed mb-4">{descriptionTeaser}</p>
+            <div className="bg-background rounded-xl border-2 border-border p-6 sm:p-8">
+              <p className="text-foreground text-lg leading-relaxed mb-4">{descriptionTeaser}</p>
 
               <a
                 href={vehicle.dealer_vdp_url}
@@ -316,44 +316,44 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
 
           {/* Quick Specs */}
           <div className="lg:col-span-1">
-            <h3 className="text-xl font-bold text-slate-900 mb-4">Quick Specs</h3>
-            <div className="bg-slate-50 rounded-xl border border-slate-200 p-6 space-y-4">
+            <h3 className="text-xl font-bold text-foreground mb-4">Quick Specs</h3>
+            <div className="bg-muted/30 dark:bg-muted/10 rounded-xl border border-border p-6 space-y-4">
               {vehicle.body_style && (
-                <div className="flex justify-between items-center pb-3 border-b border-slate-200">
-                  <span className="text-slate-600 font-medium">Body Type</span>
-                  <span className="text-slate-900 font-semibold">{vehicle.body_style}</span>
+                <div className="flex justify-between items-center pb-3 border-b border-border">
+                  <span className="text-muted-foreground font-medium">Body Type</span>
+                  <span className="text-foreground font-semibold">{vehicle.body_style}</span>
                 </div>
               )}
               {vehicle.transmission && (
-                <div className="flex justify-between items-center pb-3 border-b border-slate-200">
-                  <span className="text-slate-600 font-medium">Transmission</span>
-                  <span className="text-slate-900 font-semibold">{vehicle.transmission}</span>
+                <div className="flex justify-between items-center pb-3 border-b border-border">
+                  <span className="text-muted-foreground font-medium">Transmission</span>
+                  <span className="text-foreground font-semibold">{vehicle.transmission}</span>
                 </div>
               )}
               {vehicle.drive_type && (
-                <div className="flex justify-between items-center pb-3 border-b border-slate-200">
-                  <span className="text-slate-600 font-medium">Drivetrain</span>
-                  <span className="text-slate-900 font-semibold">{vehicle.drive_type}</span>
+                <div className="flex justify-between items-center pb-3 border-b border-border">
+                  <span className="text-muted-foreground font-medium">Drivetrain</span>
+                  <span className="text-foreground font-semibold">{vehicle.drive_type}</span>
                 </div>
               )}
               {vehicle.fuel_type && (
-                <div className="flex justify-between items-center pb-3 border-b border-slate-200">
-                  <span className="text-slate-600 font-medium">Fuel Type</span>
-                  <span className="text-slate-900 font-semibold">{vehicle.fuel_type}</span>
+                <div className="flex justify-between items-center pb-3 border-b border-border">
+                  <span className="text-muted-foreground font-medium">Fuel Type</span>
+                  <span className="text-foreground font-semibold">{vehicle.fuel_type}</span>
                 </div>
               )}
               {(vehicle.mpg_city || vehicle.mpg_highway) && (
-                <div className="flex justify-between items-center pb-3 border-b border-slate-200">
-                  <span className="text-slate-600 font-medium">MPG</span>
-                  <span className="text-slate-900 font-semibold">
+                <div className="flex justify-between items-center pb-3 border-b border-border">
+                  <span className="text-muted-foreground font-medium">MPG</span>
+                  <span className="text-foreground font-semibold">
                     {vehicle.mpg_city || '?'}/{vehicle.mpg_highway || '?'}
                   </span>
                 </div>
               )}
               {vehicle.exterior_color && (
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-600 font-medium">Exterior Color</span>
-                  <span className="text-slate-900 font-semibold text-sm">
+                  <span className="text-muted-foreground font-medium">Exterior Color</span>
+                  <span className="text-foreground font-semibold text-sm">
                     {vehicle.exterior_color}
                   </span>
                 </div>
@@ -363,11 +363,11 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
         </div>
 
         {/* Final CTA */}
-        <div className="mt-12 sm:mt-16 bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl p-8 sm:p-12 text-center">
+        <div className="mt-12 sm:mt-16 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 rounded-2xl p-8 sm:p-12 text-center">
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
             Ready to See This {vehicle.year} {vehicle.make} {vehicle.model}?
           </h2>
-          <p className="text-lg text-slate-300 mb-8 max-w-2xl mx-auto">
+          <p className="text-lg text-white/90 dark:text-white/80 mb-8 max-w-2xl mx-auto">
             View complete listing with all photos, pricing details, vehicle history report, and
             dealer contact information
           </p>
@@ -394,11 +394,11 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
           showStickyBar ? 'translate-y-0' : 'translate-y-full'
         }`}
       >
-        <div className="bg-white border-t-2 border-slate-300 shadow-2xl px-4 py-3">
+        <div className="bg-background border-t-2 border-border shadow-2xl dark:shadow-brand/20 px-4 py-3">
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <p className="text-xs text-slate-600 font-medium">Starting at</p>
-              <p className="text-xl font-bold text-slate-900">{formattedPrice}</p>
+              <p className="text-xs text-muted-foreground font-medium">Starting at</p>
+              <p className="text-xl font-bold text-foreground">{formattedPrice}</p>
             </div>
             <a
               href={vehicle.dealer_vdp_url}
@@ -419,12 +419,12 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
       </div>
 
       {/* Footer */}
-      <footer className="bg-slate-100 border-t border-slate-200 py-6 mt-12">
+      <footer className="bg-muted/30 dark:bg-muted/10 border-t border-border py-6 mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-muted-foreground">
             © 2025 Carzo. All rights reserved. Vehicle information subject to change.
           </p>
-          <p className="text-xs text-slate-400 mt-2">
+          <p className="text-xs text-muted-foreground/70 dark:text-muted-foreground/60 mt-2">
             When you click on links to vehicles on this site, contact sellers, or make a purchase,
             it can result in us earning a commission.
           </p>
@@ -485,13 +485,13 @@ function VDPRedirect({ vehicle }: { vehicle: Vehicle }) {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-muted/30 dark:bg-muted/10">
         <div className="text-center space-y-6 px-4 max-w-lg">
           <div className="text-error text-6xl">⚠️</div>
-          <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">
+          <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
             Unable to Redirect
           </h1>
-          <p className="text-lg text-slate-600">
+          <p className="text-lg text-muted-foreground">
             {error}. This vehicle listing may be incomplete.
           </p>
           <a
@@ -506,18 +506,18 @@ function VDPRedirect({ vehicle }: { vehicle: Vehicle }) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+    <div className="min-h-screen flex items-center justify-center bg-muted/30 dark:bg-muted/10">
       <div className="text-center space-y-6 px-4">
         <Loader2 className="w-16 h-16 text-brand animate-spin mx-auto" />
         <div className="space-y-2">
-          <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">
+          <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
             Redirecting to {vehicle.year} {vehicle.make} {vehicle.model}
           </h1>
-          <p className="text-lg text-slate-600">
+          <p className="text-lg text-muted-foreground">
             Taking you to the dealer site...
           </p>
         </div>
-        <div className="flex items-center justify-center gap-2 text-sm text-slate-500">
+        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <MapPin className="w-4 h-4" />
           <span>
             {vehicle.dealer_name} • {vehicle.dealer_city}, {vehicle.dealer_state}

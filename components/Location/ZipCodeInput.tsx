@@ -84,7 +84,7 @@ export default function ZipCodeInput({ placeholder = '98112', className = '', on
       <form onSubmit={handleSubmit} className="relative">
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
-            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
               value={zipCode}
@@ -94,7 +94,7 @@ export default function ZipCodeInput({ placeholder = '98112', className = '', on
                 setError('');
               }}
               placeholder={placeholder}
-              className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:border-transparent"
+              className="w-full pl-10 pr-4 py-2 bg-background border border-border text-foreground rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:border-transparent"
               disabled={loading}
               maxLength={5}
             />

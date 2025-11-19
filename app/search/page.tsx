@@ -332,7 +332,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   ]);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-muted/30 dark:bg-muted/10">
       {/* Skip to main content link for accessibility */}
       <a
         href="#main-content"
@@ -342,23 +342,23 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       </a>
 
       {/* Header */}
-      <div className="bg-white border-b border-slate-200">
+      <div className="bg-background border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">
+              <h1 className="text-3xl font-bold text-foreground">
                 {params.make
                   ? `${params.make}${params.model ? ` ${params.model}` : ''} Vehicles`
                   : 'Search Vehicles'}
               </h1>
-              <p className="text-slate-600 mt-1">
+              <p className="text-muted-foreground mt-1">
                 {searchResults.total.toLocaleString()} vehicles found
               </p>
             </div>
-            <Suspense fallback={<div className="text-sm text-slate-600">Loading location...</div>}>
+            <Suspense fallback={<div className="text-sm text-muted-foreground">Loading location...</div>}>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                 <LocationDetector />
-                <div className="flex items-center gap-2 text-sm text-slate-600">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <span>or</span>
                   <ZipCodeInput placeholder="Enter zip code" className="w-48" />
                 </div>

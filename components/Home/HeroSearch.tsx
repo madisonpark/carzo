@@ -42,7 +42,7 @@ export default function HeroSearch() {
       {/* Main Search Bar */}
       <form
         onSubmit={handleSearch}
-        className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 bg-white text-slate-900 px-4 sm:px-6 py-4 sm:py-5 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-300 group"
+        className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 bg-white px-4 sm:px-6 py-4 sm:py-5 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-300 group border border-white/20"
       >
         <div className="flex items-center gap-3 flex-1">
           <Search className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400 group-hover:text-brand transition-colors flex-shrink-0" />
@@ -62,8 +62,8 @@ export default function HeroSearch() {
       {/* Zip Code Input */}
       <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 text-white text-sm">
         <span>or find vehicles near</span>
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 w-full sm:w-auto max-w-xs">
-          <ZipCodeInput placeholder="Enter zip code" className="text-white w-full" />
+        <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2 w-full sm:w-auto max-w-xs">
+          <ZipCodeInput placeholder="Enter zip code" className="w-full [&_input]:bg-white [&_input]:text-slate-900 [&_input]:border-white/30 [&_.text-muted-foreground]:text-slate-400" />
         </div>
       </div>
     </div>

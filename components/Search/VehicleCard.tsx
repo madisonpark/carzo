@@ -64,10 +64,10 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
       target={linkTarget}
       rel={linkRel}
       onClick={handleClick}
-      className="group bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-xl transition-all duration-200 flex flex-col h-full"
+      className="group bg-background rounded-lg border border-border overflow-hidden hover:shadow-xl dark:hover:shadow-brand/20 transition-all duration-200 flex flex-col h-full"
     >
       {/* Image - Fixed height */}
-      <div className="relative h-48 bg-slate-200 overflow-hidden flex-shrink-0">
+      <div className="relative h-48 bg-muted overflow-hidden flex-shrink-0">
         <img
           src={(vehicle.primary_image_url && vehicle.primary_image_url.trim()) || '/placeholder-vehicle.svg'}
           alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
@@ -93,19 +93,19 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
       <div className="p-4 flex flex-col flex-grow">
         {/* Title - Fixed height with line clamp */}
         <div className="mb-2 min-h-[3rem]">
-          <h3 className="text-base font-bold text-slate-900 group-hover:text-brand transition-colors line-clamp-1">
+          <h3 className="text-base font-bold text-foreground group-hover:text-brand transition-colors line-clamp-1">
             {vehicle.year} {vehicle.make} {vehicle.model}
           </h3>
           {vehicle.trim && (
-            <p className="text-sm text-slate-600 line-clamp-1">{vehicle.trim}</p>
+            <p className="text-sm text-muted-foreground line-clamp-1">{vehicle.trim}</p>
           )}
         </div>
 
         {/* Price */}
-        <p className="text-xl font-bold text-slate-900 mb-3">{formattedPrice}</p>
+        <p className="text-xl font-bold text-foreground mb-3">{formattedPrice}</p>
 
         {/* Details - Single line */}
-        <div className="text-sm text-slate-600 mb-3 space-y-1">
+        <div className="text-sm text-muted-foreground mb-3 space-y-1">
           {formattedMileage && <div>{formattedMileage} miles</div>}
           {vehicle.transmission && <div>{vehicle.transmission}</div>}
         </div>
@@ -114,7 +114,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
         <div className="flex-grow"></div>
 
         {/* Location */}
-        <div className="flex items-center justify-between text-sm text-slate-600 mb-3">
+        <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
           <div className="flex items-center gap-1">
             <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
             <span className="line-clamp-1">

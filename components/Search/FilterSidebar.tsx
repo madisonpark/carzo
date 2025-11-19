@@ -31,7 +31,7 @@ const ActiveFilterBadge = ({ label, onRemove }: { label: string; onRemove: () =>
       onClick={onRemove}
       variant="ghost"
       size="icon"
-      className="hover:bg-muted rounded-full"
+      className="hover:bg-muted dark:hover:bg-muted/50 rounded-full"
       aria-label={`Remove ${label} filter`}
     >
       <X className="w-3 h-3" />

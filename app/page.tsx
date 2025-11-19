@@ -226,13 +226,13 @@ export default async function HomePage() {
                   className="h-auto"
                 />
               </div>
-              <p className="text-slate-400 dark:text-slate-500 text-sm">
+              <p className="text-muted-foreground text-sm">
                 Your trusted source for finding quality vehicles from dealerships nationwide.
               </p>
             </div>
             <div>
               <h4 className="font-bold mb-4">Quick Links</h4>
-              <ul className="space-y-2 text-sm text-slate-400 dark:text-slate-500">
+              <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
                   <Link href="/search" className="hover:text-white transition-colors">
                     Search Vehicles
@@ -247,7 +247,7 @@ export default async function HomePage() {
             </div>
             <div>
               <h4 className="font-bold mb-4">Legal</h4>
-              <p className="text-xs text-slate-400 dark:text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 © 2025 Carzo. All rights reserved. Vehicle information subject to change. When you
                 click on links to vehicles on this site, contact sellers, or make a purchase, it
                 can result in us earning a commission.

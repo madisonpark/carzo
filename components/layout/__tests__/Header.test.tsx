@@ -52,9 +52,13 @@ describe('Header', () => {
         </ThemeProvider>
       );
 
-      const logo = screen.getByText('Carzo');
+      const logo = screen.getByAltText('Carzo');
       expect(logo).toBeInTheDocument();
-      expect(logo).toHaveAttribute('href', '/');
+      expect(logo).toHaveAttribute('src', '/logos/carzo-dark.svg');
+
+      // Check that logo is wrapped in link
+      const logoLink = logo.closest('a');
+      expect(logoLink).toHaveAttribute('href', '/');
     });
 
     it('renders desktop navigation links', () => {
@@ -140,7 +144,7 @@ describe('Header', () => {
       );
 
       // Logo should still be present
-      expect(screen.getByText('Carzo')).toBeInTheDocument();
+      expect(screen.getByAltText('Carzo')).toBeInTheDocument();
 
       // Desktop navigation should NOT be visible
       const nav = screen.queryByRole('navigation');
@@ -161,7 +165,7 @@ describe('Header', () => {
       );
 
       // Logo should be present
-      expect(screen.getByText('Carzo')).toBeInTheDocument();
+      expect(screen.getByAltText('Carzo')).toBeInTheDocument();
 
       // Navigation should NOT be visible
       const nav = screen.queryByRole('navigation');
@@ -190,8 +194,10 @@ describe('Header', () => {
         </ThemeProvider>
       );
 
-      const logo = screen.getByText('Carzo');
-      expect(logo).toHaveClass('text-xl');
+      const logo = screen.getByAltText('Carzo');
+      // In Focus Mode, logo is 100x28 (smaller than 120x32)
+      expect(logo).toHaveAttribute('width', '100');
+      expect(logo).toHaveAttribute('height', '28');
     });
   });
 
@@ -362,15 +368,16 @@ describe('Header', () => {
       expect(header).toBeInTheDocument();
     });
 
-    it('has focus-visible styles on logo', () => {
+    it('has focus-visible styles on logo link', () => {
       render(
         <ThemeProvider>
           <Header />
         </ThemeProvider>
       );
 
-      const logo = screen.getByText('Carzo');
-      expect(logo).toHaveClass('focus-visible:ring-2', 'focus-visible:ring-brand');
+      const logo = screen.getByAltText('Carzo');
+      const logoLink = logo.closest('a');
+      expect(logoLink).toHaveClass('focus-visible:ring-2', 'focus-visible:ring-brand');
     });
 
     it('has focus-visible styles on navigation links', () => {

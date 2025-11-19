@@ -214,7 +214,7 @@ export class FeedSyncService {
     params.append('username', this.username);
     params.append('password', this.password);
 
-    console.log(`Downloading from ${this.feedUrl} as user ${this.username}`);
+    console.log(`Downloading from ${this.feedUrl}`);
 
     const response = await fetch(this.feedUrl, {
       method: 'POST',
@@ -222,6 +222,7 @@ export class FeedSyncService {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
+      signal: AbortSignal.timeout(60000), // 60s timeout
     });
 
     if (!response.ok) {
@@ -244,7 +245,6 @@ export class FeedSyncService {
    * Extract TSV from ZIP using adm-zip
    */
   private async extractTSV(zipPath: string): Promise<string> {
-    const tsvPath = zipPath.replace('.zip', '.tsv');
     const tempDir = path.dirname(zipPath);
 
     try {
@@ -263,13 +263,8 @@ export class FeedSyncService {
       // Extract to temp directory
       zip.extractEntryTo(tsvEntry.entryName, tempDir, false, true);
       
-      // Rename to the target path if needed
-      const extractedPath = path.join(tempDir, tsvEntry.entryName);
-      if (extractedPath !== tsvPath) {
-        fs.renameSync(extractedPath, tsvPath);
-      }
-
-      return tsvPath;
+      // Return path to the extracted file
+      return path.join(tempDir, tsvEntry.entryName);
     } catch (error) {
       console.error('Zip extraction error:', error);
       throw new Error(`Failed to extract ZIP: ${error instanceof Error ? error.message : String(error)}`);

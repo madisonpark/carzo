@@ -21,6 +21,7 @@ curl -X POST https://feed.lotlinx.com/ \
 
 # Extract and view (if you have unzip installed)
 unzip feed.zip
+# The filename may vary, but is often 'master.tsv' or similar
 head -n 20 master.tsv
 ```
 

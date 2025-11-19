@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
   const platform = searchParams.get('platform') || 'facebook';
   const format = searchParams.get('format') || 'csv';
   const make = searchParams.get('make');
-  const bodyStyle = searchParams.get('bodyStyle');
+  const bodyStyle = searchParams.get('body_style');
 
   if (!metro) {
     return NextResponse.json({ error: 'metro parameter required' }, { status: 400 });
@@ -152,9 +152,14 @@ export async function GET(request: NextRequest) {
 
       if (zipError) throw zipError;
 
-      const zipCodes = zipCodesData as ZipResult[] | null;
+      // Runtime validation: Ensure RPC returns expected array format
+      if (!Array.isArray(zipCodesData)) {
+        throw new Error('Unexpected response format from get_zips_for_metro RPC function');
+      }
 
-      if (!zipCodes || zipCodes.length === 0) {
+      const zipCodes: ZipResult[] = zipCodesData;
+
+      if (zipCodes.length === 0) {
         return NextResponse.json(
           { error: `No ZIP codes found for metro: ${metro}. This metro may not have active dealers.` },
           { status: 404 }

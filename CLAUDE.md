@@ -97,17 +97,35 @@ This file contains **Claude Code-specific instructions** for tool usage, task ma
 - **Reference** (`/docs/reference/`) - Technical specifications
 - **Explanation** (`/docs/explanation/`) - Conceptual "why" documentation
 
-**CRITICAL: Never hardcode data that changes:**
+**CRITICAL: Never hardcode volatile data in documentation:**
 - ❌ **NO**: "We have 72,000 vehicles" (inventory changes daily)
 - ❌ **NO**: "Sitemap has 1,002 URLs" (grows with inventory)
+- ❌ **NO**: "27 tests passed" (test count changes as code evolves)
+- ❌ **NO**: "Search returned 127 results" (query-dependent)
 - ✅ **YES**: "Vehicle inventory (varies)"
 - ✅ **YES**: "Up to 50,000 URLs per sitemap (Google's limit)"
+- ✅ **YES**: "All tests passing" or "75+ component tests"
+- ✅ **YES**: Constants are fine: `const MAX_RESULTS = 100`
+
+**What counts as "volatile data":**
+- Current inventory counts
+- Active user/session counts
+- Test result numbers (unless describing a specific test run)
+- Search/query result counts
+- Database row counts
+- Anything that changes with normal operation
+
+**What's OK to hardcode:**
+- System limits/constraints (Google's 50K sitemap limit)
+- Configuration constants (max page size, timeout values)
+- Business rules ($0.80 per click, 30-day deduplication)
+- API response codes (200, 404, 429)
+- Fixed thresholds (80% coverage target)
 
 **Before documenting:**
-1. Verify current behavior (don't assume from old code/docs)
-2. Test endpoints/features locally
-3. Use relative/generic terms for variable data
-4. Reference limits/constraints, not current values
+1. Ask: "Will this number change during normal operation?"
+2. If YES → use generic terms ("varies", "multiple", "up to X limit")
+3. If NO → it's a constant/constraint, OK to document
 
 **CLAUDE.md vs detailed docs:**
 - CLAUDE.md: Quick reference + pointer to detailed doc

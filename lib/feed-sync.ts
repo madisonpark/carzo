@@ -319,14 +319,39 @@ export class FeedSyncService {
     let updated = 0;
 
     // Get all current VINs to track removals
-    // Note: For very large datasets, fetching all VINs might be memory intensive.
-    // Consider iterating or using a different removal strategy if scaling > 100k.
-    const { data: currentVehicles } = await this.supabase
+    // We need to fetch ALL active VINs, so we use CSV export or a high limit
+    // Using .csv() is efficient for large datasets
+    const { data: csvData, error } = await this.supabase
       .from('vehicles')
-      .select('vin, id')
-      .eq('is_active', true);
+      .select('vin')
+      .eq('is_active', true)
+      .csv();
 
-    const currentVins = new Set(currentVehicles?.map(v => v.vin) || []);
+    if (error) {
+      console.error('Error fetching current VINs:', error);
+      throw error;
+    }
+
+    // Parse CSV to get VINs (skip header)
+    // CSV format: "vin"\n"VIN1"\n"VIN2"...
+    const currentVins = new Set<string>();
+    
+    if (csvData) {
+      // Simple CSV parsing (assuming just one column 'vin')
+      const lines = (csvData as string).split('\n');
+      // Skip header (index 0)
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line) {
+          // Remove quotes if present
+          const vin = line.replace(/^"|"$/g, '');
+          if (vin) currentVins.add(vin);
+        }
+      }
+    }
+
+    console.log(`Found ${currentVins.size} active vehicles in DB`);
+
     const feedVins = new Set(vehicles.map(v => v.Vin));
 
     // Process in batches

@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { validateAdminAuth } from '@/lib/admin-auth';
+import { sanitizeCsvField } from '@/lib/csv';
 
 export const dynamic = 'force-dynamic';
 
 const VALID_CAMPAIGN_TYPES = ['body_style', 'make', 'make_body_style', 'make_model'] as const;
 const VALID_PLATFORMS = ['facebook', 'google'] as const;
 const METRO_RADIUS_MILES = 30; // Default radius to cover all dealers in metro + surrounding area
+
+// Input validation limits (prevent DoS via large inputs)
+const MAX_CAMPAIGN_VALUE_LENGTH = 100;
 
 type CampaignType = typeof VALID_CAMPAIGN_TYPES[number];
 type Platform = typeof VALID_PLATFORMS[number];
@@ -29,27 +33,6 @@ interface MetroLocation {
   radius_miles: number;
   vehicles: number;
   dealers: number;
-}
-
-/**
- * Sanitize field for CSV export to prevent formula injection
- */
-function sanitizeCsvField(value: string): string {
-  if (!value) return '""';
-
-  // Prevent formula injection (leading =, +, -, @, tab, carriage return)
-  let sanitized = value;
-  if (/^[=+\-@\t\r]/.test(sanitized)) {
-    sanitized = `'${sanitized}`; // Prefix with single quote
-  }
-
-  // Escape double quotes
-  sanitized = sanitized.replace(/"/g, '""');
-
-  // Remove newlines
-  sanitized = sanitized.replace(/[\r\n]/g, ' ');
-
-  return `"${sanitized}"`;
 }
 
 /**
@@ -143,6 +126,14 @@ export async function GET(request: NextRequest) {
   if (!trimmedCampaignValue) {
     return NextResponse.json(
       { error: 'campaign_value cannot be empty' },
+      { status: 400 }
+    );
+  }
+
+  // Validate input length (prevent DoS via large inputs)
+  if (trimmedCampaignValue.length > MAX_CAMPAIGN_VALUE_LENGTH) {
+    return NextResponse.json(
+      { error: `campaign_value too long (max ${MAX_CAMPAIGN_VALUE_LENGTH} characters)` },
       { status: 400 }
     );
   }

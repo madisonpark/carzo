@@ -1,29 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { validateAdminAuth } from '@/lib/admin-auth';
+import { sanitizeCsvField } from '@/lib/csv';
 
 export const dynamic = 'force-dynamic';
 
-/**
- * Sanitize field for CSV export to prevent formula injection
- */
-function sanitizeCsvField(value: string): string {
-  if (!value) return '""';
-
-  // Prevent formula injection (leading =, +, -, @, tab, carriage return)
-  let sanitized = value;
-  if (/^[=+\-@\t\r]/.test(sanitized)) {
-    sanitized = `'${sanitized}`; // Prefix with single quote
-  }
-
-  // Escape double quotes
-  sanitized = sanitized.replace(/"/g, '""');
-
-  // Remove newlines
-  sanitized = sanitized.replace(/[\r\n]/g, ' ');
-
-  return `"${sanitized}"`;
-}
+// Input validation limits (prevent DoS via large inputs)
+const MAX_METRO_LENGTH = 100;
+const MAX_FILTER_LENGTH = 50;
 
 /**
  * Export geographic targeting lists for ad platforms
@@ -53,8 +37,31 @@ export async function GET(request: NextRequest) {
   const make = searchParams.get('make');
   const bodyStyle = searchParams.get('body_style');
 
+  // Validate required params
   if (!metro) {
     return NextResponse.json({ error: 'metro parameter required' }, { status: 400 });
+  }
+
+  // Validate input lengths (prevent DoS via large inputs)
+  if (metro.length > MAX_METRO_LENGTH) {
+    return NextResponse.json(
+      { error: `metro parameter too long (max ${MAX_METRO_LENGTH} characters)` },
+      { status: 400 }
+    );
+  }
+
+  if (make && make.length > MAX_FILTER_LENGTH) {
+    return NextResponse.json(
+      { error: `make parameter too long (max ${MAX_FILTER_LENGTH} characters)` },
+      { status: 400 }
+    );
+  }
+
+  if (bodyStyle && bodyStyle.length > MAX_FILTER_LENGTH) {
+    return NextResponse.json(
+      { error: `body_style parameter too long (max ${MAX_FILTER_LENGTH} characters)` },
+      { status: 400 }
+    );
   }
 
   const supabase = createClient(
@@ -88,8 +95,22 @@ export async function GET(request: NextRequest) {
       if (error) throw error;
 
       if (!dealers || dealers.length === 0) {
+        // Build descriptive error message with filter context
+        const filters = [];
+        if (make) filters.push(`make: ${make}`);
+        if (bodyStyle) filters.push(`body_style: ${bodyStyle}`);
+
+        const filterContext = filters.length > 0
+          ? ` with filters (${filters.join(', ')})`
+          : '';
+
         return NextResponse.json(
-          { error: `No active dealers found for metro: ${metro}` },
+          {
+            error: `No active dealers found for metro: ${metro}${filterContext}`,
+            suggestion: filters.length > 0
+              ? 'Try removing filters or choosing a different metro'
+              : 'Metro may have no active inventory'
+          },
           { status: 404 }
         );
       }

@@ -63,6 +63,30 @@ export function Header() {
     };
   }, [mobileMenuOpen]);
 
+  // Close mobile menu on Escape key
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && mobileMenuOpen) {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [mobileMenuOpen]);
+
+  // Close mobile menu on window resize to desktop width
+  React.useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024 && mobileMenuOpen) {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [mobileMenuOpen]);
+
   return (
     <header
       className={cn(

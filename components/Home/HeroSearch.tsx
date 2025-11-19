@@ -42,16 +42,16 @@ export default function HeroSearch() {
       {/* Main Search Bar */}
       <form
         onSubmit={handleSearch}
-        className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 bg-background px-4 sm:px-6 py-4 sm:py-5 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-300 group border border-border/50"
+        className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 bg-white px-4 sm:px-6 py-4 sm:py-5 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-300 group border border-white/20"
       >
         <div className="flex items-center gap-3 flex-1">
-          <Search className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground group-hover:text-brand transition-colors flex-shrink-0" />
+          <Search className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400 group-hover:text-brand transition-colors flex-shrink-0" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by make, model, or type..."
-            className="flex-1 text-base sm:text-lg text-foreground placeholder:text-muted-foreground bg-transparent outline-none"
+            className="flex-1 text-base sm:text-lg text-slate-900 placeholder:text-slate-500 bg-transparent outline-none"
           />
         </div>
         <Button type="submit" variant="brand" className="w-full sm:w-auto sm:flex-shrink-0">
@@ -62,8 +62,8 @@ export default function HeroSearch() {
       {/* Zip Code Input */}
       <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 text-white text-sm">
         <span>or find vehicles near</span>
-        <div className="bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2 w-full sm:w-auto max-w-xs">
-          <ZipCodeInput placeholder="Enter zip code" className="text-white w-full" />
+        <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2 w-full sm:w-auto max-w-xs">
+          <ZipCodeInput placeholder="Enter zip code" className="w-full [&_input]:bg-white [&_input]:text-slate-900 [&_input]:border-white/30 [&_.text-muted-foreground]:text-slate-400" />
         </div>
       </div>
     </div>

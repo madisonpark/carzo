@@ -65,6 +65,21 @@ import { cn } from '@/lib/utils';
 - `bg-error`, `text-error` - Red for errors
 - `bg-muted`, `text-muted-foreground` - Gray for muted elements
 
+**Exception: Always-dark backgrounds**
+When a component sits on an always-dark background (e.g., hero gradient that's dark in both themes), use fixed colors for contrast:
+```tsx
+// Hero section with dark gradient (both light & dark modes)
+<div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
+  {/* Search bar must be white for contrast */}
+  <form className="bg-white text-slate-900">
+    {/* Content... */}
+  </form>
+</div>
+
+// Override child component styles using arbitrary variants
+<ZipCodeInput className="[&_input]:bg-white [&_input]:text-slate-900" />
+```
+
 ## Accessibility (WCAG 2.1)
 
 **ALWAYS use `focus-visible:` (not `focus:`):**

@@ -1,6 +1,9 @@
 -- Update get_zips_for_metro to support inventory filtering
 -- This allows targeting only areas near dealers that have specific inventory
 
+-- Drop the old signature to avoid overloading confusion
+DROP FUNCTION IF EXISTS get_zips_for_metro(TEXT, TEXT, INT);
+
 CREATE OR REPLACE FUNCTION get_zips_for_metro(
   p_city TEXT,
   p_state TEXT,

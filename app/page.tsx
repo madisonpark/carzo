@@ -67,7 +67,7 @@ export default async function HomePage() {
           <div className="text-center">
             {/* Logo */}
             <div className="mb-8 flex justify-center">
-              {/* Light theme: dark logo; Dark theme: light logo */}
+              {/* Hero background is always dark (both light/dark modes), so use light logo for contrast */}
               <Image
                 src="/logos/carzo-light.png"
                 alt="Carzo"
@@ -140,7 +140,7 @@ export default async function HomePage() {
             <Link
               key={make}
               href={`/search?make=${encodeURIComponent(make)}`}
-              className="bg-background border-2 border-border hover:border-brand rounded-xl p-6 text-center transition-all duration-300 hover:shadow-lg dark:hover:shadow-brand/20 group"
+              className="bg-background dark:bg-muted/20 border-2 border-border hover:border-brand rounded-xl p-6 text-center transition-all duration-300 hover:shadow-lg dark:hover:shadow-brand/20 group"
             >
               <p className="font-bold text-foreground group-hover:text-brand transition-colors">
                 {make}
@@ -162,7 +162,7 @@ export default async function HomePage() {
                 <Link
                   key={style}
                   href={`/search?bodyStyle=${encodeURIComponent(style)}`}
-                  className="bg-background border-2 border-border hover:border-brand rounded-xl p-6 text-center transition-all duration-300 hover:shadow-lg dark:hover:shadow-brand/20 group"
+                  className="bg-background dark:bg-muted/30 border-2 border-border hover:border-brand rounded-xl p-6 text-center transition-all duration-300 hover:shadow-lg dark:hover:shadow-brand/20 group"
                 >
                   <p className="font-bold text-foreground group-hover:text-brand transition-colors">
                     {style}

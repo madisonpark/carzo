@@ -62,7 +62,8 @@ function calculateMetroLocations(
   return qualifyingMetros
     .map(([metro, vehicles]) => {
       // Calculate centroid of all dealers in this metro
-      const dealersInMetro = vehicles.filter((v) => v.latitude && v.longitude);
+      // Use explicit null/undefined checks to avoid filtering out latitude/longitude = 0
+      const dealersInMetro = vehicles.filter((v) => v.latitude != null && v.longitude != null);
 
       // Skip metros with no valid coordinates (prevent division by zero)
       if (dealersInMetro.length === 0) {
@@ -70,11 +71,9 @@ function calculateMetroLocations(
       }
 
       const avgLat =
-        dealersInMetro.reduce((sum: number, v: Vehicle) => sum + (v.latitude as number), 0) /
-        dealersInMetro.length;
+        dealersInMetro.reduce((sum, v) => sum + v.latitude, 0) / dealersInMetro.length;
       const avgLon =
-        dealersInMetro.reduce((sum: number, v: Vehicle) => sum + (v.longitude as number), 0) /
-        dealersInMetro.length;
+        dealersInMetro.reduce((sum, v) => sum + v.longitude, 0) / dealersInMetro.length;
 
       return {
         metro: metro,

@@ -25,13 +25,13 @@ interface FilterSidebarProps {
 
 // Extracted reusable active filter badge component
 const ActiveFilterBadge = ({ label, onRemove }: { label: string; onRemove: () => void }) => (
-  <Badge variant="secondary" className="gap-1 rounded-full text-brand">
+  <Badge variant="secondary" className="gap-1 rounded-full">
     {label}
     <Button
       onClick={onRemove}
       variant="ghost"
       size="icon"
-      className="hover:bg-slate-300 rounded-full"
+      className="hover:bg-muted rounded-full"
       aria-label={`Remove ${label} filter`}
     >
       <X className="w-3 h-3" />
@@ -72,7 +72,7 @@ const FilterContent = ({
   <>
     <div className="flex items-center justify-between mb-6">
       <div className="flex items-center gap-2">
-        <h2 className="text-lg font-bold text-slate-900">Filters</h2>
+        <h2 className="text-lg font-bold text-foreground">Filters</h2>
         {isUpdating && (
           <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin"></div>
         )}
@@ -93,11 +93,11 @@ const FilterContent = ({
     <div className="space-y-6">
       {/* Make */}
       <div>
-        <label className="block text-sm font-semibold text-slate-700 mb-2">Make</label>
+        <label className="block text-sm font-semibold text-foreground mb-2">Make</label>
         <select
           value={currentFilters.make || ''}
           onChange={(e) => updateFilter('make', e.target.value)}
-          className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          className="w-full px-3 py-2 bg-background border border-border rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand text-foreground"
         >
           <option value="">All Makes</option>
           {makes.map((make) => (
@@ -110,11 +110,11 @@ const FilterContent = ({
 
       {/* Condition */}
       <div>
-        <label className="block text-sm font-semibold text-slate-700 mb-2">Condition</label>
+        <label className="block text-sm font-semibold text-foreground mb-2">Condition</label>
         <select
           value={currentFilters.condition || ''}
           onChange={(e) => updateFilter('condition', e.target.value)}
-          className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          className="w-full px-3 py-2 bg-background border border-border rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand text-foreground"
         >
           <option value="">All Conditions</option>
           {conditions.map((condition) => (
@@ -127,11 +127,11 @@ const FilterContent = ({
 
       {/* Body Style */}
       <div>
-        <label className="block text-sm font-semibold text-slate-700 mb-2">Body Style</label>
+        <label className="block text-sm font-semibold text-foreground mb-2">Body Style</label>
         <select
           value={currentFilters.bodyStyle || ''}
           onChange={(e) => updateFilter('bodyStyle', e.target.value)}
-          className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          className="w-full px-3 py-2 bg-background border border-border rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand text-foreground"
         >
           <option value="">All Body Styles</option>
           {bodyStyles.map((style) => (
@@ -144,13 +144,13 @@ const FilterContent = ({
 
       {/* Year Range */}
       <div>
-        <label className="block text-sm font-semibold text-slate-700 mb-2">Year</label>
+        <label className="block text-sm font-semibold text-foreground mb-2">Year</label>
         <div className="grid grid-cols-2 gap-3">
           <select
             value={currentFilters.minYear || ''}
             onChange={(e) => updateFilter('minYear', e.target.value)}
             aria-label="Minimum year"
-            className="px-3 py-2 border border-slate-300 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand text-sm"
+            className="px-3 py-2 bg-background border border-border rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand text-sm text-foreground"
           >
             <option value="">Min</option>
             {years.map((year) => (
@@ -163,7 +163,7 @@ const FilterContent = ({
             value={currentFilters.maxYear || ''}
             onChange={(e) => updateFilter('maxYear', e.target.value)}
             aria-label="Maximum year"
-            className="px-3 py-2 border border-slate-300 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand text-sm"
+            className="px-3 py-2 bg-background border border-border rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand text-sm text-foreground"
           >
             <option value="">Max</option>
             {years.map((year) => (
@@ -177,7 +177,7 @@ const FilterContent = ({
 
       {/* Price Range */}
       <div>
-        <label className="block text-sm font-semibold text-slate-700 mb-2">Price</label>
+        <label className="block text-sm font-semibold text-foreground mb-2">Price</label>
         <div className="grid grid-cols-2 gap-3">
           <Input
             type="number"
@@ -201,8 +201,8 @@ const FilterContent = ({
 
     {/* Active Filters */}
     {hasActiveFilters && (
-      <div className="mt-6 pt-6 border-t border-slate-200">
-        <h3 className="text-sm font-semibold text-slate-700 mb-3">Active Filters</h3>
+      <div className="mt-6 pt-6 border-t border-border">
+        <h3 className="text-sm font-semibold text-foreground mb-3">Active Filters</h3>
         <div className="flex flex-wrap gap-2">
           {currentFilters.make && (
             <ActiveFilterBadge
@@ -359,7 +359,7 @@ export default function FilterSidebar({
   return (
     <>
       {/* Mobile Filter Button - Fixed at bottom on mobile */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 shadow-lg p-4">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border shadow-lg p-4">
         <Button
           onClick={() => setIsMobileDrawerOpen(true)}
           variant="brand"
@@ -368,7 +368,7 @@ export default function FilterSidebar({
           <SlidersHorizontal className="w-5 h-5" />
           Filters
           {activeFilterCount > 0 && (
-            <Badge variant="secondary" className="bg-white text-brand">
+            <Badge variant="secondary" className="bg-background">
               {activeFilterCount}
             </Badge>
           )}
@@ -378,7 +378,7 @@ export default function FilterSidebar({
       {/* Mobile Drawer Overlay */}
       {isMobileDrawerOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-50 animate-fade-in"
+          className="lg:hidden fixed inset-0 bg-black/50 dark:bg-black/70 z-50 animate-fade-in"
           onClick={() => setIsMobileDrawerOpen(false)}
           aria-hidden="true"
         />
@@ -387,12 +387,12 @@ export default function FilterSidebar({
       {/* Mobile Drawer */}
       <div
         className={cn(
-          'lg:hidden fixed top-0 left-0 bottom-0 w-full max-w-sm bg-white z-[60] overflow-y-auto transition-transform duration-300 ease-in-out shadow-2xl',
+          'lg:hidden fixed top-0 left-0 bottom-0 w-full max-w-sm bg-background z-[60] overflow-y-auto transition-transform duration-300 ease-in-out shadow-2xl',
           isMobileDrawerOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        <div className="sticky top-0 bg-white border-b border-slate-200 p-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-slate-900">Filters</h2>
+        <div className="sticky top-0 bg-background border-b border-border p-4 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-foreground">Filters</h2>
           <Button
             onClick={() => setIsMobileDrawerOpen(false)}
             variant="ghost"
@@ -408,7 +408,7 @@ export default function FilterSidebar({
       </div>
 
       {/* Desktop Sidebar - Hidden on mobile */}
-      <div className="hidden lg:block bg-white rounded-xl border border-slate-200 p-6 sticky top-8">
+      <div className="hidden lg:block bg-background rounded-xl border border-border p-6 sticky top-8">
         <FilterContent {...filterContentProps} />
       </div>
     </>

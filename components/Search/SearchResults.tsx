@@ -45,11 +45,11 @@ export default function SearchResults({
 
   if (vehicles.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
+      <div className="bg-background rounded-xl border border-border p-12 text-center">
         {/* Empty State Icon */}
-        <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-100 rounded-full mb-6">
+        <div className="inline-flex items-center justify-center w-20 h-20 bg-muted rounded-full mb-6">
           <svg
-            className="w-10 h-10 text-slate-400"
+            className="w-10 h-10 text-muted-foreground"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -64,10 +64,10 @@ export default function SearchResults({
         </div>
 
         {/* Message */}
-        <h3 className="text-2xl font-bold text-slate-900 mb-2">
+        <h3 className="text-2xl font-bold text-foreground mb-2">
           No vehicles found
         </h3>
-        <p className="text-slate-600 mb-6 max-w-md mx-auto">
+        <p className="text-muted-foreground mb-6 max-w-md mx-auto">
           We couldn&apos;t find any vehicles matching your search criteria. Try adjusting your filters
           or browse all available vehicles.
         </p>
@@ -105,19 +105,19 @@ export default function SearchResults({
     <div>
       {/* Sort Controls */}
       <div className="flex items-center justify-between mb-6">
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-muted-foreground">
           Showing <span className="font-semibold">{vehicles.length}</span> of{' '}
           <span className="font-semibold">{total.toLocaleString()}</span> vehicles
         </p>
         <div className="flex items-center gap-2">
-          <label htmlFor="sort-select" className="text-sm font-medium text-slate-700">
+          <label htmlFor="sort-select" className="text-sm font-medium text-foreground">
             Sort by:
           </label>
           <select
             id="sort-select"
             value={currentSort}
             onChange={(e) => updateSort(e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg text-sm outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            className="px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-brand"
           >
             <option value="relevance">Relevance</option>
             <option value="price_asc">Price: Low to High</option>
@@ -187,7 +187,7 @@ export default function SearchResults({
       )}
 
       {/* Results Summary */}
-      <p className="text-center text-sm text-slate-600 mt-6">
+      <p className="text-center text-sm text-muted-foreground mt-6">
         Showing {(page - 1) * 24 + 1}-{Math.min(page * 24, total)} of {total.toLocaleString()}{' '}
         vehicles
       </p>

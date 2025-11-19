@@ -91,7 +91,7 @@ export default function LocationDetector() {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 text-sm text-slate-600">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <MapPin className="w-4 h-4 animate-pulse" />
         <span>Detecting your location...</span>
       </div>
@@ -101,7 +101,7 @@ export default function LocationDetector() {
   if (location && location.city) {
     return (
       <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2 text-sm text-slate-700">
+        <div className="flex items-center gap-2 text-sm text-foreground">
           <MapPin className="w-4 h-4 text-brand" />
           <span>
             <strong>{location.city}, {location.state}</strong>

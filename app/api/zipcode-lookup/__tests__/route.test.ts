@@ -86,10 +86,12 @@ describe('GET /api/zipcode-lookup', () => {
   describe('Zip Code Cleaning', () => {
     it('should strip non-digits from zip code', async () => {
       mockLookup.mockReturnValue({
+        zip: '30303',
         city: 'Atlanta',
         state: 'GA',
         latitude: 33.7525,
         longitude: -84.3888,
+        country: 'US',
       });
 
       const request = createMockRequest({ zip: '30303-1234' });
@@ -102,10 +104,12 @@ describe('GET /api/zipcode-lookup', () => {
 
     it('should handle zip codes with dashes', async () => {
       mockLookup.mockReturnValue({
+        zip: '10001',
         city: 'New York',
         state: 'NY',
         latitude: 40.7128,
         longitude: -74.006,
+        country: 'US',
       });
 
       const request = createMockRequest({ zip: '10001-1234' });
@@ -117,10 +121,12 @@ describe('GET /api/zipcode-lookup', () => {
 
     it('should handle zip codes with spaces', async () => {
       mockLookup.mockReturnValue({
+        zip: '90001',
         city: 'Los Angeles',
         state: 'CA',
         latitude: 34.0522,
         longitude: -118.2437,
+        country: 'US',
       });
 
       const request = createMockRequest({ zip: ' 90001 ' });
@@ -132,10 +138,12 @@ describe('GET /api/zipcode-lookup', () => {
 
     it('should take first 5 digits from longer strings', async () => {
       mockLookup.mockReturnValue({
+        zip: '60601',
         city: 'Chicago',
         state: 'IL',
         latitude: 41.8781,
         longitude: -87.6298,
+        country: 'US',
       });
 
       const request = createMockRequest({ zip: '60601-12345' });
@@ -149,10 +157,12 @@ describe('GET /api/zipcode-lookup', () => {
   describe('Valid Zip Code Lookup', () => {
     it('should return location data for valid zip code', async () => {
       mockLookup.mockReturnValue({
+        zip: '30303',
         city: 'Atlanta',
         state: 'GA',
         latitude: 33.7525,
         longitude: -84.3888,
+        country: 'US',
       });
 
       const request = createMockRequest({ zip: '30303' });
@@ -175,10 +185,12 @@ describe('GET /api/zipcode-lookup', () => {
 
     it('should return location for NYC zip code', async () => {
       mockLookup.mockReturnValue({
+        zip: '10001',
         city: 'New York',
         state: 'NY',
         latitude: 40.7128,
         longitude: -74.006,
+        country: 'US',
       });
 
       const request = createMockRequest({ zip: '10001' });
@@ -194,10 +206,12 @@ describe('GET /api/zipcode-lookup', () => {
 
     it('should return location for LA zip code', async () => {
       mockLookup.mockReturnValue({
+        zip: '90001',
         city: 'Los Angeles',
         state: 'CA',
         latitude: 34.0522,
         longitude: -118.2437,
+        country: 'US',
       });
 
       const request = createMockRequest({ zip: '90001' });
@@ -275,10 +289,12 @@ describe('GET /api/zipcode-lookup', () => {
   describe('Edge Cases', () => {
     it('should handle zip code with leading zeros', async () => {
       mockLookup.mockReturnValue({
+        zip: '02101',
         city: 'Boston',
         state: 'MA',
         latitude: 42.3601,
         longitude: -71.0589,
+        country: 'US',
       });
 
       const request = createMockRequest({ zip: '02101' });
@@ -293,10 +309,12 @@ describe('GET /api/zipcode-lookup', () => {
 
     it('should handle zip+4 format', async () => {
       mockLookup.mockReturnValue({
+        zip: '98101',
         city: 'Seattle',
         state: 'WA',
         latitude: 47.6062,
         longitude: -122.3321,
+        country: 'US',
       });
 
       const request = createMockRequest({ zip: '98101-1234' });
@@ -323,10 +341,12 @@ describe('GET /api/zipcode-lookup', () => {
   describe('Response Format', () => {
     it('should return all required location fields', async () => {
       mockLookup.mockReturnValue({
+        zip: '80201',
         city: 'Denver',
         state: 'CO',
         latitude: 39.7392,
         longitude: -104.9903,
+        country: 'US',
       });
 
       const request = createMockRequest({ zip: '80201' });
@@ -346,10 +366,12 @@ describe('GET /api/zipcode-lookup', () => {
 
     it('should include cleaned zip code in response', async () => {
       mockLookup.mockReturnValue({
+        zip: '85001',
         city: 'Phoenix',
         state: 'AZ',
         latitude: 33.4484,
         longitude: -112.074,
+        country: 'US',
       });
 
       const request = createMockRequest({ zip: '85001-1234' });

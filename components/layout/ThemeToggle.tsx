@@ -53,13 +53,10 @@ export function ThemeToggle() {
       size="icon"
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
       aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
-      className="transition-smooth"
+      className="transition-smooth relative"
     >
-      {isDark ? (
-        <Moon className="h-4 w-4 transition-all duration-300 rotate-0 scale-100" />
-      ) : (
-        <Sun className="h-4 w-4 transition-all duration-300 rotate-0 scale-100" />
-      )}
+      <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+      <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
       <span className="sr-only">
         {isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       </span>

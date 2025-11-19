@@ -257,7 +257,7 @@ describe('ThemeToggle', () => {
       expect(button).toHaveClass('transition-smooth');
     });
 
-    it('applies transition classes to icon', () => {
+    it('applies transition classes to icons', () => {
       render(
         <ThemeProvider>
           <ThemeToggle />
@@ -265,8 +265,13 @@ describe('ThemeToggle', () => {
       );
 
       const button = screen.getByRole('button');
-      const svg = button.querySelector('svg');
-      expect(svg).toHaveClass('transition-all', 'duration-300');
+      const svgs = button.querySelectorAll('svg');
+
+      // Both icons should have transition-all class
+      expect(svgs.length).toBe(2); // Sun and Moon icons
+      svgs.forEach((svg) => {
+        expect(svg).toHaveClass('transition-all');
+      });
     });
   });
 

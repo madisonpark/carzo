@@ -60,15 +60,16 @@ export default async function HomePage() {
   ]);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-slate-900 to-slate-800 text-white">
+      <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
           <div className="text-center">
             {/* Logo */}
             <div className="mb-8 flex justify-center">
+              {/* Light theme: dark logo; Dark theme: light logo */}
               <Image
-                src="/carzo-logo.png"
+                src="/logos/carzo-light.png"
                 alt="Carzo"
                 width={200}
                 height={60}
@@ -80,7 +81,7 @@ export default async function HomePage() {
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6">
               Find Your Perfect Vehicle
             </h1>
-            <p className="text-xl sm:text-2xl text-slate-300 mb-12 max-w-3xl mx-auto">
+            <p className="text-xl sm:text-2xl text-white/90 dark:text-white/80 mb-12 max-w-3xl mx-auto">
               Browse thousands of quality vehicles from trusted dealerships across the country
             </p>
 
@@ -93,38 +94,38 @@ export default async function HomePage() {
       </div>
 
       {/* Features */}
-      <div className="bg-slate-50 border-y border-slate-200 py-12">
+      <div className="bg-muted/30 dark:bg-muted/10 border-y border-border py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="flex items-start gap-4">
-              <div className="bg-muted p-3 rounded-lg">
+              <div className="bg-muted dark:bg-muted/50 p-3 rounded-lg">
                 <TrendingUp className="w-6 h-6 text-brand" />
               </div>
               <div>
-                <h3 className="font-bold text-slate-900 mb-1">Wide Selection</h3>
-                <p className="text-slate-600 text-sm">
+                <h3 className="font-bold text-foreground mb-1">Wide Selection</h3>
+                <p className="text-muted-foreground text-sm">
                   Thousands of vehicles from dealerships nationwide
                 </p>
               </div>
             </div>
             <div className="flex items-start gap-4">
-              <div className="bg-green-100 p-3 rounded-lg">
-                <Shield className="w-6 h-6 text-green-600" />
+              <div className="bg-success/10 dark:bg-success/20 p-3 rounded-lg">
+                <Shield className="w-6 h-6 text-success" />
               </div>
               <div>
-                <h3 className="font-bold text-slate-900 mb-1">Verified Listings</h3>
-                <p className="text-slate-600 text-sm">
+                <h3 className="font-bold text-foreground mb-1">Verified Listings</h3>
+                <p className="text-muted-foreground text-sm">
                   All vehicles from certified dealerships
                 </p>
               </div>
             </div>
             <div className="flex items-start gap-4">
-              <div className="bg-purple-100 p-3 rounded-lg">
-                <Zap className="w-6 h-6 text-purple-600" />
+              <div className="bg-dealer/10 dark:bg-dealer/20 p-3 rounded-lg">
+                <Zap className="w-6 h-6 text-dealer" />
               </div>
               <div>
-                <h3 className="font-bold text-slate-900 mb-1">Fast & Easy</h3>
-                <p className="text-slate-600 text-sm">Find and contact dealers instantly</p>
+                <h3 className="font-bold text-foreground mb-1">Fast & Easy</h3>
+                <p className="text-muted-foreground text-sm">Find and contact dealers instantly</p>
               </div>
             </div>
           </div>
@@ -133,15 +134,15 @@ export default async function HomePage() {
 
       {/* Shop by Make */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-8">Shop by Make</h2>
+        <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-8">Shop by Make</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
           {popularMakes.map((make) => (
             <Link
               key={make}
               href={`/search?make=${encodeURIComponent(make)}`}
-              className="bg-white border-2 border-slate-200 hover:border-brand rounded-xl p-6 text-center transition-all duration-300 hover:shadow-lg group"
+              className="bg-background border-2 border-border hover:border-brand rounded-xl p-6 text-center transition-all duration-300 hover:shadow-lg dark:hover:shadow-brand/20 group"
             >
-              <p className="font-bold text-slate-900 group-hover:text-brand transition-colors">
+              <p className="font-bold text-foreground group-hover:text-brand transition-colors">
                 {make}
               </p>
             </Link>
@@ -151,9 +152,9 @@ export default async function HomePage() {
 
       {/* Shop by Body Style */}
       {bodyStyles.length > 0 && (
-        <div className="bg-slate-50 py-16">
+        <div className="bg-muted/30 dark:bg-muted/10 py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-8">
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-8">
               Shop by Body Style
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -161,9 +162,9 @@ export default async function HomePage() {
                 <Link
                   key={style}
                   href={`/search?bodyStyle=${encodeURIComponent(style)}`}
-                  className="bg-white border-2 border-slate-200 hover:border-brand rounded-xl p-6 text-center transition-all duration-300 hover:shadow-lg group"
+                  className="bg-background border-2 border-border hover:border-brand rounded-xl p-6 text-center transition-all duration-300 hover:shadow-lg dark:hover:shadow-brand/20 group"
                 >
-                  <p className="font-bold text-slate-900 group-hover:text-brand transition-colors">
+                  <p className="font-bold text-foreground group-hover:text-brand transition-colors">
                     {style}
                   </p>
                 </Link>
@@ -176,10 +177,10 @@ export default async function HomePage() {
       {/* Featured Vehicles */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="flex items-center justify-between mb-8">
-          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">Featured Vehicles</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold text-foreground">Featured Vehicles</h2>
           <Link
             href="/search"
-            className="text-brand hover:text-brand-hover font-semibold flex items-center gap-2"
+            className="text-brand hover:text-brand-hover font-semibold flex items-center gap-2 transition-colors"
           >
             View All
             <ArrowRight className="w-5 h-5" />
@@ -194,15 +195,15 @@ export default async function HomePage() {
       </div>
 
       {/* CTA Section */}
-      <div className="bg-gradient-to-br from-brand to-brand-hover text-white py-16">
+      <div className="bg-gradient-to-br from-brand via-brand to-brand-hover dark:from-brand dark:via-brand-hover dark:to-brand text-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold mb-4">Ready to Find Your Next Vehicle?</h2>
-          <p className="text-xl text-slate-100 mb-8">
+          <p className="text-xl text-white/90 dark:text-white/80 mb-8">
             Browse our complete inventory and connect with dealers instantly
           </p>
           <Link
             href="/search"
-            className="inline-flex items-center gap-3 bg-white text-brand px-8 py-4 rounded-xl font-bold text-lg hover:shadow-2xl transition-all duration-300 hover:scale-105"
+            className="inline-flex items-center gap-3 bg-white dark:bg-slate-50 text-brand px-8 py-4 rounded-xl font-bold text-lg hover:shadow-2xl dark:hover:shadow-brand/50 transition-all duration-300 hover:scale-105"
           >
             Start Searching
             <ArrowRight className="w-6 h-6" />
@@ -211,26 +212,27 @@ export default async function HomePage() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-white py-12">
+      <footer className="bg-slate-900 dark:bg-slate-950 text-white py-12 border-t border-slate-800 dark:border-slate-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <div className="mb-4">
+                {/* Footer always uses light logo since footer background is dark */}
                 <Image
-                  src="/carzo-logo.png"
+                  src="/logos/carzo-light.png"
                   alt="Carzo"
                   width={150}
                   height={45}
-                  className="h-auto brightness-0 invert"
+                  className="h-auto"
                 />
               </div>
-              <p className="text-slate-400 text-sm">
+              <p className="text-slate-400 dark:text-slate-500 text-sm">
                 Your trusted source for finding quality vehicles from dealerships nationwide.
               </p>
             </div>
             <div>
               <h4 className="font-bold mb-4">Quick Links</h4>
-              <ul className="space-y-2 text-sm text-slate-400">
+              <ul className="space-y-2 text-sm text-slate-400 dark:text-slate-500">
                 <li>
                   <Link href="/search" className="hover:text-white transition-colors">
                     Search Vehicles
@@ -245,7 +247,7 @@ export default async function HomePage() {
             </div>
             <div>
               <h4 className="font-bold mb-4">Legal</h4>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-400 dark:text-slate-500">
                 © 2025 Carzo. All rights reserved. Vehicle information subject to change. When you
                 click on links to vehicles on this site, contact sellers, or make a purchase, it
                 can result in us earning a commission.

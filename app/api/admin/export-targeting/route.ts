@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { validateAdminAuth } from '@/lib/admin-auth';
-import { sanitizeCsvField } from '@/lib/csv';
+import { sanitizeCsvField, generateCsv } from '@/lib/csv';
 
 export const dynamic = 'force-dynamic';
 
@@ -187,10 +187,10 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      const rows = (zipCodes || []).map((z: ZipResult) => ({ zip_code: z.zip_code }));
+      const rows = (zipCodes || []).map((z: ZipResult) => [z.zip_code]);
 
       if (format === 'csv') {
-        const csv = ['zip_code', ...rows.map((r: { zip_code: string }) => r.zip_code)].join('\n');
+        const csv = generateCsv(['zip_code'], rows);
 
         return new NextResponse(csv, {
           headers: {

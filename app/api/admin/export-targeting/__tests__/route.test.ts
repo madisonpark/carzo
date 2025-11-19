@@ -247,7 +247,7 @@ describe('GET /api/admin/export-targeting', () => {
 
       expect(response.status).toBe(200);
       expect(response.headers.get('Content-Type')).toBe('text/csv');
-      expect(text).toBe('zip_code\n33601\n33602\n33603');
+      expect(text).toBe('"zip_code"\n"33601"\n"33602"\n"33603"');
     });
 
     it('should return 404 when no ZIP codes found', async () => {

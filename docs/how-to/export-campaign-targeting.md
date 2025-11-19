@@ -61,8 +61,8 @@ curl -H "Authorization: Bearer ${ADMIN_PASSWORD}" \
 |-----------|----------|-------------|---------|
 | `metro` | Yes | Metro name (city, state) | `Tampa, FL` |
 | `platform` | No | Ad platform (default: facebook) | `facebook`, `google`, `tiktok` |
-| `campaign_type` | No | Campaign filter type | `make`, `body_style`, `make_body_style`, `make_model` |
-| `campaign_value` | No | Value to filter by | `Toyota`, `suv`, `Jeep Wrangler` |
+| `make` | No | Vehicle make to filter by | `Toyota`, `Honda`, `Ford` |
+| `body_style` | No | Vehicle body style to filter by | `suv`, `truck`, `sedan` |
 | `radius` | No | Targeting radius in miles (default: 25) | `30` |
 | `format` | No | Output format (default: csv) | `csv`, `json` |
 
@@ -78,29 +78,22 @@ curl -H "Authorization: Bearer ${ADMIN_PASSWORD}" \
 **Example (filter by make):**
 ```bash
 curl -H "Authorization: Bearer ${ADMIN_PASSWORD}" \
-  "https://carzo.net/api/admin/export-targeting?metro=Miami,%20FL&campaign_type=make&campaign_value=Honda&platform=google" \
+  "https://carzo.net/api/admin/export-targeting?metro=Miami,%20FL&make=Honda&platform=google" \
   --output miami-honda-google.csv
 ```
 
 **Example (filter by body style):**
 ```bash
 curl -H "Authorization: Bearer ${ADMIN_PASSWORD}" \
-  "https://carzo.net/api/admin/export-targeting?metro=Phoenix,%20AZ&campaign_type=body_style&campaign_value=truck&platform=facebook" \
+  "https://carzo.net/api/admin/export-targeting?metro=Phoenix,%20AZ&body_style=truck&platform=facebook" \
   --output phoenix-trucks-facebook.csv
 ```
 
-**Example (filter by make + body style):**
+**Example (filter by make AND body style):**
 ```bash
 curl -H "Authorization: Bearer ${ADMIN_PASSWORD}" \
-  "https://carzo.net/api/admin/export-targeting?metro=Dallas,%20TX&campaign_type=make_body_style&campaign_value=Jeep%20suv&platform=facebook" \
+  "https://carzo.net/api/admin/export-targeting?metro=Dallas,%20TX&make=Jeep&body_style=suv&platform=facebook" \
   --output dallas-jeep-suvs-facebook.csv
-```
-
-**Example (filter by make + model):**
-```bash
-curl -H "Authorization: Bearer ${ADMIN_PASSWORD}" \
-  "https://carzo.net/api/admin/export-targeting?metro=Denver,%20CO&campaign_type=make_model&campaign_value=Ford%20F-150&platform=google" \
-  --output denver-f150-google.csv
 ```
 
 ---
@@ -143,18 +136,17 @@ curl -H "Authorization: Bearer ${ADMIN_PASSWORD}" \
 
 ---
 
-## Campaign Type Reference
+## Campaign Type Reference (Multi-Metro Only)
+
+The `/export-targeting-combined` endpoint supports campaign types for filtering across multiple metros. The `/export-targeting` endpoint uses simple `make` and `body_style` parameters instead.
 
 ### 1. Body Style Campaign
 
 **Use case:** Target all vehicles of a specific body style (e.g., all SUVs, all trucks)
 
 ```bash
-# Single metro
-?campaign_type=body_style&campaign_value=suv
-
 # Multi-metro
-?campaign_type=body_style&campaign_value=truck&min_vehicles=8
+?campaign_type=body_style&campaign_value=suv&min_vehicles=8
 ```
 
 **Valid body styles:** `suv`, `truck`, `sedan`, `coupe`, `convertible`, `wagon`, `van`, `hatchback`
@@ -164,11 +156,8 @@ curl -H "Authorization: Bearer ${ADMIN_PASSWORD}" \
 **Use case:** Target all vehicles from a specific manufacturer (e.g., all Toyota, all Honda)
 
 ```bash
-# Single metro
-?campaign_type=make&campaign_value=Toyota
-
 # Multi-metro
-?campaign_type=make&campaign_value=Honda&min_vehicles=10
+?campaign_type=make&campaign_value=Toyota&min_vehicles=10
 ```
 
 **Valid makes:** Any make in inventory (use title case: `Toyota`, `Honda`, `Ford`, `Jeep`)
@@ -178,11 +167,8 @@ curl -H "Authorization: Bearer ${ADMIN_PASSWORD}" \
 **Use case:** Target specific make + body style combination (e.g., Jeep SUVs, Ford trucks)
 
 ```bash
-# Single metro
-?campaign_type=make_body_style&campaign_value=Jeep%20suv
-
 # Multi-metro
-?campaign_type=make_body_style&campaign_value=Ford%20truck&min_vehicles=8
+?campaign_type=make_body_style&campaign_value=Jeep%20suv&min_vehicles=8
 ```
 
 **Format:** `Make BodyStyle` (space-separated, URL-encoded)
@@ -194,11 +180,8 @@ curl -H "Authorization: Bearer ${ADMIN_PASSWORD}" \
 **Use case:** Target specific make + model (e.g., Jeep Wrangler, Ford F-150)
 
 ```bash
-# Single metro
-?campaign_type=make_model&campaign_value=Jeep%20Wrangler
-
 # Multi-metro
-?campaign_type=make_model&campaign_value=Ford%20F-150&min_vehicles=5
+?campaign_type=make_model&campaign_value=Jeep%20Wrangler&min_vehicles=5
 ```
 
 **Format:** `Make Model` (space-separated, URL-encoded)

@@ -1,6 +1,6 @@
 import { render, RenderOptions } from '@testing-library/react';
 import { ReactElement } from 'react';
-import { vi } from 'vitest';
+import { vi, expect } from 'vitest';
 
 /**
  * Custom render function that wraps components with common providers
@@ -153,10 +153,10 @@ export function mockWindowLocation(overrides: Partial<Location> = {}) {
     search: '',
     hash: '',
     ...overrides,
-  };
+  } as Location;
 
   delete (window as any).location;
-  window.location = location as Location;
+  window.location = location as any;
 }
 
 /**
@@ -212,6 +212,122 @@ export async function expectToReject(
       }
     }
   }
+}
+
+/**
+ * Create mock Supabase client for testing
+ *
+ * Simplifies test setup by providing a chainable mock that works with Supabase query builder pattern.
+ *
+ * @example
+ * // Basic usage (mocks successful query)
+ * const mockClient = createMockSupabaseClient({
+ *   data: [{ id: '1', make: 'Toyota' }],
+ *   error: null,
+ * });
+ *
+ * @example
+ * // Mock error scenario
+ * const mockClient = createMockSupabaseClient({
+ *   data: null,
+ *   error: { message: 'Database error', code: 'PGRST' },
+ * });
+ *
+ * @example
+ * // Mock RPC function
+ * const mockClient = createMockSupabaseClient({
+ *   rpcData: [{ zip_code: '30303' }],
+ * });
+ *
+ * @example
+ * // Use with vi.mock
+ * vi.mock('@supabase/supabase-js', () => ({
+ *   createClient: vi.fn(() => createMockSupabaseClient({
+ *     data: [{ id: '1' }],
+ *   })),
+ * }));
+ */
+export function createMockSupabaseClient(options: {
+  data?: any;
+  error?: any;
+  rpcData?: any;
+  rpcError?: any;
+} = {}) {
+  const {
+    data = null,
+    error = null,
+    rpcData = [],
+    rpcError = null
+  } = options;
+
+  // Chainable mock for query builder pattern
+  const mockChain = {
+    select: vi.fn(function () { return this; }),
+    eq: vi.fn(function () { return this; }),
+    neq: vi.fn(function () { return this; }),
+    gt: vi.fn(function () { return this; }),
+    gte: vi.fn(function () { return this; }),
+    lt: vi.fn(function () { return this; }),
+    lte: vi.fn(function () { return this; }),
+    like: vi.fn(function () { return this; }),
+    ilike: vi.fn(function () { return this; }),
+    is: vi.fn(function () { return this; }),
+    in: vi.fn(function () { return this; }),
+    contains: vi.fn(function () { return this; }),
+    containedBy: vi.fn(function () { return this; }),
+    range: vi.fn(function () { return this; }),
+    rangeGt: vi.fn(function () { return this; }),
+    rangeGte: vi.fn(function () { return this; }),
+    rangeLt: vi.fn(function () { return this; }),
+    rangeLte: vi.fn(function () { return this; }),
+    rangeAdjacent: vi.fn(function () { return this; }),
+    overlaps: vi.fn(function () { return this; }),
+    textSearch: vi.fn(function () { return this; }),
+    match: vi.fn(function () { return this; }),
+    not: vi.fn(function () { return this; }),
+    or: vi.fn(function () { return this; }),
+    filter: vi.fn(function () { return this; }),
+    order: vi.fn(function () { return this; }),
+    limit: vi.fn(function () { return this; }),
+    range: vi.fn(function () { return this; }),
+    single: vi.fn(() => Promise.resolve({ data, error })),
+    maybeSingle: vi.fn(() => Promise.resolve({ data, error })),
+    insert: vi.fn(() => Promise.resolve({ data, error })),
+    update: vi.fn(() => Promise.resolve({ data, error })),
+    upsert: vi.fn(() => Promise.resolve({ data, error })),
+    delete: vi.fn(() => Promise.resolve({ data, error })),
+    then: vi.fn(function (resolve) {
+      return resolve({ data, error });
+    }),
+  };
+
+  return {
+    from: vi.fn(() => mockChain),
+    rpc: vi.fn(() => Promise.resolve({ data: rpcData, error: rpcError })),
+    auth: {
+      getSession: vi.fn(() => Promise.resolve({
+        data: { session: null },
+        error: null
+      })),
+      getUser: vi.fn(() => Promise.resolve({
+        data: { user: null },
+        error: null
+      })),
+      signIn: vi.fn(() => Promise.resolve({
+        data: { user: null, session: null },
+        error: null
+      })),
+      signOut: vi.fn(() => Promise.resolve({ error: null })),
+    },
+    storage: {
+      from: vi.fn(() => ({
+        upload: vi.fn(() => Promise.resolve({ data: null, error: null })),
+        download: vi.fn(() => Promise.resolve({ data: null, error: null })),
+        list: vi.fn(() => Promise.resolve({ data: [], error: null })),
+        remove: vi.fn(() => Promise.resolve({ data: null, error: null })),
+      })),
+    },
+  };
 }
 
 // Re-export commonly used testing library utilities

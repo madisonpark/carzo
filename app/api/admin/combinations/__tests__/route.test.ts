@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET } from '../route';
 import { NextRequest } from 'next/server';
 import * as adminAuth from '@/lib/admin-auth';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 vi.mock('@/lib/admin-auth');
 vi.mock('@supabase/supabase-js', () => ({
@@ -95,7 +96,7 @@ describe('GET /api/admin/combinations', () => {
         }
         return Promise.resolve({ data: [], error: null });
       }),
-    } as any);
+    } as unknown as SupabaseClient<unknown, never, never>);
 
     const request = new NextRequest('http://localhost/api/admin/combinations');
     const response = await GET(request);
@@ -112,7 +113,7 @@ describe('GET /api/admin/combinations', () => {
         }
         return Promise.resolve({ data: [], error: null });
       }),
-    } as any);
+    } as unknown as SupabaseClient<unknown, never, never>);
 
     const request = new NextRequest('http://localhost/api/admin/combinations');
     const response = await GET(request);
@@ -124,7 +125,7 @@ describe('GET /api/admin/combinations', () => {
     const { createClient } = await import('@supabase/supabase-js');
     vi.mocked(createClient).mockReturnValue({
       rpc: vi.fn(() => Promise.resolve({ data: null, error: null })),
-    } as any);
+    } as unknown as SupabaseClient<unknown, never, never>);
 
     const request = new NextRequest('http://localhost/api/admin/combinations');
     const response = await GET(request);

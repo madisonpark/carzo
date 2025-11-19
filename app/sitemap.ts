@@ -57,7 +57,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const results = await Promise.all(promises)
 
   // Process results and collect vehicles
-  let allVehicles: Array<{ vin: string; last_sync: string | null }> = []
+  const allVehicles: Array<{ vin: string; last_sync: string | null }> = []
 
   for (const { data, error } of results) {
     if (error) {

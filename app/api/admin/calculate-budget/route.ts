@@ -132,10 +132,11 @@ export async function GET(request: NextRequest) {
       allocations,
       summary,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error calculating budget:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Failed to calculate budget', details: error.message },
+      { error: 'Failed to calculate budget', details: errorMessage },
       { status: 500 }
     );
   }

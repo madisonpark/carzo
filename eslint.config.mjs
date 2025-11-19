@@ -26,6 +26,13 @@ const eslintConfig = defineConfig([
       "@next/next/no-img-element": "off",
     },
   },
+  // Test files and mocks can use 'any' type
+  {
+    files: ["**/__tests__/**/*", "**/*.test.ts", "**/*.test.tsx", "**/tests/**/*", "**/mocks/**/*"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

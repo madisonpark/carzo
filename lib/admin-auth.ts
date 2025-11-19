@@ -8,7 +8,7 @@ import { getClientIdentifier, checkMultipleRateLimits, RATE_LIMITS } from './rat
 
 export interface AdminAuthResult {
   authorized: boolean;
-  response?: NextResponse;
+  response?: Response;
 }
 
 /**

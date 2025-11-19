@@ -1,29 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { validateAdminAuth } from '@/lib/admin-auth';
+import { sanitizeCsvField, generateCsv } from '@/lib/csv';
 
 export const dynamic = 'force-dynamic';
 
-/**
- * Sanitize field for CSV export to prevent formula injection
- */
-function sanitizeCsvField(value: string): string {
-  if (!value) return '""';
-
-  // Prevent formula injection (leading =, +, -, @, tab, carriage return)
-  let sanitized = value;
-  if (/^[=+\-@\t\r]/.test(sanitized)) {
-    sanitized = `'${sanitized}`; // Prefix with single quote
-  }
-
-  // Escape double quotes
-  sanitized = sanitized.replace(/"/g, '""');
-
-  // Remove newlines
-  sanitized = sanitized.replace(/[\r\n]/g, ' ');
-
-  return `"${sanitized}"`;
-}
+// Input validation limits (prevent DoS via large inputs)
+const MAX_METRO_LENGTH = 100;
+const MAX_FILTER_LENGTH = 50;
 
 /**
  * Export geographic targeting lists for ad platforms
@@ -35,6 +19,10 @@ function sanitizeCsvField(value: string): string {
  *
  * @returns CSV or JSON download
  */
+interface ZipResult {
+  zip_code: string;
+}
+
 export async function GET(request: NextRequest) {
   // Validate auth and rate limiting
   const authResult = await validateAdminAuth(request);
@@ -46,9 +34,34 @@ export async function GET(request: NextRequest) {
   const metro = searchParams.get('metro'); // e.g., "Tampa, FL"
   const platform = searchParams.get('platform') || 'facebook';
   const format = searchParams.get('format') || 'csv';
+  const make = searchParams.get('make');
+  const bodyStyle = searchParams.get('body_style');
 
+  // Validate required params
   if (!metro) {
     return NextResponse.json({ error: 'metro parameter required' }, { status: 400 });
+  }
+
+  // Validate input lengths (prevent DoS via large inputs)
+  if (metro.length > MAX_METRO_LENGTH) {
+    return NextResponse.json(
+      { error: `metro parameter too long (max ${MAX_METRO_LENGTH} characters)` },
+      { status: 400 }
+    );
+  }
+
+  if (make && make.length > MAX_FILTER_LENGTH) {
+    return NextResponse.json(
+      { error: `make parameter too long (max ${MAX_FILTER_LENGTH} characters)` },
+      { status: 400 }
+    );
+  }
+
+  if (bodyStyle && bodyStyle.length > MAX_FILTER_LENGTH) {
+    return NextResponse.json(
+      { error: `body_style parameter too long (max ${MAX_FILTER_LENGTH} characters)` },
+      { status: 400 }
+    );
   }
 
   const supabase = createClient(
@@ -62,18 +75,42 @@ export async function GET(request: NextRequest) {
 
     if (platform === 'facebook') {
       // Export lat/long radius targeting for Facebook
-      const { data: dealers, error } = await supabase
+      let query = supabase
         .from('vehicles')
         .select('latitude, longitude, dealer_name, dealer_id')
         .eq('dealer_city', city)
         .eq('dealer_state', state)
         .eq('is_active', true);
 
+      if (make) {
+        query = query.eq('make', make);
+      }
+
+      if (bodyStyle) {
+        query = query.eq('body_style', bodyStyle);
+      }
+
+      const { data: dealers, error } = await query;
+
       if (error) throw error;
 
       if (!dealers || dealers.length === 0) {
+        // Build descriptive error message with filter context
+        const filters = [];
+        if (make) filters.push(`make: ${make}`);
+        if (bodyStyle) filters.push(`body_style: ${bodyStyle}`);
+
+        const filterContext = filters.length > 0
+          ? ` with filters (${filters.join(', ')})`
+          : '';
+
         return NextResponse.json(
-          { error: `No active dealers found for metro: ${metro}` },
+          {
+            error: `No active dealers found for metro: ${metro}${filterContext}`,
+            suggestion: filters.length > 0
+              ? 'Try removing filters or choosing a different metro'
+              : 'Metro may have no active inventory'
+          },
           { status: 404 }
         );
       }
@@ -126,25 +163,34 @@ export async function GET(request: NextRequest) {
     } else if (platform === 'google') {
       // Export ZIP codes within 25 miles of dealers
       // Uses bulk function to avoid N+1 query problem
-      const { data: zipCodes, error: zipError } = await supabase.rpc('get_zips_for_metro', {
+      const { data: zipCodesData, error: zipError } = await supabase.rpc('get_zips_for_metro', {
         p_city: city,
         p_state: state,
         p_radius_miles: 25,
+        p_make: make || null,
+        p_body_style: bodyStyle || null,
       });
 
       if (zipError) throw zipError;
 
-      if (!zipCodes || zipCodes.length === 0) {
+      // Runtime validation: Ensure RPC returns expected array format
+      if (!Array.isArray(zipCodesData)) {
+        throw new Error('Unexpected response format from get_zips_for_metro RPC function');
+      }
+
+      const zipCodes: ZipResult[] = zipCodesData;
+
+      if (zipCodes.length === 0) {
         return NextResponse.json(
           { error: `No ZIP codes found for metro: ${metro}. This metro may not have active dealers.` },
           { status: 404 }
         );
       }
 
-      const rows = (zipCodes || []).map((z: any) => ({ zip_code: z.zip_code }));
+      const rows = (zipCodes || []).map((z: ZipResult) => [z.zip_code]);
 
       if (format === 'csv') {
-        const csv = ['zip_code', ...rows.map((r: { zip_code: string }) => r.zip_code)].join('\n');
+        const csv = generateCsv(['zip_code'], rows);
 
         return new NextResponse(csv, {
           headers: {
@@ -174,10 +220,11 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ error: 'Invalid platform' }, { status: 400 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error exporting targeting:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Failed to export targeting', details: error.message },
+      { error: 'Failed to export targeting', details: errorMessage },
       { status: 500 }
     );
   }

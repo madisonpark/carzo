@@ -96,12 +96,13 @@ export async function GET(request: NextRequest) {
       tier2,
       tier3,
       total_campaigns: recommendations.length,
-      total_inventory: metros.reduce((sum: number, m: any) => sum + Number(m.vehicle_count), 0),
+      total_inventory: metros.reduce((sum: number, m: MetroInventoryRow) => sum + Number(m.vehicle_count), 0),
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error generating recommendations:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Failed to generate campaign recommendations', details: error.message },
+      { error: 'Failed to generate campaign recommendations', details: errorMessage },
       { status: 500 }
     );
   }

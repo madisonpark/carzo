@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET } from '../route';
 import { NextRequest } from 'next/server';
 import * as adminAuth from '@/lib/admin-auth';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 // Mock admin auth
 vi.mock('@/lib/admin-auth');
@@ -137,7 +138,7 @@ describe('GET /api/admin/inventory-snapshot', () => {
     const { createClient } = await import('@supabase/supabase-js');
     vi.mocked(createClient).mockReturnValue({
       rpc: vi.fn(() => Promise.resolve({ data: null, error: { message: 'DB error' } })),
-    } as any);
+    } as unknown as SupabaseClient<unknown, never, never>);
 
     const request = new NextRequest('http://localhost/api/admin/inventory-snapshot');
     const response = await GET(request);

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET } from '../route';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { SupabaseClient } from '@supabase/supabase-js';
 import * as adminAuth from '@/lib/admin-auth';
 
 vi.mock('@/lib/admin-auth');
@@ -27,7 +28,7 @@ describe('GET /api/admin/calculate-budget', () => {
   it('should return 401 if not authorized', async () => {
     vi.mocked(adminAuth.validateAdminAuth).mockResolvedValue({
       authorized: false,
-      response: new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }),
+      response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
     });
 
     const request = new NextRequest('http://localhost/api/admin/calculate-budget');
@@ -107,7 +108,7 @@ describe('GET /api/admin/calculate-budget', () => {
     const { createClient } = await import('@supabase/supabase-js');
     vi.mocked(createClient).mockReturnValue({
       rpc: vi.fn(() => Promise.resolve({ data: [], error: null })),
-    } as any);
+    } as unknown as SupabaseClient<unknown, never, never>);
 
     const request = new NextRequest('http://localhost/api/admin/calculate-budget');
     const response = await GET(request);

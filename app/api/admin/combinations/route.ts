@@ -34,10 +34,11 @@ export async function GET(request: NextRequest) {
       make_bodystyle: makeBodyStyleResult.data || [],
       make_model: makeModelResult.data || [],
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching combinations:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Failed to fetch combinations', details: error.message },
+      { error: 'Failed to fetch combinations', details: errorMessage },
       { status: 500 }
     );
   }

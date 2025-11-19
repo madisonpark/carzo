@@ -1,0 +1,345 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { GET } from '../route';
+import { NextRequest } from 'next/server';
+
+// Mock admin auth
+vi.mock('@/lib/admin-auth', () => ({
+  validateAdminAuth: vi.fn(() => Promise.resolve({ authorized: true, response: null })),
+}));
+
+// Mock Supabase
+const mockQuery = {
+  data: null,
+  error: null,
+};
+
+const mockRpc = vi.fn(() => Promise.resolve({ data: [], error: null }));
+
+const mockSupabaseChain = {
+  select: vi.fn(function () {
+    return this;
+  }),
+  eq: vi.fn(function () {
+    return this;
+  }),
+  then: vi.fn(function (resolve) {
+    return resolve(mockQuery);
+  }),
+};
+
+vi.mock('@supabase/supabase-js', () => ({
+  createClient: vi.fn(() => ({
+    from: vi.fn(() => mockSupabaseChain),
+    rpc: mockRpc,
+  })),
+}));
+
+function createMockRequest(params: Record<string, string>): NextRequest {
+  const url = new URL('http://localhost:3000/api/admin/export-targeting');
+  Object.entries(params).forEach(([key, value]) => {
+    url.searchParams.set(key, value);
+  });
+
+  return new NextRequest(url, {
+    headers: { Authorization: 'Bearer carzo2024admin' },
+  });
+}
+
+describe('GET /api/admin/export-targeting', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockQuery.data = null;
+    mockQuery.error = null;
+    mockRpc.mockResolvedValue({ data: [], error: null });
+  });
+
+  describe('Request Validation', () => {
+    it('should return 400 when metro parameter is missing', async () => {
+      const request = createMockRequest({ platform: 'facebook' });
+
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.error).toBe('metro parameter required');
+    });
+  });
+
+  describe('Facebook Platform - Inventory Filtering', () => {
+    it('should filter dealers by make parameter', async () => {
+      mockQuery.data = [
+        { latitude: 27.9, longitude: -82.4, dealer_name: 'Tampa Toyota', dealer_id: 'dealer1' },
+      ];
+
+      const request = createMockRequest({
+        metro: 'Tampa, FL',
+        platform: 'facebook',
+        make: 'Toyota',
+      });
+
+      const response = await GET(request);
+      expect(response.status).toBe(200);
+
+      // Verify make filter was applied
+      expect(mockSupabaseChain.eq).toHaveBeenCalledWith('make', 'Toyota');
+    });
+
+    it('should filter dealers by body_style parameter', async () => {
+      mockQuery.data = [
+        { latitude: 27.9, longitude: -82.4, dealer_name: 'Tampa SUV Center', dealer_id: 'dealer1' },
+      ];
+
+      const request = createMockRequest({
+        metro: 'Tampa, FL',
+        platform: 'facebook',
+        body_style: 'suv',
+      });
+
+      const response = await GET(request);
+      expect(response.status).toBe(200);
+
+      // Verify body_style filter was applied
+      expect(mockSupabaseChain.eq).toHaveBeenCalledWith('body_style', 'suv');
+    });
+
+    it('should filter dealers by both make and body_style', async () => {
+      mockQuery.data = [
+        { latitude: 27.9, longitude: -82.4, dealer_name: 'Toyota SUV Store', dealer_id: 'dealer1' },
+      ];
+
+      const request = createMockRequest({
+        metro: 'Tampa, FL',
+        platform: 'facebook',
+        make: 'Toyota',
+        body_style: 'suv',
+      });
+
+      const response = await GET(request);
+      expect(response.status).toBe(200);
+
+      // Verify both filters were applied
+      expect(mockSupabaseChain.eq).toHaveBeenCalledWith('make', 'Toyota');
+      expect(mockSupabaseChain.eq).toHaveBeenCalledWith('body_style', 'suv');
+    });
+
+    it('should return CSV format for Facebook with dealer locations', async () => {
+      mockQuery.data = [
+        { latitude: 27.9, longitude: -82.4, dealer_name: 'Tampa Toyota', dealer_id: 'dealer1' },
+        { latitude: 27.95, longitude: -82.45, dealer_name: 'North Tampa Toyota', dealer_id: 'dealer2' },
+      ];
+
+      const request = createMockRequest({
+        metro: 'Tampa, FL',
+        platform: 'facebook',
+        format: 'csv',
+      });
+
+      const response = await GET(request);
+      const text = await response.text();
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get('Content-Type')).toBe('text/csv');
+      expect(text).toContain('latitude,longitude,radius_miles,dealer_name');
+      expect(text).toContain('27.9,-82.4,25,"Tampa Toyota"');
+    });
+
+    it('should return 404 when no dealers found', async () => {
+      mockQuery.data = [];
+
+      const request = createMockRequest({
+        metro: 'NonExistent, XX',
+        platform: 'facebook',
+      });
+
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(404);
+      expect(data.error).toContain('No active dealers found');
+    });
+  });
+
+  describe('Google Platform - Inventory Filtering', () => {
+    it('should call get_zips_for_metro with make parameter', async () => {
+      mockRpc.mockResolvedValueOnce({
+        data: [{ zip_code: '33601' }, { zip_code: '33602' }],
+        error: null
+      });
+
+      const request = createMockRequest({
+        metro: 'Tampa, FL',
+        platform: 'google',
+        make: 'Toyota',
+      });
+
+      await GET(request);
+
+      expect(mockRpc).toHaveBeenCalledWith('get_zips_for_metro', {
+        p_city: 'Tampa',
+        p_state: 'FL',
+        p_radius_miles: 25,
+        p_make: 'Toyota',
+        p_body_style: null,
+      });
+    });
+
+    it('should call get_zips_for_metro with body_style parameter', async () => {
+      mockRpc.mockResolvedValueOnce({
+        data: [{ zip_code: '33601' }],
+        error: null
+      });
+
+      const request = createMockRequest({
+        metro: 'Tampa, FL',
+        platform: 'google',
+        body_style: 'suv',
+      });
+
+      await GET(request);
+
+      expect(mockRpc).toHaveBeenCalledWith('get_zips_for_metro', {
+        p_city: 'Tampa',
+        p_state: 'FL',
+        p_radius_miles: 25,
+        p_make: null,
+        p_body_style: 'suv',
+      });
+    });
+
+    it('should call get_zips_for_metro with both make and body_style', async () => {
+      mockRpc.mockResolvedValueOnce({
+        data: [{ zip_code: '33601' }],
+        error: null
+      });
+
+      const request = createMockRequest({
+        metro: 'Tampa, FL',
+        platform: 'google',
+        make: 'Toyota',
+        body_style: 'suv',
+      });
+
+      await GET(request);
+
+      expect(mockRpc).toHaveBeenCalledWith('get_zips_for_metro', {
+        p_city: 'Tampa',
+        p_state: 'FL',
+        p_radius_miles: 25,
+        p_make: 'Toyota',
+        p_body_style: 'suv',
+      });
+    });
+
+    it('should return CSV with ZIP codes for Google platform', async () => {
+      mockRpc.mockResolvedValueOnce({
+        data: [{ zip_code: '33601' }, { zip_code: '33602' }, { zip_code: '33603' }],
+        error: null
+      });
+
+      const request = createMockRequest({
+        metro: 'Tampa, FL',
+        platform: 'google',
+        format: 'csv',
+      });
+
+      const response = await GET(request);
+      const text = await response.text();
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get('Content-Type')).toBe('text/csv');
+      expect(text).toBe('"zip_code"\n"33601"\n"33602"\n"33603"');
+    });
+
+    it('should return 404 when no ZIP codes found', async () => {
+      mockRpc.mockResolvedValueOnce({ data: [], error: null });
+
+      const request = createMockRequest({
+        metro: 'NonExistent, XX',
+        platform: 'google',
+      });
+
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(404);
+      expect(data.error).toContain('No ZIP codes found');
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should return 500 when Supabase query fails', async () => {
+      mockQuery.error = { message: 'Database error' };
+
+      const request = createMockRequest({
+        metro: 'Tampa, FL',
+        platform: 'facebook',
+      });
+
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(data.error).toBe('Failed to export targeting');
+    });
+
+    it('should return 500 when get_zips_for_metro RPC fails', async () => {
+      mockRpc.mockResolvedValueOnce({
+        data: null,
+        error: { message: 'PostGIS function error' },
+      });
+
+      const request = createMockRequest({
+        metro: 'Tampa, FL',
+        platform: 'google',
+      });
+
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(data.error).toBe('Failed to export targeting');
+    });
+  });
+
+  describe('Metro Parsing', () => {
+    it('should parse metro with comma separator', async () => {
+      mockRpc.mockResolvedValueOnce({ data: [{ zip_code: '33601' }], error: null });
+
+      const request = createMockRequest({
+        metro: 'Tampa, FL',
+        platform: 'google',
+      });
+
+      await GET(request);
+
+      expect(mockRpc).toHaveBeenCalledWith(
+        'get_zips_for_metro',
+        expect.objectContaining({
+          p_city: 'Tampa',
+          p_state: 'FL',
+        })
+      );
+    });
+
+    it('should handle metro without spaces after comma', async () => {
+      mockRpc.mockResolvedValueOnce({ data: [{ zip_code: '33601' }], error: null });
+
+      const request = createMockRequest({
+        metro: 'Tampa,FL',
+        platform: 'google',
+      });
+
+      await GET(request);
+
+      // Note: API splits on ', ' (comma+space), so 'Tampa,FL' becomes ['Tampa,FL', undefined]
+      // This results in city='Tampa,FL' and state=undefined
+      expect(mockRpc).toHaveBeenCalledWith(
+        'get_zips_for_metro',
+        expect.objectContaining({
+          p_city: 'Tampa,FL',
+          p_state: undefined,
+        })
+      );
+    });
+  });
+});

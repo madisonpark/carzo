@@ -10,7 +10,7 @@ import {
 type MockVehicle = {
   id: string;
   dealer_id: string;
-  dealer_name?: string;
+  dealer_name: string;
   make?: string;
   model?: string;
 };

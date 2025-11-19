@@ -105,8 +105,8 @@ describe('cn() utility function', () => {
 
   describe('Real-world UI component scenarios', () => {
     it('should handle Button component classes', () => {
-      const variant = 'primary';
-      const size = 'md';
+      const variant: string = 'primary';
+      const size: string = 'md';
       const disabled = false;
 
       expect(

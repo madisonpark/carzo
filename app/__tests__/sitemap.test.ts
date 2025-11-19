@@ -183,7 +183,10 @@ describe('sitemap.ts', () => {
       expect(vehicleUrls).toHaveLength(2);
       // Should keep the most recently synced version of ABC123
       const abc123 = vehicleUrls.find(url => url.url.includes('ABC123'));
-      expect(abc123?.lastModified?.toISOString()).toContain('2025-11-12');
+      const lastModDate = abc123?.lastModified instanceof Date 
+        ? abc123.lastModified 
+        : new Date(abc123?.lastModified as string);
+      expect(lastModDate.toISOString()).toContain('2025-11-12');
     });
 
     it('should handle VINs with special characters (URL encoding)', async () => {

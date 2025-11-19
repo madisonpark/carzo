@@ -1,6 +1,8 @@
 import { render, RenderOptions } from '@testing-library/react';
 import { ReactElement } from 'react';
-import { vi } from 'vitest';
+import { vi, expect } from 'vitest';
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
  * Custom render function that wraps components with common providers
@@ -153,10 +155,10 @@ export function mockWindowLocation(overrides: Partial<Location> = {}) {
     search: '',
     hash: '',
     ...overrides,
-  };
+  } as Location;
 
   delete (window as any).location;
-  window.location = location as Location;
+  window.location = location as any;
 }
 
 /**

@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import robots from '../robots';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 describe('robots.ts', () => {
   const originalEnv = process.env.NEXT_PUBLIC_SITE_URL;
 
@@ -17,23 +19,26 @@ describe('robots.ts', () => {
       const result = robots();
 
       expect(result.rules).toHaveLength(1);
-      expect(result.rules[0].allow).toContain('/');
-      expect(result.rules[0].allow).toContain('/search$');
-      expect(result.rules[0].allow).toContain('/vehicles/');
+      const rule: any = (result.rules as any)[0];
+      expect(rule?.allow).toContain('/');
+      expect(rule?.allow).toContain('/search$');
+      expect(rule?.allow).toContain('/vehicles/');
     });
 
     it('should block /admin/ and /api/ routes', () => {
       const result = robots();
 
-      expect(result.rules[0].disallow).toContain('/admin/');
-      expect(result.rules[0].disallow).toContain('/api/');
+      const rule: any = (result.rules as any)[0];
+      expect(rule?.disallow).toContain('/admin/');
+      expect(rule?.disallow).toContain('/api/');
     });
 
     it('should block search query params and flow parameters', () => {
       const result = robots();
 
-      expect(result.rules[0].disallow).toContain('/search?*');
-      expect(result.rules[0].disallow).toContain('/*?flow=*');
+      const rule: any = (result.rules as any)[0];
+      expect(rule?.disallow).toContain('/search?*');
+      expect(rule?.disallow).toContain('/*?flow=*');
     });
 
     it('should include sitemap reference', () => {
@@ -53,8 +58,9 @@ describe('robots.ts', () => {
       const result = robots();
 
       expect(result.rules).toHaveLength(1);
-      expect(result.rules[0].userAgent).toBe('*');
-      expect(result.rules[0].disallow).toBe('/');
+      const rule: any = (result.rules as any)[0];
+      expect(rule?.userAgent).toBe('*');
+      expect(rule?.disallow).toBe('/');
     });
 
     it('should not include sitemap for staging', () => {

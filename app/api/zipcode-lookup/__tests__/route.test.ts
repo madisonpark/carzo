@@ -1,13 +1,15 @@
-import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET } from '../route';
 import { NextRequest } from 'next/server';
+import * as zipcodes from 'zipcodes';
 
 // Mock zipcodes module
 vi.mock('zipcodes', () => ({
-  default: {
-    lookup: vi.fn(),
-  },
+  lookup: vi.fn(),
 }));
+
+// Get typed reference to the mocked lookup function
+const mockLookup = vi.mocked(zipcodes.lookup);
 
 // Helper to create mock NextRequest with query params
 function createMockRequest(queryParams: Record<string, string>): NextRequest {
@@ -27,12 +29,8 @@ function createMockRequest(queryParams: Record<string, string>): NextRequest {
 }
 
 describe('GET /api/zipcode-lookup', () => {
-  let zipcodesLookup: Mock;
-
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
-    const zipcodes = await import('zipcodes');
-    zipcodesLookup = zipcodes.default.lookup as unknown as Mock;
   });
 
   describe('Request Validation', () => {
@@ -59,7 +57,7 @@ describe('GET /api/zipcode-lookup', () => {
     it('should use first 5 digits from longer input', async () => {
       // Zip codes longer than 5 digits get sliced to first 5
       // Then lookup is attempted - if not found, returns 404
-      zipcodesLookup.mockReturnValue(null);
+      mockLookup.mockReturnValue(undefined);
 
       const request = createMockRequest({ zip: '123456789' });
 
@@ -67,7 +65,7 @@ describe('GET /api/zipcode-lookup', () => {
       const data = await response.json();
 
       // Verify it tried to lookup '12345' (first 5 digits)
-      expect(zipcodesLookup).toHaveBeenCalledWith('12345');
+      expect(mockLookup).toHaveBeenCalledWith('12345');
 
       // Returns 404 because lookup returns null
       expect(response.status).toBe(404);
@@ -87,7 +85,7 @@ describe('GET /api/zipcode-lookup', () => {
 
   describe('Zip Code Cleaning', () => {
     it('should strip non-digits from zip code', async () => {
-      zipcodesLookup.mockReturnValue({
+      mockLookup.mockReturnValue({
         city: 'Atlanta',
         state: 'GA',
         latitude: 33.7525,
@@ -99,11 +97,11 @@ describe('GET /api/zipcode-lookup', () => {
       await GET(request);
 
       // Verify zipcodes.lookup was called with cleaned zip (first 5 digits only)
-      expect(zipcodesLookup).toHaveBeenCalledWith('30303');
+      expect(mockLookup).toHaveBeenCalledWith('30303');
     });
 
     it('should handle zip codes with dashes', async () => {
-      zipcodesLookup.mockReturnValue({
+      mockLookup.mockReturnValue({
         city: 'New York',
         state: 'NY',
         latitude: 40.7128,
@@ -114,11 +112,11 @@ describe('GET /api/zipcode-lookup', () => {
 
       await GET(request);
 
-      expect(zipcodesLookup).toHaveBeenCalledWith('10001');
+      expect(mockLookup).toHaveBeenCalledWith('10001');
     });
 
     it('should handle zip codes with spaces', async () => {
-      zipcodesLookup.mockReturnValue({
+      mockLookup.mockReturnValue({
         city: 'Los Angeles',
         state: 'CA',
         latitude: 34.0522,
@@ -129,11 +127,11 @@ describe('GET /api/zipcode-lookup', () => {
 
       await GET(request);
 
-      expect(zipcodesLookup).toHaveBeenCalledWith('90001');
+      expect(mockLookup).toHaveBeenCalledWith('90001');
     });
 
     it('should take first 5 digits from longer strings', async () => {
-      zipcodesLookup.mockReturnValue({
+      mockLookup.mockReturnValue({
         city: 'Chicago',
         state: 'IL',
         latitude: 41.8781,
@@ -144,13 +142,13 @@ describe('GET /api/zipcode-lookup', () => {
 
       await GET(request);
 
-      expect(zipcodesLookup).toHaveBeenCalledWith('60601');
+      expect(mockLookup).toHaveBeenCalledWith('60601');
     });
   });
 
   describe('Valid Zip Code Lookup', () => {
     it('should return location data for valid zip code', async () => {
-      zipcodesLookup.mockReturnValue({
+      mockLookup.mockReturnValue({
         city: 'Atlanta',
         state: 'GA',
         latitude: 33.7525,
@@ -176,7 +174,7 @@ describe('GET /api/zipcode-lookup', () => {
     });
 
     it('should return location for NYC zip code', async () => {
-      zipcodesLookup.mockReturnValue({
+      mockLookup.mockReturnValue({
         city: 'New York',
         state: 'NY',
         latitude: 40.7128,
@@ -195,7 +193,7 @@ describe('GET /api/zipcode-lookup', () => {
     });
 
     it('should return location for LA zip code', async () => {
-      zipcodesLookup.mockReturnValue({
+      mockLookup.mockReturnValue({
         city: 'Los Angeles',
         state: 'CA',
         latitude: 34.0522,
@@ -217,7 +215,7 @@ describe('GET /api/zipcode-lookup', () => {
 
   describe('Invalid Zip Code', () => {
     it('should return 404 when zip code not found', async () => {
-      zipcodesLookup.mockReturnValue(null);
+      mockLookup.mockReturnValue(undefined);
 
       const request = createMockRequest({ zip: '99999' });
 
@@ -230,7 +228,7 @@ describe('GET /api/zipcode-lookup', () => {
     });
 
     it('should return 404 for invalid but well-formed zip', async () => {
-      zipcodesLookup.mockReturnValue(null);
+      mockLookup.mockReturnValue(undefined);
 
       const request = createMockRequest({ zip: '00000' });
 
@@ -244,7 +242,7 @@ describe('GET /api/zipcode-lookup', () => {
 
   describe('Error Handling', () => {
     it('should return 500 when zipcodes.lookup throws error', async () => {
-      zipcodesLookup.mockImplementation(() => {
+      mockLookup.mockImplementation(() => {
         throw new Error('Database connection failed');
       });
 
@@ -259,7 +257,7 @@ describe('GET /api/zipcode-lookup', () => {
     });
 
     it('should return 500 for non-Error exceptions', async () => {
-      zipcodesLookup.mockImplementation(() => {
+      mockLookup.mockImplementation(() => {
         throw 'String error'; // Non-Error exception
       });
 
@@ -276,7 +274,7 @@ describe('GET /api/zipcode-lookup', () => {
 
   describe('Edge Cases', () => {
     it('should handle zip code with leading zeros', async () => {
-      zipcodesLookup.mockReturnValue({
+      mockLookup.mockReturnValue({
         city: 'Boston',
         state: 'MA',
         latitude: 42.3601,
@@ -290,11 +288,11 @@ describe('GET /api/zipcode-lookup', () => {
 
       expect(data.success).toBe(true);
       expect(data.location.zipCode).toBe('02101');
-      expect(zipcodesLookup).toHaveBeenCalledWith('02101');
+      expect(mockLookup).toHaveBeenCalledWith('02101');
     });
 
     it('should handle zip+4 format', async () => {
-      zipcodesLookup.mockReturnValue({
+      mockLookup.mockReturnValue({
         city: 'Seattle',
         state: 'WA',
         latitude: 47.6062,
@@ -324,7 +322,7 @@ describe('GET /api/zipcode-lookup', () => {
 
   describe('Response Format', () => {
     it('should return all required location fields', async () => {
-      zipcodesLookup.mockReturnValue({
+      mockLookup.mockReturnValue({
         city: 'Denver',
         state: 'CO',
         latitude: 39.7392,
@@ -347,7 +345,7 @@ describe('GET /api/zipcode-lookup', () => {
     });
 
     it('should include cleaned zip code in response', async () => {
-      zipcodesLookup.mockReturnValue({
+      mockLookup.mockReturnValue({
         city: 'Phoenix',
         state: 'AZ',
         latitude: 33.4484,

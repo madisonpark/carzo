@@ -361,7 +361,7 @@ describe('CampaignPlanningDashboard', () => {
         resolvePromise = resolve;
       });
 
-      vi.mocked(global.fetch).mockReturnValueOnce(fetchPromise as any);
+      vi.mocked(global.fetch).mockReturnValueOnce(fetchPromise as Promise<Response> & { then: typeof fetchPromise.then });
 
       const downloadButton = screen.getAllByText(/Download/)[0];
       await user.click(downloadButton);

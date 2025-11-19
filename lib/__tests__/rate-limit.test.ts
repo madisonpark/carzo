@@ -527,9 +527,9 @@ describe('checkMultipleRateLimits()', () => {
     const callOrder: number[] = [];
 
     vi.mocked(supabaseAdmin.rpc)
-      .mockImplementationOnce(async () => {
-        callOrder.push(1);
-        return {
+      .mockResolvedValueOnce((
+        callOrder.push(1),
+        {
           data: [
             {
               allowed: true,
@@ -539,11 +539,11 @@ describe('checkMultipleRateLimits()', () => {
             },
           ],
           error: null,
-        } as any;
-      })
-      .mockImplementationOnce(async () => {
-        callOrder.push(2);
-        return {
+        } as any
+      ))
+      .mockResolvedValueOnce((
+        callOrder.push(2),
+        {
           data: [
             {
               allowed: true,
@@ -553,8 +553,8 @@ describe('checkMultipleRateLimits()', () => {
             },
           ],
           error: null,
-        } as any;
-      });
+        } as any
+      ));
 
     await checkMultipleRateLimits('192.168.1.1', [
       { endpoint: 'search_vehicles', limit: 100, windowSeconds: 60 },

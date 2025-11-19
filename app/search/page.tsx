@@ -212,7 +212,7 @@ async function searchVehicles(params: {
     const totalResults = spatialVehicles?.[0]?.total_results || 0;
 
     // Cast to VehicleWithDistance type
-    let vehiclesWithDistance = (spatialVehicles || []) as VehicleWithDistance[];
+    const vehiclesWithDistance = (spatialVehicles || []) as VehicleWithDistance[];
 
     // PostGIS already sorted by distance, just apply user-selected sort if needed
     if (params.sortBy && params.sortBy !== 'distance' && params.sortBy !== 'relevance') {
@@ -265,7 +265,7 @@ async function searchVehicles(params: {
   const { data: allVehicles, count } = await query.limit(5000);
 
   // Apply user-selected sorting if different from default
-  let vehiclesWithDistance = allVehicles || [];
+  const vehiclesWithDistance = allVehicles || [];
   if (params.sortBy && params.sortBy !== 'year_desc') {
     applySorting(vehiclesWithDistance, params.sortBy);
   }

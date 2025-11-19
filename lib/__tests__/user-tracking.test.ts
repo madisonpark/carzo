@@ -8,6 +8,8 @@ import {
   clearTrackingData,
 } from '../user-tracking';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 // Helper to restore window
 function restoreWindow() {
   delete (global as any).window;
@@ -371,13 +373,13 @@ describe('getUtmParams()', () => {
 
   describe('Client-side (window defined)', () => {
     it('should return empty object when no UTM params', () => {
-      global.window.location = new URL('http://localhost:3000/search');
+      global.window.location = new URL('http://localhost:3000/search') as any;
 
       expect(getUtmParams()).toEqual({});
     });
 
     it('should extract utm_source parameter', () => {
-      global.window.location = new URL('http://localhost:3000/search?utm_source=facebook');
+      global.window.location = new URL('http://localhost:3000/search?utm_source=facebook') as any;
 
       expect(getUtmParams()).toEqual({
         source: 'facebook',
@@ -385,7 +387,7 @@ describe('getUtmParams()', () => {
     });
 
     it('should extract utm_medium parameter', () => {
-      global.window.location = new URL('http://localhost:3000/search?utm_medium=cpc');
+      global.window.location = new URL('http://localhost:3000/search?utm_medium=cpc') as any;
 
       expect(getUtmParams()).toEqual({
         medium: 'cpc',
@@ -395,7 +397,7 @@ describe('getUtmParams()', () => {
     it('should extract utm_campaign parameter', () => {
       global.window.location = new URL(
         'http://localhost:3000/search?utm_campaign=spring_sale'
-      );
+      ) as any;
 
       expect(getUtmParams()).toEqual({
         campaign: 'spring_sale',
@@ -405,7 +407,7 @@ describe('getUtmParams()', () => {
     it('should extract all UTM parameters', () => {
       global.window.location = new URL(
         'http://localhost:3000/search?utm_source=google&utm_medium=display&utm_campaign=toyota_2024'
-      );
+      ) as any;
 
       expect(getUtmParams()).toEqual({
         source: 'google',
@@ -417,7 +419,7 @@ describe('getUtmParams()', () => {
     it('should handle UTM params with other query params', () => {
       global.window.location = new URL(
         'http://localhost:3000/search?make=toyota&utm_source=facebook&model=camry&utm_medium=cpc'
-      );
+      ) as any;
 
       expect(getUtmParams()).toEqual({
         source: 'facebook',
@@ -428,7 +430,7 @@ describe('getUtmParams()', () => {
     it('should return undefined for missing UTM params', () => {
       global.window.location = new URL(
         'http://localhost:3000/search?utm_source=facebook'
-      );
+      ) as any;
 
       const params = getUtmParams();
 
@@ -440,7 +442,7 @@ describe('getUtmParams()', () => {
     it('should handle URL-encoded UTM values', () => {
       global.window.location = new URL(
         'http://localhost:3000/search?utm_campaign=2024%20Summer%20Sale'
-      );
+      ) as any;
 
       expect(getUtmParams()).toEqual({
         campaign: '2024 Summer Sale',
@@ -450,7 +452,7 @@ describe('getUtmParams()', () => {
     it('should handle empty UTM parameter values', () => {
       global.window.location = new URL(
         'http://localhost:3000/search?utm_source=&utm_medium=cpc'
-      );
+      ) as any;
 
       const params = getUtmParams();
 
@@ -461,7 +463,7 @@ describe('getUtmParams()', () => {
     it('should extract UTM params from complex URL', () => {
       global.window.location = new URL(
         'http://localhost:3000/vehicles/ABC123?flow=direct&make=toyota&utm_source=google&utm_medium=display&utm_campaign=q1_2024#photos'
-      );
+      ) as any;
 
       expect(getUtmParams()).toEqual({
         source: 'google',
@@ -620,7 +622,7 @@ describe('Integration tests: Real-world scenarios', () => {
     // 5. Check UTM params (if coming from ad)
     global.window.location = new URL(
       'http://localhost:3000/search?utm_source=facebook&utm_campaign=spring'
-    );
+    ) as any;
     const utmParams = getUtmParams();
     expect(utmParams.source).toBe('facebook');
   });
@@ -677,7 +679,7 @@ describe('Integration tests: Real-world scenarios', () => {
     // Simulate user clicking Facebook ad
     global.window.location = new URL(
       'http://localhost:3000/search?make=toyota&utm_source=facebook&utm_medium=cpc&utm_campaign=toyota_spring_2024&flow=direct'
-    );
+    ) as any;
 
     const utmParams = getUtmParams();
 

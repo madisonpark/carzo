@@ -175,7 +175,7 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
             <div>
               <h2 className="text-xl font-bold text-slate-900 mb-1">Select Ad Platform</h2>
               <p className="text-sm text-slate-600">
-                Choose which platform you're creating campaigns for
+                Choose which platform you&apos;re creating campaigns for
               </p>
             </div>
             <div className="flex gap-3" role="group" aria-label="Platform selector">
@@ -236,7 +236,7 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {allCampaigns.slice(0, TOP_CAMPAIGNS_LIMIT).map((campaign, i) => (
+                {allCampaigns.slice(0, TOP_CAMPAIGNS_LIMIT).map((campaign) => (
                   <tr
                     key={`${campaign.campaignType}-${campaign.campaignValue}`}
                     className="hover:bg-slate-50 transition-colors"

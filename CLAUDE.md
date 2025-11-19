@@ -248,6 +248,9 @@ npm test path/to/test   # Run specific test
 - ✅ components/ui/__tests__/Input.test.tsx
 - ✅ components/ui/__tests__/Badge.test.tsx
 - ✅ components/ui/__tests__/Card.test.tsx
+- ✅ components/layout/__tests__/Header.test.tsx (29 tests)
+- ✅ components/layout/__tests__/Footer.test.tsx (29 tests)
+- ✅ components/layout/__tests__/ThemeToggle.test.tsx (17 tests)
 - ⏳ Feature components (VehicleCard, FilterSidebar, etc.)
 
 **Phase 5 PLANNED** (Integration Tests):

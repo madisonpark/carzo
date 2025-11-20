@@ -10,6 +10,40 @@ Carzo earns revenue by driving paid traffic (Facebook Ads, Google Display) to co
 
 **Key Constraint:** Only paid ONCE per dealer per user per 30 days. This means dealer diversification is CRITICAL for revenue optimization.
 
+## Git Workflow Enforcement
+
+**CRITICAL RULES (ALWAYS ENFORCED):**
+
+1. **NEVER work on main branch directly**
+   - **ALL work must happen on a feature/fix/docs branch**
+   - Only exception: User explicitly says "work on main"
+   - Create branch BEFORE making any changes
+   - Check current branch with `git branch --show-current`
+
+2. **NEVER merge PRs without explicit user approval**
+   - Create PR and wait for user's "merge" command
+   - User reviews PR first (human + AI bots: gemini-code-assist, claude)
+   - **DO NOT auto-merge even if approved by bots**
+
+3. **ALWAYS respond to PR feedback with comments**
+   - When addressing feedback from gemini-code-assist or claude (AI reviewers)
+   - Add PR comment tagging the bot: `@gemini-code-assist` or `@claude`
+   - Describe what was changed and why
+   - Example: `@gemini-code-assist Fixed the type safety issue by adding explicit types to the function parameters as suggested.`
+   - If feedback NOT addressed, explain why: `@claude I did not implement X because...`
+
+4. **NEVER force push to main**
+   - `git push --force origin main` is FORBIDDEN
+   - Use force push only on feature branches if needed
+
+5. **Use GitHub CLI for all GitHub operations**
+   - Create PRs: `gh pr create --title "..." --body "..."`
+   - Comment on PRs: `gh pr comment PR_NUMBER --body "..."`
+   - View PRs: `gh pr view PR_NUMBER`
+   - List PRs: `gh pr list`
+   - Merge PRs: `gh pr merge PR_NUMBER` (only after explicit user approval)
+   - **DO NOT ask user to perform GitHub operations manually** when `gh` CLI can do it
+
 ## Tech Stack
 
 ### Core Framework

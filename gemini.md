@@ -73,6 +73,22 @@ Do NOT use it for simple queries like "Find the definition of function X" (use `
 4.  **Pushing**
     - Do not push to remote unless explicitly asked or if it's a necessary step in the defined workflow (e.g. "Create a PR").
 
+### Pull Request Standards
+
+**PR Structure:**
+When using `gh pr create`, ensure the body includes:
+1.  **Summary**: High-level overview of the problem and solution.
+2.  **Key Changes**: Bullet points of specific file/logic modifications.
+3.  **Impact**: Revenue, UX, or performance implications.
+4.  **Verification**: Checklist of tests run (`[x] ...`) and confirmation of build/lint passes.
+
+**Review Workflow:**
+- **Wait for Reviews**: AI bots (gemini-code-assist, claude) and humans will review.
+- **Respond to Feedback**:
+    - Address every comment.
+    - Tag the reviewer in your reply: `@gemini-code-assist Fixed type safety...` or `@claude Explained why...`.
+    - **NEVER** merge without an explicit "merge" command from the user.
+
 ---
 
 ## Testing Requirements (CRITICAL)

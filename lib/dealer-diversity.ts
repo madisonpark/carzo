@@ -21,7 +21,6 @@ export function diversifyByDealer<T extends { dealer_id: string }>(
   limit: number
 ): T[] {
   if (vehicles.length === 0) return [];
-  if (vehicles.length <= limit) return vehicles;
 
   const result: T[] = [];
   const dealerVehicles = new Map<string, T[]>();
@@ -69,7 +68,7 @@ export function calculateDealerDiversity(
 ): number {
   if (vehicles.length === 0) return 0;
 
-  const uniqueDealers = new Set(vehicles.map(v => v.dealer_id));
+  const uniqueDealers = new Set(vehicles.map((v) => v.dealer_id));
   return (uniqueDealers.size / vehicles.length) * 100;
 }
 
@@ -77,7 +76,9 @@ export function calculateDealerDiversity(
  * Get dealer distribution stats
  * Useful for admin dashboard
  */
-export function getDealerStats(vehicles: { dealer_id: string; dealer_name: string }[]): {
+export function getDealerStats(
+  vehicles: { dealer_id: string; dealer_name: string }[]
+): {
   totalDealers: number;
   vehiclesPerDealer: Record<string, number>;
   topDealers: Array<{ dealerId: string; dealerName: string; count: number }>;
@@ -95,7 +96,7 @@ export function getDealerStats(vehicles: { dealer_id: string; dealer_name: strin
     .map(([dealerId, count]) => ({
       dealerId,
       dealerName: dealerNames[dealerId],
-      count
+      count,
     }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 10);
@@ -103,7 +104,7 @@ export function getDealerStats(vehicles: { dealer_id: string; dealer_name: strin
   return {
     totalDealers: Object.keys(vehiclesPerDealer).length,
     vehiclesPerDealer,
-    topDealers
+    topDealers,
   };
 }
 
@@ -123,11 +124,11 @@ export function prioritizeDifferentDealers<T extends { dealer_id: string }>(
 ): T[] {
   // Split into different dealers and same dealer
   const differentDealers = relatedVehicles.filter(
-    v => v.dealer_id !== currentVehicle.dealer_id
+    (v) => v.dealer_id !== currentVehicle.dealer_id
   );
 
   const sameDealers = relatedVehicles.filter(
-    v => v.dealer_id === currentVehicle.dealer_id
+    (v) => v.dealer_id === currentVehicle.dealer_id
   );
 
   // Prioritize different dealers, then add same dealer if needed

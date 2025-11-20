@@ -50,6 +50,25 @@ Wasted clicks: 0 (0% waste)
 
 **Target:** 80%+ dealer diversity score (16+ unique dealers per 20 vehicles)
 
+### Diversification vs. User Sorting
+
+Diversification is applied selectively based on the user's sort preference.
+
+1. **Relevance / Default Sort (Default)**
+   - **Diversification: ON (Active)**
+   - Goal: Maximize revenue while showing relevant vehicles
+   - Why: Users browsing "best match" are generally exploring and open to various dealers
+
+2. **Price (Low-High / High-Low)**
+   - **Diversification: OFF (Bypassed)**
+   - Goal: Respect user intent strictly
+   - Why: If a user asks for the cheapest cars, they want the cheapest cars, regardless of dealer concentration. Forcing diversity here would break trust (e.g., hiding a cheaper car from Dealer A to show a more expensive one from Dealer B).
+
+3. **Mileage (Low-High / High-Low)**
+   - **Diversification: OFF (Bypassed)**
+   - Goal: Respect user intent strictly
+   - Why: Similar to price, users sorting by mileage have a specific criteria that overrides dealer variety needs.
+
 ### How It Works
 
 ```mermaid
@@ -112,7 +131,7 @@ export function diversifyByDealer<T extends { dealer_id: string }>(
   vehicles: T[],
   limit: number
 ): T[] {
-  if (vehicles.length <= limit) return vehicles;
+  if (vehicles.length === 0) return [];
 
   // Group vehicles by dealer_id
   const dealerBuckets = new Map<string, T[]>();

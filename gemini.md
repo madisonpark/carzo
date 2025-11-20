@@ -87,6 +87,14 @@ Do NOT use it for simple queries like "Find the definition of function X" (use `
 6.  **Pushing**
     - Do not push to remote unless explicitly asked or if it's a necessary step in the defined workflow (e.g. "Create a PR").
 
+7.  **Use Vercel CLI for all Vercel operations**
+    - Whenever possible, leverage `vercel` CLI commands instead of manual dashboard actions.
+    - Deploy: `vercel deploy --prod` (or `--force` if needed)
+    - Check deployments: `vercel list`
+    - View logs: `vercel logs`
+    - Manage environment variables: `vercel env pull`, `vercel env push`, `vercel env ls`, `vercel env add`
+    - **DO NOT ask user to perform Vercel dashboard actions manually** when `vercel` CLI can do it.
+
 ### Pre-PR Documentation & QA
 
 **Before creating a PR:**

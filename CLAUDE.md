@@ -45,6 +45,7 @@ This file contains **Claude Code-specific instructions** for tool usage, task ma
 - Git commands
 - npm/npx commands
 - Supabase CLI commands
+- Vercel CLI commands
 - Docker commands
 - Terminal operations that require shell
 
@@ -158,12 +159,30 @@ This file contains **Claude Code-specific instructions** for tool usage, task ma
    - `git push --force origin main` is FORBIDDEN
    - Use force push only on feature branches if needed
 
+5. **Use GitHub CLI for all GitHub operations**
+   - Create PRs: `gh pr create --fill` (automatically uses commit messages)
+   - Comment on PRs: `gh pr comment PR_NUMBER --body "..."`
+   - View PRs: `gh pr view PR_NUMBER`
+   - List PRs: `gh pr list`
+   - Merge PRs: `gh pr merge PR_NUMBER --squash` (only after explicit user approval; confirm strategy with user)
+   - **DO NOT ask user to perform GitHub operations manually** when `gh` CLI can do it
+
+6. **Use Vercel CLI for all Vercel operations**
+   - Whenever possible, leverage `vercel` CLI commands instead of manual dashboard actions.
+   - Deploy: `vercel deploy --prod` (or `--force` if needed)
+   - Check deployments: `vercel list`
+   - View logs: `vercel logs`
+   - Manage environment variables: `vercel env pull`, `vercel env push`, `vercel env ls`, `vercel env add`
+   - **DO NOT ask user to perform Vercel dashboard actions manually** when `vercel` CLI can do it.
+
 **Branch naming:**
 - `feature/` - New features
 - `fix/` - Bug fixes
 - `docs/` - Documentation
 - `refactor/` - Code refactoring
 - `test/` - Test additions
+
+**Commit format:**
 
 **Commit format:**
 - `feat:` - New feature

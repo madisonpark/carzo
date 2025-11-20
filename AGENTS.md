@@ -37,11 +37,11 @@ Carzo earns revenue by driving paid traffic (Facebook Ads, Google Display) to co
    - Use force push only on feature branches if needed
 
 5. **Use GitHub CLI for all GitHub operations**
-   - Create PRs: `gh pr create --title "..." --body "..."`
+   - Create PRs: `gh pr create --fill` (automatically uses commit messages)
    - Comment on PRs: `gh pr comment PR_NUMBER --body "..."`
    - View PRs: `gh pr view PR_NUMBER`
    - List PRs: `gh pr list`
-   - Merge PRs: `gh pr merge PR_NUMBER` (only after explicit user approval)
+   - Merge PRs: `gh pr merge PR_NUMBER --squash` (only after explicit user approval; confirm strategy with user)
    - **DO NOT ask user to perform GitHub operations manually** when `gh` CLI can do it
 
 ## Tech Stack

@@ -46,7 +46,15 @@ Carzo earns revenue by driving paid traffic (Facebook Ads, Google Display) to co
 
 6.  **Pre-PR Documentation & QA Protocol**
    - **Documentation**: Always check if docs (Reference, How-To, etc.) need updates *before* PR creation.
-   - **Iterative QA**: Run comprehensive QA -> Fix bugs -> Rerun QA. Repeat until clean. **Do not** create a PR with known bugs hoping for a review to catch them.
+   - **Iterative QA**: Run comprehensive QA -> Fix bugs -> Rerun QA. **Do not** create a PR with known bugs hoping for a review to catch them.
+
+7.  **Use Vercel CLI for all Vercel operations**
+   - Whenever possible, leverage `vercel` CLI commands instead of manual dashboard actions.
+   - Deploy: `vercel deploy --prod` (or `--force` if needed)
+   - Check deployments: `vercel list`
+   - View logs: `vercel logs`
+   - Manage environment variables: `vercel env pull`, `vercel env push`, `vercel env ls`, `vercel env add`
+   - **DO NOT ask user to perform Vercel dashboard actions manually** when `vercel` CLI can do it.
 
 ## Tech Stack
 

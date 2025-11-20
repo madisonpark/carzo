@@ -343,3 +343,6 @@ public/robots.txt.backup
 # ============================================
 # END
 # ============================================
+
+# Sentry Config File
+.env.sentry-build-plugin

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST, OPTIONS } from '../route';
 import { NextRequest } from 'next/server';
+import { anonymizeIp } from '@/lib/utils';
 
 // Type definition for mocked Supabase client
 type MockSupabaseClient = {
@@ -15,22 +16,6 @@ vi.mock('@/lib/supabase', () => ({
     insert: vi.fn(),
   },
 }));
-
-// Helper to anonymize IP (zero out last octet for IPv4, last 80 bits for IPv6)
-function anonymizeIp(ip: string): string {
-  if (ip.includes(':')) {
-    // IPv6
-    const parts = ip.split(':');
-    // Anonymize last 5 parts (80 bits)
-    return [...parts.slice(0, 3), '0:0:0:0:0'].join(':');
-  }
-  // IPv4
-  const parts = ip.split('.');
-  if (parts.length === 4) {
-    return parts.slice(0, 3).join('.') + '.0';
-  }
-  return ip; // Return as is if not a standard IPv4/IPv6
-}
 
 // Helper to create mock NextRequest
 function createMockRequest(body: unknown, headers?: Record<string, string>): NextRequest {
@@ -393,6 +378,8 @@ describe('POST /api/track-impression', () => {
           utm_source: 'google',
           utm_medium: 'cpc',
           utm_campaign: 'summer_sale',
+          utm_term: 'suv',
+          utm_content: 'video_ad',
           fbclid: 'fb_cl_id',
           gclid: 'g_cl_id',
           ttclid: 'tt_cl_id',
@@ -415,6 +402,8 @@ describe('POST /api/track-impression', () => {
           utm_source: 'google',
           utm_medium: 'cpc',
           utm_campaign: 'summer_sale',
+          utm_term: 'suv',
+          utm_content: 'video_ad',
           fbclid: 'fb_cl_id',
           gclid: 'g_cl_id',
           ttclid: 'tt_cl_id',
@@ -501,6 +490,8 @@ describe('POST /api/track-impression', () => {
           utm_source: null,
           utm_medium: null,
           utm_campaign: null,
+          utm_term: null,
+          utm_content: null,
           fbclid: null,
           gclid: null,
           ttclid: null,

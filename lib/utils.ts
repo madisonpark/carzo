@@ -18,3 +18,26 @@ import { twMerge } from "tailwind-merge";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+/**
+ * Helper to anonymize IP (zero out last octet for IPv4, last 80 bits for IPv6)
+ * @param ip - The IP address string
+ * @returns Anonymized IP address string
+ */
+export function anonymizeIp(ip: string | null | undefined): string | null | undefined {
+  if (!ip) {
+    return ip;
+  }
+  if (ip.includes(':')) {
+    // IPv6
+    const parts = ip.split(':');
+    // Anonymize last 5 parts (80 bits)
+    return [...parts.slice(0, 3), '0:0:0:0:0'].join(':');
+  }
+  // IPv4
+  const parts = ip.split('.');
+  if (parts.length === 4) {
+    return parts.slice(0, 3).join('.') + '.0';
+  }
+  return ip; // Return as is if not a standard IPv4/IPv6
+}

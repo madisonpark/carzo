@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getUserId, getSessionId } from '@/lib/user-tracking';
+import { trackPurchase } from '@/lib/facebook-pixel';
 
 interface TrackClickOptions {
   vehicleId: string;
@@ -34,6 +35,9 @@ export function useClickTracking() {
     dealerId,
     ctaClicked = 'primary',
   }: TrackClickOptions): Promise<TrackClickResponse> => {
+    // Fire Facebook Pixel Purchase event immediately (client-side)
+    trackPurchase();
+
     if (!userId || !sessionId) {
       console.warn('User ID or session ID not initialized');
       return {

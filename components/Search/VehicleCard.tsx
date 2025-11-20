@@ -12,6 +12,7 @@ import {
   UserFlow,
 } from "@/lib/flow-detection";
 import { getUserId, getSessionId } from "@/lib/user-tracking";
+import { trackPurchase } from "@/lib/facebook-pixel";
 
 interface VehicleCardProps {
   vehicle: Vehicle & { distance_miles?: number };
@@ -47,6 +48,9 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
   // Track click for Flow A (direct to dealer)
   const handleClick = () => {
     if (isDirect) {
+      // Fire Facebook Pixel Purchase event
+      trackPurchase();
+
       // Track click with keepalive for reliable tracking when opening new tab
       fetch("/api/track-click", {
         method: "POST",

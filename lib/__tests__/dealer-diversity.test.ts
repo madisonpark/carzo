@@ -154,26 +154,21 @@ describe("diversifyByDealer()", () => {
       expect(result[2].dealer_id).not.toBe(result[3].dealer_id);
     });
 
-    it("should maximize dealer diversity when limit < total vehicles", () => {
+    it("should shuffle vehicles even when count < limit (always run)", () => {
       const vehicles = [
         createVehicle("1", "dealer-a"),
         createVehicle("2", "dealer-a"),
-        createVehicle("3", "dealer-a"),
-        createVehicle("4", "dealer-b"),
-        createVehicle("5", "dealer-b"),
-        createVehicle("6", "dealer-c"),
-        createVehicle("7", "dealer-c"),
-        createVehicle("8", "dealer-d"),
+        createVehicle("3", "dealer-b"),
       ];
 
-      const result = diversifyByDealer(vehicles, 4);
+      // Before: With count < limit, it returned early [A, A, B]
+      // After: Round-robin always runs (unless empty), ensuring diversity [A, B, A]
+      const result = diversifyByDealer(vehicles, 10);
 
-      // With limit of 4 and 4 dealers, should have 1 from each
-      const dealerIds = result.map((v) => v.dealer_id);
-      const uniqueDealers = new Set(dealerIds);
-
-      // Should have all 4 different dealers
-      expect(uniqueDealers.size).toBe(4);
+      expect(result).toHaveLength(3);
+      expect(result[0].dealer_id).toBe("dealer-a");
+      expect(result[1].dealer_id).toBe("dealer-b"); // Round-robin kicked in
+      expect(result[2].dealer_id).toBe("dealer-a");
     });
 
     it("should handle limit greater than vehicle count", () => {

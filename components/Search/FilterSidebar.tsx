@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { X, SlidersHorizontal } from 'lucide-react';
-import { Input, Badge, Button } from '@/components/ui';
-import { cn } from '@/lib/utils';
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { X, SlidersHorizontal } from "lucide-react";
+import { Input, Badge, Button } from "@/components/ui";
+import { cn } from "@/lib/utils";
 
 interface FilterSidebarProps {
   makes: string[];
@@ -24,7 +24,13 @@ interface FilterSidebarProps {
 }
 
 // Extracted reusable active filter badge component
-const ActiveFilterBadge = ({ label, onRemove }: { label: string; onRemove: () => void }) => (
+const ActiveFilterBadge = ({
+  label,
+  onRemove,
+}: {
+  label: string;
+  onRemove: () => void;
+}) => (
   <Badge variant="secondary" className="gap-1 rounded-full">
     {label}
     <Button
@@ -55,7 +61,7 @@ const FilterContent = ({
   handleMinPriceChange,
   handleMaxPriceChange,
 }: {
-  currentFilters: FilterSidebarProps['currentFilters'];
+  currentFilters: FilterSidebarProps["currentFilters"];
   isUpdating: boolean;
   updateFilter: (key: string, value: string) => void;
   clearFilters: () => void;
@@ -93,10 +99,16 @@ const FilterContent = ({
     <div className="space-y-6">
       {/* Make */}
       <div>
-        <label className="block text-sm font-semibold text-foreground mb-2">Make</label>
+        <label
+          htmlFor="filter-make"
+          className="block text-sm font-semibold text-foreground mb-2"
+        >
+          Make
+        </label>
         <select
-          value={currentFilters.make || ''}
-          onChange={(e) => updateFilter('make', e.target.value)}
+          id="filter-make"
+          value={currentFilters.make || ""}
+          onChange={(e) => updateFilter("make", e.target.value)}
           className="w-full px-3 py-2 bg-background border border-border rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand text-foreground"
         >
           <option value="">All Makes</option>
@@ -110,10 +122,16 @@ const FilterContent = ({
 
       {/* Condition */}
       <div>
-        <label className="block text-sm font-semibold text-foreground mb-2">Condition</label>
+        <label
+          htmlFor="filter-condition"
+          className="block text-sm font-semibold text-foreground mb-2"
+        >
+          Condition
+        </label>
         <select
-          value={currentFilters.condition || ''}
-          onChange={(e) => updateFilter('condition', e.target.value)}
+          id="filter-condition"
+          value={currentFilters.condition || ""}
+          onChange={(e) => updateFilter("condition", e.target.value)}
           className="w-full px-3 py-2 bg-background border border-border rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand text-foreground"
         >
           <option value="">All Conditions</option>
@@ -127,10 +145,16 @@ const FilterContent = ({
 
       {/* Body Style */}
       <div>
-        <label className="block text-sm font-semibold text-foreground mb-2">Body Style</label>
+        <label
+          htmlFor="filter-body-style"
+          className="block text-sm font-semibold text-foreground mb-2"
+        >
+          Body Style
+        </label>
         <select
-          value={currentFilters.bodyStyle || ''}
-          onChange={(e) => updateFilter('bodyStyle', e.target.value)}
+          id="filter-body-style"
+          value={currentFilters.bodyStyle || ""}
+          onChange={(e) => updateFilter("bodyStyle", e.target.value)}
           className="w-full px-3 py-2 bg-background border border-border rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand text-foreground"
         >
           <option value="">All Body Styles</option>
@@ -144,11 +168,13 @@ const FilterContent = ({
 
       {/* Year Range */}
       <div>
-        <label className="block text-sm font-semibold text-foreground mb-2">Year</label>
+        <label className="block text-sm font-semibold text-foreground mb-2">
+          Year
+        </label>
         <div className="grid grid-cols-2 gap-3">
           <select
-            value={currentFilters.minYear || ''}
-            onChange={(e) => updateFilter('minYear', e.target.value)}
+            value={currentFilters.minYear || ""}
+            onChange={(e) => updateFilter("minYear", e.target.value)}
             aria-label="Minimum year"
             className="px-3 py-2 bg-background border border-border rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand text-sm text-foreground"
           >
@@ -160,8 +186,8 @@ const FilterContent = ({
             ))}
           </select>
           <select
-            value={currentFilters.maxYear || ''}
-            onChange={(e) => updateFilter('maxYear', e.target.value)}
+            value={currentFilters.maxYear || ""}
+            onChange={(e) => updateFilter("maxYear", e.target.value)}
             aria-label="Maximum year"
             className="px-3 py-2 bg-background border border-border rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand text-sm text-foreground"
           >
@@ -177,7 +203,9 @@ const FilterContent = ({
 
       {/* Price Range */}
       <div>
-        <label className="block text-sm font-semibold text-foreground mb-2">Price</label>
+        <label className="block text-sm font-semibold text-foreground mb-2">
+          Price
+        </label>
         <div className="grid grid-cols-2 gap-3">
           <Input
             type="number"
@@ -202,24 +230,26 @@ const FilterContent = ({
     {/* Active Filters */}
     {hasActiveFilters && (
       <div className="mt-6 pt-6 border-t border-border">
-        <h3 className="text-sm font-semibold text-foreground mb-3">Active Filters</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-3">
+          Active Filters
+        </h3>
         <div className="flex flex-wrap gap-2">
           {currentFilters.make && (
             <ActiveFilterBadge
               label={currentFilters.make}
-              onRemove={() => updateFilter('make', '')}
+              onRemove={() => updateFilter("make", "")}
             />
           )}
           {currentFilters.condition && (
             <ActiveFilterBadge
               label={currentFilters.condition}
-              onRemove={() => updateFilter('condition', '')}
+              onRemove={() => updateFilter("condition", "")}
             />
           )}
           {currentFilters.bodyStyle && (
             <ActiveFilterBadge
               label={currentFilters.bodyStyle}
-              onRemove={() => updateFilter('bodyStyle', '')}
+              onRemove={() => updateFilter("bodyStyle", "")}
             />
           )}
         </div>
@@ -236,33 +266,36 @@ export default function FilterSidebar({
   currentFilters,
 }: FilterSidebarProps) {
   const router = useRouter();
-  const [minPrice, setMinPrice] = useState(currentFilters.minPrice || '');
-  const [maxPrice, setMaxPrice] = useState(currentFilters.maxPrice || '');
+  const [minPrice, setMinPrice] = useState(currentFilters.minPrice || "");
+  const [maxPrice, setMaxPrice] = useState(currentFilters.maxPrice || "");
   const [isUpdating, setIsUpdating] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
-  const updateFilter = useCallback((key: string, value: string) => {
-    const params = new URLSearchParams(window.location.search);
+  const updateFilter = useCallback(
+    (key: string, value: string) => {
+      const params = new URLSearchParams(window.location.search);
 
-    // Update or delete the changed filter
-    if (value) {
-      params.set(key, value);
-    } else {
-      params.delete(key);
-    }
+      // Update or delete the changed filter
+      if (value) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
 
-    // Reset to page 1 when filtering
-    params.delete('page');
+      // Reset to page 1 when filtering
+      params.delete("page");
 
-    // Flow parameter is automatically preserved since we're using window.location.search
-    router.push(`/search?${params.toString()}`);
-  }, [router]);
+      // Flow parameter is automatically preserved since we're using window.location.search
+      router.push(`/search?${params.toString()}`);
+    },
+    [router]
+  );
 
   // Debounce minPrice updates
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (minPrice !== (currentFilters.minPrice || '')) {
-        updateFilter('minPrice', minPrice);
+      if (minPrice !== (currentFilters.minPrice || "")) {
+        updateFilter("minPrice", minPrice);
         setIsUpdating(false);
       }
     }, 800);
@@ -272,8 +305,8 @@ export default function FilterSidebar({
   // Debounce maxPrice updates
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (maxPrice !== (currentFilters.maxPrice || '')) {
-        updateFilter('maxPrice', maxPrice);
+      if (maxPrice !== (currentFilters.maxPrice || "")) {
+        updateFilter("maxPrice", maxPrice);
         setIsUpdating(false);
       }
     }, 800);
@@ -293,13 +326,13 @@ export default function FilterSidebar({
 
   const clearFilters = () => {
     const params = new URLSearchParams(window.location.search);
-    const flow = params.get('flow');
+    const flow = params.get("flow");
 
     // Clear all filters but preserve flow
     if (flow) {
       router.push(`/search?flow=${flow}`);
     } else {
-      router.push('/search');
+      router.push("/search");
     }
   };
 
@@ -318,9 +351,9 @@ export default function FilterSidebar({
   // Lock body scroll when mobile drawer is open
   useEffect(() => {
     if (isMobileDrawerOpen) {
-      document.body.classList.add('overflow-hidden');
+      document.body.classList.add("overflow-hidden");
       return () => {
-        document.body.classList.remove('overflow-hidden');
+        document.body.classList.remove("overflow-hidden");
       };
     }
   }, [isMobileDrawerOpen]);
@@ -328,14 +361,14 @@ export default function FilterSidebar({
   // Handle Escape key to close drawer
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isMobileDrawerOpen) {
+      if (e.key === "Escape" && isMobileDrawerOpen) {
         setIsMobileDrawerOpen(false);
       }
     };
 
-    document.addEventListener('keydown', handleEscape);
+    document.addEventListener("keydown", handleEscape);
     return () => {
-      document.removeEventListener('keydown', handleEscape);
+      document.removeEventListener("keydown", handleEscape);
     };
   }, [isMobileDrawerOpen]);
 
@@ -387,8 +420,8 @@ export default function FilterSidebar({
       {/* Mobile Drawer */}
       <div
         className={cn(
-          'lg:hidden fixed top-0 left-0 bottom-0 w-full max-w-sm bg-background z-[60] overflow-y-auto transition-transform duration-300 ease-in-out shadow-2xl',
-          isMobileDrawerOpen ? 'translate-x-0' : '-translate-x-full'
+          "lg:hidden fixed top-0 left-0 bottom-0 w-full max-w-sm bg-background z-60 overflow-y-auto transition-transform duration-300 ease-in-out shadow-2xl",
+          isMobileDrawerOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <div className="sticky top-0 bg-background border-b border-border p-4 flex items-center justify-between">

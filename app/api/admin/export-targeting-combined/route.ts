@@ -71,6 +71,82 @@ function calculateMetroLocations(
 }
 
 /**
+ * Generate destination URL for the campaign landing page
+ * 
+ * Examples:
+ * - Body Style: https://carzo.net/search?body_style=SUV
+ * - Make: https://carzo.net/search?make=Kia
+ * - Make+Body: https://carzo.net/search?make=Kia&body_style=SUV
+ * - Make+Model: https://carzo.net/search?make=Kia&model=Sorrento
+ */
+function generateDestinationUrl(campaignType: CampaignType, campaignValue: string): string {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://carzo.net';
+  const searchPath = '/search';
+  const url = new URL(searchPath, baseUrl);
+
+  // Add campaign parameters
+  switch (campaignType) {
+    case 'body_style':
+      url.searchParams.set('body_style', campaignValue);
+      break;
+    case 'make':
+      url.searchParams.set('make', campaignValue);
+      break;
+    case 'make_body_style': {
+      const parts = campaignValue.split(' ');
+      if (parts.length >= 2) {
+        url.searchParams.set('make', parts[0]);
+        url.searchParams.set('body_style', parts.slice(1).join(' '));
+      }
+      break;
+    }
+    case 'make_model': {
+      const parts = campaignValue.split(' ');
+      if (parts.length >= 2) {
+        url.searchParams.set('make', parts[0]);
+        // Join the rest as model (e.g. "Grand Cherokee")
+        url.searchParams.set('model', parts.slice(1).join(' '));
+      }
+      break;
+    }
+  }
+
+  return url.toString();
+}
+
+/**
+ * Generate CSV content with platform-specific headers
+ */
+function generateCsvContent(
+  platform: Platform,
+  locations: MetroLocation[],
+  destinationUrl: string
+): string {
+  const isFacebook = platform === 'facebook';
+  const header = isFacebook
+    ? 'name,lat,long,radius,distance_unit,destination_url,vehicle_count,dealer_count'
+    : 'Target Location,Latitude,Longitude,Radius,Unit,Destination URL,Vehicle Count,Dealer Count';
+  const distanceUnit = isFacebook ? 'mile' : 'mi';
+
+  const rows = locations.map((m) =>
+    [
+      m.metro,
+      m.latitude.toFixed(4),
+      m.longitude.toFixed(4),
+      m.radius_miles,
+      distanceUnit,
+      destinationUrl,
+      m.vehicles,
+      m.dealers,
+    ]
+      .map((v) => sanitizeCsvField(v))
+      .join(',')
+  );
+
+  return [header, ...rows].join('\n');
+}
+
+/**
  * Export combined multi-metro targeting for a campaign type
  * Returns ONE CSV with all metros that have sufficient inventory
  *
@@ -246,14 +322,11 @@ export async function GET(request: NextRequest) {
     // Calculate metro-level targeting locations (used by both platforms)
     const metroLocations = calculateMetroLocations(qualifyingMetros);
 
-    // Generate CSV with lat/long + radius targeting
-    const csv = [
-      'metro,latitude,longitude,radius_miles,vehicles,dealers',
-      ...metroLocations.map(
-        (m) =>
-          `${sanitizeCsvField(m.metro)},${m.latitude.toFixed(4)},${m.longitude.toFixed(4)},${m.radius_miles},${m.vehicles},${m.dealers}`
-      ),
-    ].join('\n');
+    // Generate destination URL
+    const destinationUrl = generateDestinationUrl(campaignType, trimmedCampaignValue);
+
+    // Generate CSV with platform-specific headers
+    const csv = generateCsvContent(platform, metroLocations, destinationUrl);
 
     const filename = `${platform}-targeting-${trimmedCampaignValue.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${qualifyingMetros.length}-metros.csv`;
 

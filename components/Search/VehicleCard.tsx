@@ -1,32 +1,38 @@
-'use client';
+"use client";
 
-import { Vehicle } from '@/lib/supabase';
-import Link from 'next/link';
-import { Camera, MapPin, ChevronRight, ExternalLink } from 'lucide-react';
-import { Button, Badge } from '@/components/ui';
-import { useEffect, useState } from 'react';
-import { getFlowFromUrl, preserveFlowParam, isDirectFlow, UserFlow } from '@/lib/flow-detection';
-import { getUserId, getSessionId } from '@/lib/user-tracking';
+import { Vehicle } from "@/lib/supabase";
+import Link from "next/link";
+import { Camera, MapPin, ChevronRight, ExternalLink } from "lucide-react";
+import { Button, Badge } from "@/components/ui";
+import { useState } from "react";
+import {
+  getFlowFromUrl,
+  preserveFlowParam,
+  isDirectFlow,
+  UserFlow,
+} from "@/lib/flow-detection";
+import { getUserId, getSessionId } from "@/lib/user-tracking";
 
 interface VehicleCardProps {
   vehicle: Vehicle & { distance_miles?: number };
 }
 
 export default function VehicleCard({ vehicle }: VehicleCardProps) {
-  const [flow, setFlow] = useState<UserFlow>('full');
+  // Initialize flow state directly instead of using useEffect to avoid cascading renders
+  const [flow] = useState<UserFlow>(() => {
+    if (typeof window === "undefined") return "full";
+    return getFlowFromUrl();
+  });
 
-  useEffect(() => {
-    setFlow(getFlowFromUrl());
-  }, []);
-  const formattedPrice = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
+  const formattedPrice = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(vehicle.price);
 
   const formattedMileage = vehicle.miles
-    ? new Intl.NumberFormat('en-US').format(vehicle.miles)
+    ? new Intl.NumberFormat("en-US").format(vehicle.miles)
     : null;
 
   // Determine link destination based on flow
@@ -35,26 +41,26 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
     ? vehicle.dealer_vdp_url // Flow A: Direct to dealer
     : preserveFlowParam(`/vehicles/${vehicle.vin}`); // Flow C: To VDP
 
-  const linkTarget = isDirect ? '_blank' : '_self';
-  const linkRel = isDirect ? 'noopener noreferrer' : undefined;
+  const linkTarget = isDirect ? "_blank" : "_self";
+  const linkRel = isDirect ? "noopener noreferrer" : undefined;
 
   // Track click for Flow A (direct to dealer)
   const handleClick = () => {
     if (isDirect) {
       // Track click with keepalive for reliable tracking when opening new tab
-      fetch('/api/track-click', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      fetch("/api/track-click", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           vehicleId: vehicle.id,
           dealerId: vehicle.dealer_id,
           userId: getUserId(),
           sessionId: getSessionId(),
-          ctaClicked: 'serp_direct',
-          flow: 'direct',
+          ctaClicked: "serp_direct",
+          flow: "direct",
         }),
         keepalive: true,
-      }).catch((err) => console.error('Failed to track click:', err));
+      }).catch((err) => console.error("Failed to track click:", err));
     }
   };
 
@@ -67,13 +73,16 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
       className="group bg-background rounded-lg border border-border overflow-hidden hover:shadow-xl dark:hover:shadow-brand/20 transition-all duration-200 flex flex-col h-full"
     >
       {/* Image - Fixed height */}
-      <div className="relative h-48 bg-muted overflow-hidden flex-shrink-0">
+      <div className="relative h-48 bg-muted overflow-hidden shrink-0">
         <img
-          src={(vehicle.primary_image_url && vehicle.primary_image_url.trim()) || '/placeholder-vehicle.svg'}
+          src={
+            (vehicle.primary_image_url && vehicle.primary_image_url.trim()) ||
+            "/placeholder-vehicle.svg"
+          }
           alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           onError={(e) => {
-            e.currentTarget.src = '/placeholder-vehicle.svg';
+            e.currentTarget.src = "/placeholder-vehicle.svg";
           }}
         />
         {vehicle.condition && (
@@ -90,19 +99,23 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
       </div>
 
       {/* Content - Flex grow to fill remaining space */}
-      <div className="p-4 flex flex-col flex-grow">
+      <div className="p-4 flex flex-col grow">
         {/* Title - Fixed height with line clamp */}
-        <div className="mb-2 min-h-[3rem]">
+        <div className="mb-2 min-h-12">
           <h3 className="text-base font-bold text-foreground group-hover:text-brand transition-colors line-clamp-1">
             {vehicle.year} {vehicle.make} {vehicle.model}
           </h3>
           {vehicle.trim && (
-            <p className="text-sm text-muted-foreground line-clamp-1">{vehicle.trim}</p>
+            <p className="text-sm text-muted-foreground line-clamp-1">
+              {vehicle.trim}
+            </p>
           )}
         </div>
 
         {/* Price */}
-        <p className="text-xl font-bold text-foreground mb-3">{formattedPrice}</p>
+        <p className="text-xl font-bold text-foreground mb-3">
+          {formattedPrice}
+        </p>
 
         {/* Details - Single line */}
         <div className="text-sm text-muted-foreground mb-3 space-y-1">
@@ -111,21 +124,22 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
         </div>
 
         {/* Spacer to push location and button to bottom */}
-        <div className="flex-grow"></div>
+        <div className="grow"></div>
 
         {/* Location */}
         <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
           <div className="flex items-center gap-1">
-            <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+            <MapPin className="w-3.5 h-3.5 shrink-0" />
             <span className="line-clamp-1">
               {vehicle.dealer_city}, {vehicle.dealer_state}
             </span>
           </div>
-          {vehicle.distance_miles !== undefined && vehicle.distance_miles !== Infinity && (
-            <span className="text-brand font-semibold ml-2 flex-shrink-0">
-              {Math.round(vehicle.distance_miles)} mi
-            </span>
-          )}
+          {vehicle.distance_miles !== undefined &&
+            vehicle.distance_miles !== Infinity && (
+              <span className="text-brand font-semibold ml-2 shrink-0">
+                {Math.round(vehicle.distance_miles)} mi
+              </span>
+            )}
         </div>
 
         {/* CTA */}

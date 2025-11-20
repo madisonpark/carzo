@@ -1,0 +1,140 @@
+# Gemini Agent Instructions for Carzo
+
+## Primary Context
+
+**See AGENTS.md for complete project context:**
+- Project overview & business model
+- Tech stack with versions
+- Critical commands
+- Project structure
+- Business rules (dealer diversification, revenue model)
+- Code conventions
+- Common gotchas
+- Architecture references
+
+This file contains **Gemini-specific instructions** for tool usage, task management, and workflow preferences.
+
+---
+
+## Gemini-Specific Behavior
+
+### Tool Usage Policy
+
+**Preferred Tooling Strategy:**
+- **Complex Exploration**: Use `codebase_investigator` for architectural mapping, vague requests, or root-cause analysis. Do not rely solely on grep/search for understanding system-wide patterns.
+- **Task Management**: Use `write_todos` for ANY task involving more than 2 steps. Keep the todo list updated in real-time.
+- **File Search**: Use `glob` to find files by pattern and `search_file_content` (ripgrep) for finding specific code patterns.
+- **File Operations**:
+    - `read_file`: Always read a file before editing it.
+    - `replace`: Use for targeted edits. Ensure 3 lines of context match exactly.
+    - `write_file`: Use for creating new files.
+
+### Task Management (write_todos)
+
+**ALWAYS use `write_todos` when:**
+- Implementing a feature spanning multiple files.
+- Refactoring code.
+- The user request implies a multi-step process (e.g., "Set up the new API endpoint").
+
+**Todo Management Rules:**
+- Break down complex tasks into atomic subtasks.
+- Mark only **one** task as `in_progress` at a time.
+- Update the status to `completed` or `cancelled` promptly.
+- If a blocker arises, add a new subtask to resolve it or mark the current one as `pending` while you investigate.
+
+### Codebase Investigation
+
+**When to use `codebase_investigator`:**
+- "How does the dealer diversification algorithm work?"
+- "Where is the entry point for the feed sync?"
+- "Analyze the dependency structure of the search component."
+
+Do NOT use it for simple queries like "Find the definition of function X" (use `search_file_content` or `glob`).
+
+---
+
+## Git Workflow Enforcement
+
+**CRITICAL RULES (ALWAYS ENFORCED):**
+
+1.  **NEVER work on main branch directly**
+    - **ALL work must happen on a feature/fix/docs branch**
+    - Only exception: User explicitly says "work on main"
+    - Create branch BEFORE making any changes: `git checkout -b feature/name`
+
+2.  **NEVER merge PRs without explicit user approval**
+    - Create PR and wait for user's "merge" command
+    - **DO NOT auto-merge**
+
+3.  **Commit Messages**
+    - Format: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`
+    - Be descriptive but concise.
+
+4.  **Pushing**
+    - Do not push to remote unless explicitly asked or if it's a necessary step in the defined workflow (e.g. "Create a PR").
+
+---
+
+## Testing Requirements (CRITICAL)
+
+**⚠️ Prioritize testing, especially for revenue-critical code**
+
+**Revenue-Critical Files Require 95% Coverage:**
+- `lib/dealer-diversity.ts` - Round-robin dealer algorithm (THE MONEY ALGORITHM)
+- `lib/flow-detection.ts` - A/B testing flow routing
+- `lib/user-tracking.ts` - Cookie-based user tracking
+- `app/api/track-click/route.ts` - Click tracking API
+
+**General Rules:**
+- **New Features**: Must include tests.
+- **Bug Fixes**: Must include a regression test.
+- **Running Tests**: Use `npm test` or `npm run test:coverage`.
+
+---
+
+## Domain Constraints (Revenue Optimization)
+
+**MOST IMPORTANT RULE:**
+- **$0.80 per UNIQUE dealer click per user per 30 days**
+- **dealer_id tracking is CRITICAL** for all dealer clicks.
+
+**Dealer Diversification:**
+- Apply `diversifyByDealer()` from `lib/dealer-diversity.ts` to ALL vehicle lists.
+- **DO NOT MODIFY `lib/dealer-diversity.ts` without explicit approval.**
+
+**External Links:**
+- All dealer links must be `target="_blank" rel="noopener noreferrer"`.
+- Must call `/api/track-click` before opening.
+
+---
+
+## Documentation Best Practices
+
+- **Do not hardcode volatile data** (inventory counts, active users).
+- Follow the **Diátaxis framework** (`/docs/README.md`):
+    - `tutorials/`: Learning-oriented
+    - `how-to/`: Problem-oriented
+    - `reference/`: Information-oriented
+    - `explanation/`: Understanding-oriented
+- Keep `gemini.md` concise. Refer to `AGENTS.md` for shared context.
+
+---
+
+## Quick Reference
+
+**Common Commands:**
+```bash
+npm run dev              # Start dev server
+npm run build            # Production build
+npm test                 # Run tests
+supabase start           # Local Supabase
+supabase db push         # Apply migrations
+```
+
+**Key Files:**
+- `AGENTS.md`: Master project context.
+- `lib/dealer-diversity.ts`: Core revenue logic.
+- `app/globals.css`: Tailwind v4 configuration.
+
+**Integration:**
+- If referencing other AI assistants, check `CLAUDE.md` or `.cursorrules` if present, but rely on `AGENTS.md` as the source of truth.

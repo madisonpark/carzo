@@ -44,6 +44,10 @@ Carzo earns revenue by driving paid traffic (Facebook Ads, Google Display) to co
    - Merge PRs: `gh pr merge PR_NUMBER --squash` (only after explicit user approval; confirm strategy with user)
    - **DO NOT ask user to perform GitHub operations manually** when `gh` CLI can do it
 
+6.  **Pre-PR Documentation & QA Protocol**
+   - **Documentation**: Always check if docs (Reference, How-To, etc.) need updates *before* PR creation.
+   - **Iterative QA**: Run comprehensive QA -> Fix bugs -> Rerun QA. Repeat until clean. **Do not** create a PR with known bugs hoping for a review to catch them.
+
 ## Tech Stack
 
 ### Core Framework

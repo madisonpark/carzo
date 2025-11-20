@@ -64,3 +64,10 @@ This document outlines the strategy for deploying the Carzo application from a l
 
 ## 7. Discrepancy Note
 *   **Cron Schedule:** `vercel.json` lists one job (`sync-feed`), documentation mentions two. We will prioritize `vercel.json` as the source of truth and update docs if needed during the process.
+
+## 8. Solo Founder Optimizations
+As a one-person startup, speed and simplicity are key. Consider these adjustments:
+*   **Vercel Toolbar:** Use it in production for instant feedback on layout shifts and errors without complex monitoring tools.
+*   **Cost Control:** Stay on the Hobby plan until you hit limits. The current architecture (ISR + cached feed) is highly efficient.
+*   **Manual Backups:** Before running `supabase db push` on production, simply use the Supabase Dashboard to create a manual backup. It's faster than writing rollback scripts.
+*   **Log Monitoring:** Don't over-engineer alerting yet. Just check Vercel Logs once a day to ensure the feed sync ran.

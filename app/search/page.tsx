@@ -60,6 +60,7 @@ async function getFilterOptions(params?: {
     };
 
     // Run 4 parallel DISTINCT queries for each filter option
+    // Use buildFilterQuery to respect current filters, avoiding 'any' casts
     const [makesResult, bodyStylesResult, conditionsResult, yearsResult] =
       await Promise.all([
         buildFilterQuery().select("make").limit(1000),

@@ -1,6 +1,6 @@
 
 import { describe, it, expect } from 'vitest';
-import { shouldApplyDiversification } from '@/lib/search-utils';
+import { shouldApplyDiversification } from '../search-utils';
 
 describe('shouldApplyDiversification', () => {
   it.each([

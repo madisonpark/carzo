@@ -66,11 +66,23 @@ Do NOT use it for simple queries like "Find the definition of function X" (use `
     - Create PR and wait for user's "merge" command
     - **DO NOT auto-merge**
 
-3.  **Commit Messages**
+3.  **ALWAYS respond to PR feedback with comments**
+    - When addressing feedback from gemini-code-assist or claude (AI reviewers)
+    - Add PR comment tagging the bot: `@gemini-code-assist` or `@claude`
+    - Describe what was changed and why
+    - Example: `@gemini-code-assist Fixed the type safety issue by adding explicit types to the function parameters as suggested.`
+    - If feedback NOT addressed, explain why: `@claude I did not implement X because...`
+
+4.  **Commit Messages**
     - Format: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`
     - Be descriptive but concise.
 
-4.  **Pushing**
+5.  **Use GitHub CLI for all GitHub operations**
+    - Create PRs: `gh pr create --fill`
+    - Comment on PRs: `gh pr comment PR_NUMBER --body "..."`
+    - **DO NOT ask user to perform GitHub operations manually**
+
+6.  **Pushing**
     - Do not push to remote unless explicitly asked or if it's a necessary step in the defined workflow (e.g. "Create a PR").
 
 ### Pull Request Standards
@@ -84,10 +96,8 @@ When using `gh pr create`, ensure the body includes:
 
 **Review Workflow:**
 - **Wait for Reviews**: AI bots (gemini-code-assist, claude) and humans will review.
-- **Respond to Feedback**:
-    - Address every comment.
-    - Tag the reviewer in your reply: `@gemini-code-assist Fixed type safety...` or `@claude Explained why...`.
-    - **NEVER** merge without an explicit "merge" command from the user.
+- **Respond to Feedback**: See item #3 above.
+- **NEVER** merge without an explicit "merge" command from the user.
 
 ---
 

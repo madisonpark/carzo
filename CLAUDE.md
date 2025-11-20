@@ -72,11 +72,12 @@ This file contains **Claude Code-specific instructions** for tool usage, task ma
 - Create new task for blockers/issues
 - Never mark completed if:
   - Tests are failing
-  - **Tests not written for new code**
-  - **Coverage below threshold** (80% general, 95% revenue-critical)
+  - **Tests not written for revenue-critical code** (see Testing Requirements)
+  - **Coverage below threshold for revenue-critical code** (95% required)
   - Implementation is partial
   - Unresolved errors exist
   - Missing files/dependencies
+- May mark completed without tests if noted in PR description for follow-up
 
 ### File Operations
 
@@ -176,10 +177,11 @@ This file contains **Claude Code-specific instructions** for tool usage, task ma
 1. Verify on feature/fix branch (not main)
 2. Code builds (`npm run build`)
 3. No TypeScript errors
-4. **Tests written and passing** (`npm test`)
-5. **Coverage thresholds met** (`npm run test:coverage`)
+4. **Tests passing** (if tests exist) - `npm test`
+5. **Revenue-critical code has tests and meets 95% coverage** (required)
 6. No secrets committed (use SECRETS.md pattern)
 7. Descriptive commit message
+8. Note in PR description if tests deferred to follow-up PR
 
 **PR Review Workflow:**
 1. Create PR on feature branch
@@ -191,14 +193,23 @@ This file contains **Claude Code-specific instructions** for tool usage, task ma
 
 ### Testing Requirements (CRITICAL)
 
-**⚠️ ALL code changes require tests**
+**⚠️ Prioritize testing, especially for revenue-critical code**
 
 **Test Coverage Rules:**
-- ✅ Every new function → corresponding test file
-- ✅ Every updated function → updated tests
-- ✅ Every new component → component tests
-- ✅ Every new API route → API route tests
-- ❌ Never commit code without tests (except docs/config/types)
+- ✅ Every new function → corresponding test file (when practical)
+- ✅ Every updated function → updated tests (when practical)
+- ✅ Every new component → component tests (when practical)
+- ✅ Every new API route → API route tests (when practical)
+- ⚠️ Prefer tests with code, but acceptable to commit without tests when:
+  - Rapid prototyping or experimentation
+  - Minor refactoring or code cleanup
+  - Documentation, config, or type-only changes
+  - Tests would be added in a follow-up PR (note in PR description)
+- ❌ Revenue-critical code MUST have tests before committing (no exceptions):
+  - `lib/dealer-diversity.ts`
+  - `lib/user-tracking.ts`
+  - `lib/flow-detection.ts`
+  - `app/api/track-click/route.ts`
 
 **Testing Workflow:**
 1. Write tests first (TDD preferred) or immediately after implementation

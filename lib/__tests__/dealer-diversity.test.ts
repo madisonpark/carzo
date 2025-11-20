@@ -34,15 +34,15 @@ describe("diversifyByDealer()", () => {
       expect(diversifyByDealer([], 10)).toEqual([]);
     });
 
-    it("should shuffle vehicles even when count < limit (always run)", () => {
+    it("should always apply round-robin shuffling unless empty (removed early exit optimization)", () => {
       const vehicles = [
         createVehicle("1", "dealer-a"),
         createVehicle("2", "dealer-a"),
         createVehicle("3", "dealer-b"),
       ];
 
-      // Before: With count < limit, it returned early [A, A, B]
-      // After: Round-robin always runs (unless empty), ensuring diversity [A, B, A]
+      // Before fix: With count (3) <= limit (10), it returned early [A, A, B]
+      // After fix: Round-robin always runs, ensuring diversity [A, B, A] even for small sets
       const result = diversifyByDealer(vehicles, 10);
 
       expect(result).toHaveLength(3);

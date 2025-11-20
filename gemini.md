@@ -55,7 +55,7 @@ Do NOT use it for simple queries like "Find the definition of function X" (use `
 
 ## Git Workflow Enforcement
 
-**CRITICAL RULES (ALWAYS ENFORCED):**
+**CRITICAL RULES (ALWAYS ENFORCED - see AGENTS.md for full details):**
 
 1.  **NEVER work on main branch directly**
     - **ALL work must happen on a feature/fix/docs branch**
@@ -126,12 +126,11 @@ When using `gh pr create`, ensure the body includes:
 
 ## Documentation Best Practices
 
-- **Do not hardcode volatile data** (inventory counts, active users).
-- Follow the **Diátaxis framework** (`/docs/README.md`):
-    - `tutorials/`: Learning-oriented
-    - `how-to/`: Problem-oriented
-    - `reference/`: Information-oriented
-    - `explanation/`: Understanding-oriented
+- **Do not hardcode volatile data** (e.g., inventory counts, active users). Use generic descriptions instead of specific numbers.
+    - ❌ **NO**: "We have 72,000 vehicles"
+    - ✅ **YES**: "Vehicle inventory varies daily"
+- Constants and business rules are OK to state (e.g., `$0.80 per click`, `95% test coverage`).
+- Follow the **Diátaxis framework** (see `/docs/README.md`).
 - Keep `gemini.md` concise. Refer to `AGENTS.md` for shared context.
 
 ---
@@ -150,6 +149,9 @@ supabase db push         # Apply migrations
 **Key Files:**
 - `AGENTS.md`: Master project context.
 - `lib/dealer-diversity.ts`: Core revenue logic.
+- `lib/user-tracking.ts`: Cookie-based user tracking.
+- `lib/flow-detection.ts`: A/B testing flow routing.
+- `app/api/track-click/route.ts`: Click tracking API.
 - `app/globals.css`: Tailwind v4 configuration.
 
 **Integration:**

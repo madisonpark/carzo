@@ -7,9 +7,9 @@ import { createClient } from '@supabase/supabase-js';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as https from 'https';
-import { execSync } from 'child_process';
 import { createReadStream, createWriteStream } from 'fs';
 import { parse } from 'csv-parse';
+import AdmZip from 'adm-zip';
 
 // Feed field mapping (34 fields from LotLinx TSV)
 // Column names are capitalized in the feed
@@ -118,7 +118,7 @@ export class FeedSyncService {
     this.username = feedUsername;
     this.password = feedPassword;
     this.publisherId = publisherId;
-    this.feedUrl = `https://feed.lotlinx.com/${publisherId}.zip`;
+    this.feedUrl = 'https://feed.lotlinx.com/';
   }
 
   /**
@@ -135,17 +135,20 @@ export class FeedSyncService {
       duration: 0,
     };
 
+    let zipPath = '';
+    let tsvPath = '';
+
     try {
       console.log('🚀 Starting feed sync...');
 
       // Step 1: Download feed
       console.log('📥 Downloading feed...');
-      const zipPath = await this.downloadFeed();
+      zipPath = await this.downloadFeed();
       console.log(`✅ Downloaded: ${zipPath}`);
 
       // Step 2: Extract TSV
       console.log('📦 Extracting TSV...');
-      const tsvPath = await this.extractTSV(zipPath);
+      tsvPath = await this.extractTSV(zipPath);
       console.log(`✅ Extracted: ${tsvPath}`);
 
       // Step 3: Parse vehicles
@@ -160,10 +163,8 @@ export class FeedSyncService {
       result.updated = syncResult.updated;
       result.removed = syncResult.removed;
 
-      // Step 5: Cleanup temp files
-      fs.unlinkSync(zipPath);
-      fs.unlinkSync(tsvPath);
-
+      // Step 5: Cleanup temp files (done in finally block)
+      
       result.success = true;
       result.duration = Date.now() - startTime;
 
@@ -186,6 +187,14 @@ export class FeedSyncService {
       await this.logSync(result);
 
       return result;
+    } finally {
+      // Cleanup temp files
+      try {
+        if (zipPath && fs.existsSync(zipPath)) fs.unlinkSync(zipPath);
+        if (tsvPath && fs.existsSync(tsvPath)) fs.unlinkSync(tsvPath);
+      } catch (cleanupError) {
+        console.error('Error cleaning up temp files:', cleanupError);
+      }
     }
   }
 
@@ -199,65 +208,67 @@ export class FeedSyncService {
     }
 
     const zipPath = path.join(tempDir, `feed-${Date.now()}.zip`);
-    const auth = Buffer.from(`${this.username}:${this.password}`).toString('base64');
+    
+    // Use fetch with POST params as per documentation
+    const params = new URLSearchParams();
+    params.append('username', this.username);
+    params.append('password', this.password);
 
-    return new Promise((resolve, reject) => {
-      const options = {
-        headers: {
-          'Authorization': `Basic ${auth}`,
-        },
-      };
+    console.log(`Downloading from ${this.feedUrl}`);
 
-      https.get(this.feedUrl, options, (response) => {
-        if (response.statusCode !== 200) {
-          reject(new Error(`HTTP ${response.statusCode}: ${response.statusMessage}`));
-          return;
-        }
-
-        const file = createWriteStream(zipPath);
-        response.pipe(file);
-
-        file.on('finish', () => {
-          file.close();
-          resolve(zipPath);
-        });
-
-        file.on('error', (err) => {
-          fs.unlinkSync(zipPath);
-          reject(err);
-        });
-      }).on('error', reject);
+    const response = await fetch(this.feedUrl, {
+      method: 'POST',
+      body: params,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      signal: AbortSignal.timeout(60000), // 60s timeout
     });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const buffer = await response.arrayBuffer();
+    const data = Buffer.from(buffer);
+
+    // Verify it's a zip file (starts with PK)
+    if (data.length < 4 || data[0] !== 0x50 || data[1] !== 0x4B) {
+       throw new Error('Downloaded file is not a valid ZIP file (missing PK header)');
+    }
+
+    fs.writeFileSync(zipPath, data);
+    return zipPath;
   }
 
   /**
-   * Extract TSV from ZIP
+   * Extract TSV from ZIP using adm-zip
    */
   private async extractTSV(zipPath: string): Promise<string> {
-    const tsvPath = zipPath.replace('.zip', '.tsv');
-
-    // Use unzip command (macOS/Linux)
     const tempDir = path.dirname(zipPath);
 
-    // Extract to temp directory
-    execSync(`unzip -o "${zipPath}" -d "${tempDir}"`);
+    try {
+      const zip = new AdmZip(zipPath);
+      const zipEntries = zip.getEntries();
+      
+      // Find the first TSV file in the zip
+      const tsvEntry = zipEntries.find(entry => entry.entryName.endsWith('.tsv'));
 
-    // Find the TSV file
-    const files = fs.readdirSync(tempDir);
-    const tsvFile = files.find(f => f.endsWith('.tsv'));
+      if (!tsvEntry) {
+        throw new Error('No TSV file found in ZIP');
+      }
 
-    if (!tsvFile) {
-      throw new Error('No TSV file found in ZIP');
+      console.log(`Found TSV entry: ${tsvEntry.entryName}`);
+
+      // Extract to temp directory
+      zip.extractEntryTo(tsvEntry.entryName, tempDir, false, true);
+      
+      // Return path to the extracted file
+      return path.join(tempDir, tsvEntry.entryName);
+    } catch (error) {
+      console.error('Zip extraction error:', error);
+      throw new Error(`Failed to extract ZIP: ${error instanceof Error ? error.message : String(error)}`);
     }
-
-    const extractedPath = path.join(tempDir, tsvFile);
-
-    // Rename to standard name
-    if (extractedPath !== tsvPath) {
-      fs.renameSync(extractedPath, tsvPath);
-    }
-
-    return tsvPath;
   }
 
   /**
@@ -303,12 +314,39 @@ export class FeedSyncService {
     let updated = 0;
 
     // Get all current VINs to track removals
-    const { data: currentVehicles } = await this.supabase
+    // We need to fetch ALL active VINs, so we use CSV export or a high limit
+    // Using .csv() is efficient for large datasets
+    const { data: csvData, error } = await this.supabase
       .from('vehicles')
-      .select('vin, id')
-      .eq('is_active', true);
+      .select('vin')
+      .eq('is_active', true)
+      .csv();
 
-    const currentVins = new Set(currentVehicles?.map(v => v.vin) || []);
+    if (error) {
+      console.error('Error fetching current VINs:', error);
+      throw error;
+    }
+
+    // Parse CSV to get VINs (skip header)
+    // CSV format: "vin"\n"VIN1"\n"VIN2"...
+    const currentVins = new Set<string>();
+    
+    if (csvData) {
+      // Simple CSV parsing (assuming just one column 'vin')
+      const lines = (csvData as string).split('\n');
+      // Skip header (index 0)
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line) {
+          // Remove quotes if present
+          const vin = line.replace(/^"|"$/g, '');
+          if (vin) currentVins.add(vin);
+        }
+      }
+    }
+
+    console.log(`Found ${currentVins.size} active vehicles in DB`);
+
     const feedVins = new Set(vehicles.map(v => v.Vin));
 
     // Process in batches
@@ -345,10 +383,14 @@ export class FeedSyncService {
     const removedVins = Array.from(currentVins).filter(vin => !feedVins.has(vin));
 
     if (removedVins.length > 0) {
-      await this.supabase
-        .from('vehicles')
-        .update({ is_active: false })
-        .in('vin', removedVins);
+      // Batch the removal updates too
+      for (let i = 0; i < removedVins.length; i += BATCH_SIZE) {
+        const removeBatch = removedVins.slice(i, i + BATCH_SIZE);
+        await this.supabase
+          .from('vehicles')
+          .update({ is_active: false })
+          .in('vin', removeBatch);
+      }
     }
 
     return {

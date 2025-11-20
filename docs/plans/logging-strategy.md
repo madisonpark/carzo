@@ -28,7 +28,7 @@ We need to enhance our tables to capture the "fingerprint" of every event for bo
 
 **Action:** Add columns to `clicks` and `impressions` tables:
 *   `user_agent` (text) - *Bot detection*
-*   `ip_address` (text) - *Geographic validation & fraud check*
+*   `ip_address` (inet) - *Geographic validation & fraud check. Stored anonymized (last octet zeroed) or hashed for privacy.*
 *   `utm_source` (text) - *e.g., "facebook"*
 *   `utm_medium` (text) - *e.g., "cpc"*
 *   `utm_campaign` (text) - *e.g., "spring_sale"*
@@ -45,6 +45,7 @@ We need to propagate these parameters from the user's browser to our database.
 **Action 2: Update API Routes**
 *   Modify `/api/track-click` and `/api/track-impression`.
 *   Extract `User-Agent` and `x-forwarded-for` (IP) from request headers.
+    *   *Note:* `x-forwarded-for` can be a list; parse the first valid IP. Treat as "best effort" due to potential spoofing.
 *   Accept new UTM parameters in the request body.
 *   Insert these values into the Supabase tables.
 

@@ -22,10 +22,12 @@ This document outlines the strategy for deploying the Carzo application from a l
     ```bash
     supabase link --project-ref <prod-project-ref>
     ```
-2.  **Apply Migrations:** Push schema to production.
+2.  **Apply Migrations:** Push schema changes safely.
     ```bash
-    supabase db push
+    supabase migration up
     ```
+    *Note:* Avoid `supabase db push` in production as it bypasses migration version control.
+
 3.  **Verify PostGIS:** Ensure extensions are active.
     ```sql
     select * from pg_extension where extname = 'postgis';
@@ -56,7 +58,8 @@ This document outlines the strategy for deploying the Carzo application from a l
 
 ## 5. Rollback Strategy
 *   **Instant Rollback:** Use Vercel's "Instant Rollback" feature to revert to the previous deployment ID if critical errors occur.
-*   **Database Rollback:** Manual SQL execution or `supabase db reset` (extreme caution required).
+*   **Database Rollback:** Create and apply a "down" migration.
+    *   *Warning:* `supabase db reset` is destructive and should **NEVER** be used on production. It wipes all data.
 
 ## 6. Documentation Updates
 *   **`docs/how-to/deploy-to-vercel.md`**: This existing guide is comprehensive. We will use it as the primary execution manual.

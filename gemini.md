@@ -80,7 +80,9 @@ Do NOT use it for simple queries like "Find the definition of function X" (use `
 5.  **Use GitHub CLI for all GitHub operations**
     - Create PRs: `gh pr create --fill`
     - Comment on PRs: `gh pr comment PR_NUMBER --body "..."`
-    - **DO NOT ask user to perform GitHub operations manually**
+    - View PRs: `gh pr view PR_NUMBER`
+    - Merge PRs: `gh pr merge PR_NUMBER --squash` (only after approval)
+    - **DO NOT ask user to perform GitHub operations manually** when `gh` CLI can do it
 
 6.  **Pushing**
     - Do not push to remote unless explicitly asked or if it's a necessary step in the defined workflow (e.g. "Create a PR").
@@ -111,12 +113,36 @@ When using `gh pr create`, ensure the body includes:
 - `lib/user-tracking.ts` - Cookie-based user tracking
 - `app/api/track-click/route.ts` - Click tracking API
 
-**General Rules:**
-- **New Features**: Must include tests.
-- **Bug Fixes**: Must include a regression test.
-- **Running Tests**: Use `npm test` or `npm run test:coverage`.
+**Test Standards & Structure:**
+- **Location**: Colocate tests in `__tests__/` directories (e.g., `lib/__tests__/utils.test.ts`).
+- **Framework**: Vitest v4 with `@testing-library/react`.
+- **Determinism**: Tests must be deterministic (mock time/randomness).
+- **Commands**:
+    - `npm test`: Run all tests.
+    - `npm run test:watch`: Watch mode.
+    - `npm run test:coverage`: Check coverage thresholds.
+
+**Deferral Policy:**
+- Tests are required for new features and bug fixes.
+- **Exception**: Tests may be deferred for rapid prototyping if explicitly noted in the PR description.
+- **NEVER** defer tests for revenue-critical code.
 
 ---
+
+## Security Requirements
+
+**Always check for:**
+- **SQL injection**: Use parameterized queries.
+- **XSS**: Sanitize user inputs.
+- **Secrets**: Never commit secrets (use `.env.local`, gitignored).
+- **Rate limiting**: All POST endpoints must call `checkMultipleRateLimits()`.
+
+## Mobile-First Development
+
+**Always consider mobile:**
+- **Base styles**: Mobile first (min-width: 320px).
+- **Breakpoints**: Use `lg:` for desktop (1024px).
+- **Touch targets**: Minimum 40x40px (WCAG Level AAA).
 
 ## Domain Constraints (Revenue Optimization)
 

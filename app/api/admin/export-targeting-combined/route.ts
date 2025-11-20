@@ -85,22 +85,29 @@ function generateDestinationUrl(campaignType: CampaignType, campaignValue: strin
   const url = new URL(searchPath, baseUrl);
 
   // Add campaign parameters
-  if (campaignType === 'body_style') {
-    url.searchParams.set('body_style', campaignValue);
-  } else if (campaignType === 'make') {
-    url.searchParams.set('make', campaignValue);
-  } else if (campaignType === 'make_body_style') {
-    const parts = campaignValue.split(' ');
-    if (parts.length >= 2) {
-      url.searchParams.set('make', parts[0]);
-      url.searchParams.set('body_style', parts.slice(1).join(' '));
+  switch (campaignType) {
+    case 'body_style':
+      url.searchParams.set('body_style', campaignValue);
+      break;
+    case 'make':
+      url.searchParams.set('make', campaignValue);
+      break;
+    case 'make_body_style': {
+      const parts = campaignValue.split(' ');
+      if (parts.length >= 2) {
+        url.searchParams.set('make', parts[0]);
+        url.searchParams.set('body_style', parts.slice(1).join(' '));
+      }
+      break;
     }
-  } else if (campaignType === 'make_model') {
-    const parts = campaignValue.split(' ');
-    if (parts.length >= 2) {
-      url.searchParams.set('make', parts[0]);
-      // Join the rest as model (e.g. "Grand Cherokee")
-      url.searchParams.set('model', parts.slice(1).join(' '));
+    case 'make_model': {
+      const parts = campaignValue.split(' ');
+      if (parts.length >= 2) {
+        url.searchParams.set('make', parts[0]);
+        // Join the rest as model (e.g. "Grand Cherokee")
+        url.searchParams.set('model', parts.slice(1).join(' '));
+      }
+      break;
     }
   }
 
@@ -111,25 +118,32 @@ function generateDestinationUrl(campaignType: CampaignType, campaignValue: strin
  * Generate CSV content with platform-specific headers
  */
 function generateCsvContent(
-  platform: Platform, 
-  locations: MetroLocation[], 
+  platform: Platform,
+  locations: MetroLocation[],
   destinationUrl: string
 ): string {
-  if (platform === 'facebook') {
-    // Facebook Headers: name, lat, long, radius, distance_unit, [custom: destination_url, vehicle_count, dealer_count]
-    const header = 'name,lat,long,radius,distance_unit,destination_url,vehicle_count,dealer_count';
-    const rows = locations.map(m => 
-      `${sanitizeCsvField(m.metro)},${m.latitude.toFixed(4)},${m.longitude.toFixed(4)},${m.radius_miles},mile,${destinationUrl},${m.vehicles},${m.dealers}`
-    );
-    return [header, ...rows].join('\n');
-  } else {
-    // Google Headers (standard bulk upload): Target Location, Latitude, Longitude, Radius, Unit, [custom columns]
-    const header = 'Target Location,Latitude,Longitude,Radius,Unit,Destination URL,Vehicle Count,Dealer Count';
-    const rows = locations.map(m => 
-      `${sanitizeCsvField(m.metro)},${m.latitude.toFixed(4)},${m.longitude.toFixed(4)},${m.radius_miles},mi,${destinationUrl},${m.vehicles},${m.dealers}`
-    );
-    return [header, ...rows].join('\n');
-  }
+  const isFacebook = platform === 'facebook';
+  const header = isFacebook
+    ? 'name,lat,long,radius,distance_unit,destination_url,vehicle_count,dealer_count'
+    : 'Target Location,Latitude,Longitude,Radius,Unit,Destination URL,Vehicle Count,Dealer Count';
+  const distanceUnit = isFacebook ? 'mile' : 'mi';
+
+  const rows = locations.map((m) =>
+    [
+      m.metro,
+      m.latitude.toFixed(4),
+      m.longitude.toFixed(4),
+      m.radius_miles,
+      distanceUnit,
+      destinationUrl,
+      m.vehicles,
+      m.dealers,
+    ]
+      .map((v) => sanitizeCsvField(v))
+      .join(',')
+  );
+
+  return [header, ...rows].join('\n');
 }
 
 /**

@@ -191,4 +191,14 @@
   .bg-primary-gradient {
     background: linear-gradient(to right, var(--color-primary), var(--color-primary-hover));
   }
+
+  /* Hide scrollbar for elements with .scrollbar-hide */
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
 }

@@ -135,12 +135,12 @@ export default async function HomePage() {
       {/* Shop by Make */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-8">Shop by Make</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+        <div className="flex lg:grid lg:grid-cols-8 gap-4 overflow-x-auto lg:overflow-visible snap-x snap-mandatory lg:snap-none pb-4 lg:pb-0 -mx-4 px-4 lg:mx-0 lg:px-0 scrollbar-hide">
           {popularMakes.map((make) => (
             <Link
               key={make}
               href={`/search?make=${encodeURIComponent(make)}`}
-              className="bg-background dark:bg-muted/20 border-2 border-border hover:border-brand rounded-xl p-6 text-center transition-all duration-300 hover:shadow-lg dark:hover:shadow-brand/20 group"
+              className="min-w-[140px] lg:min-w-0 flex-shrink-0 snap-start bg-background dark:bg-muted/20 border-2 border-border hover:border-brand rounded-xl p-6 text-center transition-all duration-300 hover:shadow-lg dark:hover:shadow-brand/20 group"
             >
               <p className="font-bold text-foreground group-hover:text-brand transition-colors">
                 {make}
@@ -157,12 +157,12 @@ export default async function HomePage() {
             <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-8">
               Shop by Body Style
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="flex lg:grid lg:grid-cols-6 gap-4 overflow-x-auto lg:overflow-visible snap-x snap-mandatory lg:snap-none pb-4 lg:pb-0 -mx-4 px-4 lg:mx-0 lg:px-0 scrollbar-hide">
               {bodyStyles.map((style) => (
                 <Link
                   key={style}
                   href={`/search?bodyStyle=${encodeURIComponent(style)}`}
-                  className="bg-background dark:bg-muted/30 border-2 border-border hover:border-brand rounded-xl p-6 text-center transition-all duration-300 hover:shadow-lg dark:hover:shadow-brand/20 group"
+                  className="min-w-[140px] lg:min-w-0 flex-shrink-0 snap-start bg-background dark:bg-muted/30 border-2 border-border hover:border-brand rounded-xl p-6 text-center transition-all duration-300 hover:shadow-lg dark:hover:shadow-brand/20 group"
                 >
                   <p className="font-bold text-foreground group-hover:text-brand transition-colors">
                     {style}

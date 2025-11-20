@@ -83,6 +83,8 @@ Conceptual documentation that explains design decisions and architecture.
 - **Next.js 16 Decisions** - Framework choices (Turbopack, App Router)
 - **Cookie Tracking** - Why cookies, not JWT
 - **A/B Testing Flows** - Flow variants decision tree
+- **Deployment Strategy** - Step-by-step guide for Vercel deployment
+- **Logging & Attribution Strategy** - Supabase, Sentry, Logflare stack
 
 **When to use**: You want to understand the rationale behind decisions or need the big picture.
 

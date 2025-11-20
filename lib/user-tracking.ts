@@ -95,23 +95,39 @@ function getClickedDealers(): Set<string> {
   return new Set();
 }
 
-/**
- * Get UTM parameters from URL
- */
-export function getUtmParams(): {
+interface UtmParams {
   source?: string;
   medium?: string;
   campaign?: string;
-} {
+  fbclid?: string;
+  gclid?: string;
+  ttclid?: string; // TikTok Click ID
+  tblci?: string;  // Taboola Click ID
+}
+
+/**
+ * Get UTM parameters from URL and persist in sessionStorage
+ */
+export function getUtmParams(): UtmParams {
   if (typeof window === 'undefined') return {};
 
   const params = new URLSearchParams(window.location.search);
+  const sessionUtms = JSON.parse(sessionStorage.getItem('carzo_utm_params') || '{}');
 
-  return {
-    source: params.get('utm_source') || undefined,
-    medium: params.get('utm_medium') || undefined,
-    campaign: params.get('utm_campaign') || undefined,
+  const currentUtms: UtmParams = {
+    source: params.get('utm_source') || sessionUtms.source || undefined,
+    medium: params.get('utm_medium') || sessionUtms.medium || undefined,
+    campaign: params.get('utm_campaign') || sessionUtms.campaign || undefined,
+    fbclid: params.get('fbclid') || sessionUtms.fbclid || undefined,
+    gclid: params.get('gclid') || sessionUtms.gclid || undefined,
+    ttclid: params.get('ttclid') || sessionUtms.ttclid || undefined,
+    tblci: params.get('tblci') || sessionUtms.tblci || undefined,
   };
+
+  // Persist current UTMs to session storage
+  sessionStorage.setItem('carzo_utm_params', JSON.stringify(currentUtms));
+
+  return currentUtms;
 }
 
 /**
@@ -126,4 +142,5 @@ export function clearTrackingData(): void {
   // Clear session storage
   sessionStorage.removeItem(SESSION_ID_KEY);
   sessionStorage.removeItem(CLICKED_DEALERS_KEY);
+  sessionStorage.removeItem('carzo_utm_params');
 }

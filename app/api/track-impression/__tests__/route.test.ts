@@ -16,12 +16,28 @@ vi.mock('@/lib/supabase', () => ({
   },
 }));
 
+// Helper to anonymize IP (zero out last octet for IPv4, last 80 bits for IPv6)
+function anonymizeIp(ip: string): string {
+  if (ip.includes(':')) {
+    // IPv6
+    const parts = ip.split(':');
+    // Anonymize last 5 parts (80 bits)
+    return [...parts.slice(0, 3), '0:0:0:0:0'].join(':');
+  }
+  // IPv4
+  const parts = ip.split('.');
+  if (parts.length === 4) {
+    return parts.slice(0, 3).join('.') + '.0';
+  }
+  return ip; // Return as is if not a standard IPv4/IPv6
+}
+
 // Helper to create mock NextRequest
-function createMockRequest(body: unknown): NextRequest {
+function createMockRequest(body: unknown, headers?: Record<string, string>): NextRequest {
   const request = {
     text: vi.fn().mockResolvedValue(JSON.stringify(body)),
     json: vi.fn().mockResolvedValue(body),
-    headers: new Headers(),
+    headers: new Headers(headers),
     url: 'http://localhost:3000/api/track-impression',
     method: 'POST',
   } as unknown as NextRequest;
@@ -360,6 +376,137 @@ describe('POST /api/track-impression', () => {
 
       // Should normalize to 'full' in response
       expect(data.flow).toBe('full');
+    });
+  });
+
+  describe('Attribution and User Context', () => {
+    it('should log user_agent, anonymized ip_address, user_id, session_id and all UTM params', async () => {
+      mockSuccessfulImpressionInsert();
+
+      const request = createMockRequest(
+        {
+          vehicleId: 'vehicle-123',
+          pageType: 'vdp',
+          userId: 'user-456',
+          sessionId: 'session-123',
+          flow: 'full',
+          utm_source: 'google',
+          utm_medium: 'cpc',
+          utm_campaign: 'summer_sale',
+          fbclid: 'fb_cl_id',
+          gclid: 'g_cl_id',
+          ttclid: 'tt_cl_id',
+          tblci: 'tb_cl_id',
+        },
+        {
+          'User-Agent': 'Test-Agent/1.0',
+          'X-Forwarded-For': '192.168.1.100, 10.0.0.1', // Example with multiple IPs
+        }
+      );
+
+      await POST(request);
+
+      expect(mockSupabase.insert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user_id: 'user-456',
+          session_id: 'session-123',
+          user_agent: 'Test-Agent/1.0',
+          ip_address: '192.168.1.0', // Anonymized
+          utm_source: 'google',
+          utm_medium: 'cpc',
+          utm_campaign: 'summer_sale',
+          fbclid: 'fb_cl_id',
+          gclid: 'g_cl_id',
+          ttclid: 'tt_cl_id',
+          tblci: 'tb_cl_id',
+        })
+      );
+    });
+
+    it('should anonymize IPv4 address (last octet to 0)', async () => {
+      mockSuccessfulImpressionInsert();
+
+      const request = createMockRequest(
+        {
+          vehicleId: 'v1',
+          pageType: 'vdp',
+          userId: 'u1',
+        },
+        { 'X-Forwarded-For': '192.168.1.100' }
+      );
+
+      await POST(request);
+
+      expect(mockSupabase.insert).toHaveBeenCalledWith(
+        expect.objectContaining({ ip_address: '192.168.1.0' })
+      );
+    });
+
+    it('should anonymize IPv6 address (last 5 parts to 0)', async () => {
+      mockSuccessfulImpressionInsert();
+
+      const request = createMockRequest(
+        {
+          vehicleId: 'v1',
+          pageType: 'vdp',
+          userId: 'u1',
+        },
+        { 'X-Forwarded-For': '2001:0db8:85a3:0000:0000:8a2e:0370:7334' }
+      );
+
+      await POST(request);
+
+      expect(mockSupabase.insert).toHaveBeenCalledWith(
+        expect.objectContaining({ ip_address: '2001:0db8:85a3:0:0:0:0:0' }) // Adjusted to match anonymizeIp
+      );
+    });
+
+    it('should handle missing user-agent and ip_address', async () => {
+      mockSuccessfulImpressionInsert();
+
+      const request = createMockRequest(
+        {
+          vehicleId: 'v1',
+          pageType: 'vdp',
+          userId: 'u1',
+        },
+        // No headers
+      );
+
+      await POST(request);
+
+      expect(mockSupabase.insert).toHaveBeenCalledWith(
+        expect.objectContaining({ user_agent: 'unknown', ip_address: null })
+      );
+    });
+
+    it('should handle missing UTM parameters and user/session IDs (set to null)', async () => {
+      mockSuccessfulImpressionInsert();
+
+      const request = createMockRequest(
+        {
+          vehicleId: 'v1',
+          pageType: 'vdp',
+          // No UTMs, userId, sessionId in body
+        },
+        // No headers
+      );
+
+      await POST(request);
+
+      expect(mockSupabase.insert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user_id: null,
+          session_id: null,
+          utm_source: null,
+          utm_medium: null,
+          utm_campaign: null,
+          fbclid: null,
+          gclid: null,
+          ttclid: null,
+          tblci: null,
+        })
+      );
     });
   });
 });

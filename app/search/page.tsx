@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { supabase } from "@/lib/supabase";
 import { Vehicle, VehicleWithDistance } from "@/lib/supabase";
 import { diversifyByDealer } from "@/lib/dealer-diversity";
+import { shouldApplyDiversification } from "@/lib/search-utils";
 import SearchResults from "@/components/Search/SearchResults";
 import FilterSidebar from "@/components/Search/FilterSidebar";
 import LocationDetector from "@/components/Search/LocationDetector";
@@ -248,12 +249,7 @@ async function searchVehicles(params: {
 
     // Apply dealer diversification to FULL result set to ensure stable pagination
     // ONLY if not sorting by price or mileage (user intent overrides diversification)
-    const shouldDiversify =
-      !params.sortBy ||
-      params.sortBy === "relevance" ||
-      params.sortBy === "distance" ||
-      params.sortBy === "year_desc" ||
-      params.sortBy === "year_asc";
+    const shouldDiversify = shouldApplyDiversification(params.sortBy);
 
     let finalVehicles = vehiclesWithDistance;
 
@@ -309,12 +305,7 @@ async function searchVehicles(params: {
 
   // Apply dealer diversification to FULL result set to ensure stable pagination
   // ONLY if not sorting by price or mileage (user intent overrides diversification)
-  const shouldDiversify =
-    !params.sortBy ||
-    params.sortBy === "relevance" ||
-    params.sortBy === "distance" ||
-    params.sortBy === "year_desc" ||
-    params.sortBy === "year_asc";
+  const shouldDiversify = shouldApplyDiversification(params.sortBy);
 
   let finalVehicles = vehiclesWithDistance;
 

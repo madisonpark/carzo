@@ -36,7 +36,7 @@ This document outlines the strategy for deploying the Carzo application from a l
 ### Phase 2: Vercel Configuration
 1.  **Environment Variables:** Set all keys from `.env.example` in Vercel Project Settings.
     *   *Critical:* `CRON_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`.
-    *   *Update:* Add `NEXT_PUBLIC_FB_PIXEL_ID` (newly added feature).
+    *   *Include:* `NEXT_PUBLIC_FB_PIXEL_ID` for Facebook Pixel tracking.
 2.  **Cron Jobs:** Vercel automatically parses `vercel.json`.
     *   *Note:* Check `vercel.json` for current cron job configuration and schedules.
 

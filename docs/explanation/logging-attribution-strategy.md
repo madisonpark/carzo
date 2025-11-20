@@ -16,8 +16,8 @@ We adhere to a **"Right Tool for the Job"** approach to keep costs at $0 while m
 | Domain | Tool | Role | Why? | Cost |
 | :--- | :--- | :--- | :--- | :--- |
 | **Business Data** | **Supabase** | Source of Truth | Permanent, queryable SQL for revenue/clicks. | Free (Included) |
-| **Application Errors** | **Sentry** | Crash Reporting | Best-in-class error grouping and alerts. | Free Tier |
-| **Runtime Logs** | **Logflare** | History & Debugging | Retains Vercel logs > 1 day. Structured search. | Free Tier |
+| **Application Errors** | **Sentry** | Crash Reporting | Best-in-class error grouping and alerts. | Free Tier available (verify limits) |
+| **Runtime Logs** | **Logflare** | History & Debugging | Retains Vercel logs > 1 day. Structured search. | Free Tier available (verify limits) |
 
 ---
 
@@ -25,6 +25,48 @@ We adhere to a **"Right Tool for the Job"** approach to keep costs at $0 while m
 
 ### Phase 1: Database Schema (Supabase)
 We need to enhance our tables to capture the "fingerprint" of every event for bot detection and attribution.
+
+**Migration Workflow:**
+1.  Create Migration File:
+    ```bash
+    touch supabase/migrations/$(date +%Y%m%d%H%M%S)_add_attribution_columns.sql
+    ```
+2.  **Migration SQL:**
+    ```sql
+    -- Add attribution columns to clicks table
+    ALTER TABLE clicks
+      ADD COLUMN user_agent TEXT,
+      ADD COLUMN ip_address INET,
+      ADD COLUMN utm_source TEXT,
+      ADD COLUMN utm_medium TEXT,
+      ADD COLUMN utm_campaign TEXT,
+      ADD COLUMN fbclid TEXT,
+      ADD COLUMN gclid TEXT;
+
+    -- Add indexes for reporting queries
+    CREATE INDEX idx_clicks_utm_campaign ON clicks(utm_campaign);
+    CREATE INDEX idx_clicks_utm_source ON clicks(utm_source);
+
+    -- Repeat for impressions table
+    ALTER TABLE impressions
+      ADD COLUMN user_agent TEXT,
+      ADD COLUMN ip_address INET,
+      ADD COLUMN utm_source TEXT,
+      ADD COLUMN utm_medium TEXT,
+      ADD COLUMN utm_campaign TEXT,
+      ADD COLUMN fbclid TEXT,
+      ADD COLUMN gclid TEXT;
+
+    -- Add RLS policies for IP privacy (admin-only access)
+    -- Ensure your tables have RLS enabled first
+    ```
+3.  **Test Locally:**
+    ```bash
+    supabase start
+    supabase migration up
+    # Verify columns exist
+    supabase db execute "SELECT column_name FROM information_schema.columns WHERE table_name = 'clicks' AND column_name LIKE 'utm%';"
+    ```
 
 **Action:** Add columns to `clicks` and `impressions` tables:
 *   `user_agent` (text) - *Bot detection*
@@ -53,10 +95,15 @@ We need to propagate these parameters from the user's browser to our database.
 *   Update `hooks/useClickTracking.ts`, `VehicleCard.tsx`, and `VehicleBridgePage.tsx`.
 *   Pass the enhanced UTM data in the API fetch calls.
 
-**Action 4: Update Tests**
-*   Update `lib/__tests__/user-tracking.test.ts` to cover `fbclid`/`gclid` extraction.
-*   Update `app/api/track-click/__tests__/route.test.ts` and `app/api/track-impression/__tests__/route.test.ts` for new fields.
-*   Ensure 95%+ coverage is maintained (revenue-critical code).
+### Phase 2b: Testing Requirements (CRITICAL)
+**Before implementing changes to revenue-critical files:**
+1.  Run existing tests: `npm test lib/user-tracking lib/api/track-click`
+2.  Update tests **BEFORE** modifying code (TDD workflow).
+3.  Verify coverage: `npm run test:coverage` (must maintain **95%+**).
+4.  All tests must pass before committing.
+
+*   **Action:** Update `lib/__tests__/user-tracking.test.ts` to cover `fbclid`/`gclid` extraction and sessionStorage persistence.
+*   **Action:** Update `app/api/track-click/__tests__/route.test.ts` for new fields (User-Agent, IP, UTM propagation).
 
 ### Phase 3: Error Tracking (Sentry)
 **Action:**

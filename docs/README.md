@@ -60,6 +60,7 @@ Each includes: Request/response schemas, rate limits, error codes, curl examples
 - `components/overview.md` - Visual component gallery
 
 #### Other Reference Docs
+- `tracking/facebook-pixel.md` - Events, triggers, and implementation details
 - `database-schema.md` - Tables, columns, indexes, RLS policies (with ERD)
 - `environment-variables.md` - All env vars with descriptions
 - `vercel-config.md` - Cron jobs, deployment settings
@@ -183,4 +184,4 @@ When adding or updating documentation:
 - [CLAUDE.md](../CLAUDE.md) - Claude Code instructions
 - [contributing/documentation-workflow.md](./contributing/documentation-workflow.md) - How to update docs
 
-**Last Updated**: 2025-11-13
+**Last Updated**: 2025-11-20

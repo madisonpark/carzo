@@ -7,6 +7,7 @@ import { useClickTracking } from '@/hooks/useClickTracking';
 import { Badge, Button } from '@/components/ui';
 import { isVDPOnlyFlow, UserFlow } from '@/lib/flow-detection';
 import { getUserId, getSessionId } from '@/lib/user-tracking';
+import { trackPurchase } from '@/lib/facebook-pixel';
 
 interface VehicleBridgePageProps {
   vehicle: Vehicle;
@@ -459,6 +460,9 @@ function VDPRedirect({ vehicle }: { vehicle: Vehicle }) {
       }),
       keepalive: true,
     }).catch((err) => console.error('Failed to track impression:', err));
+
+    // Fire Facebook Pixel Purchase event
+    trackPurchase();
 
     // Track click
     fetch('/api/track-click', {

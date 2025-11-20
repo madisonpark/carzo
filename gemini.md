@@ -87,6 +87,16 @@ Do NOT use it for simple queries like "Find the definition of function X" (use `
 6.  **Pushing**
     - Do not push to remote unless explicitly asked or if it's a necessary step in the defined workflow (e.g. "Create a PR").
 
+### Pre-PR Documentation & QA
+
+**Before creating a PR:**
+1.  **Documentation Review**: Consider if any documentation (tutorials, how-to, reference, explanation) needs to be updated or created. Follow standards in `docs/README.md`.
+2.  **Comprehensive QA Loop**:
+    - Run a thorough QA pass on your changes.
+    - If issues are found: Fix them -> Run QA again.
+    - **Repeat** until no significant issues are found.
+    - Only *then* proceed to create the PR.
+
 ### Pull Request Standards
 
 **PR Structure:**

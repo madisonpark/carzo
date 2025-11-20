@@ -177,6 +177,12 @@ This file contains **Claude Code-specific instructions** for tool usage, task ma
 
 **Branch naming:**
 - `feature/` - New features
+- `fix/` - Bug fixes
+- `docs/` - Documentation
+- `refactor/` - Code refactoring
+- `test/` - Test additions
+
+**Commit format:**
 
 **Commit format:**
 - `feat:` - New feature

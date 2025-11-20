@@ -1,70 +1,46 @@
 
 import { describe, it, expect, vi } from 'vitest';
-import SearchPage from '../page'; // Import the default export
+import SearchPage from '../page';
 import * as diversityModule from '@/lib/dealer-diversity';
 
 // Mocks
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({
-        eq: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                gte: vi.fn(() => ({
-                  lte: vi.fn(() => ({
-                    gte: vi.fn(() => ({
-                      lte: vi.fn(() => ({
-                        // This handles the end of buildFilterQuery() chain
-                        select: vi.fn(() => ({
-                          limit: vi.fn(() => Promise.resolve({ data: [], count: 0 })),
-                        })),
-                      })),
-                    })),
-                  })),
-                })),
-              })),
-            })),
-          })),
-          // For simple filter queries
-          order: vi.fn(() => ({
-            limit: vi.fn(() => Promise.resolve({ 
-              data: [
-                { id: '1', dealer_id: 'A', year: 2023 },
-                { id: '2', dealer_id: 'A', year: 2022 }
-              ], 
-              count: 2 
-            })),
-          })),
-          // For the filter options queries that chain immediately after eq or select
-          select: vi.fn(() => ({
-            limit: vi.fn(() => Promise.resolve({
-              data: [],
-              count: 0
-            }))
-          }))
-        })),
-        // For queries that chain immediately after select
-        order: vi.fn(() => ({
-          limit: vi.fn(() => Promise.resolve({ 
-            data: [
-              { id: '1', dealer_id: 'A', year: 2023 },
-              { id: '2', dealer_id: 'A', year: 2022 }
-            ], 
-            count: 2 
-          })),
-        })),
-        select: vi.fn(() => ({
-          limit: vi.fn(() => Promise.resolve({
-            data: [],
-            count: 0
-          }))
-        }))
-      })),
-    })),
-  },
-}));
+vi.mock('@/lib/supabase', () => {
+  // Create a flexible recursive proxy that handles ANY method chain
+  const createRecursiveMock = (returnValue: any) => {
+    const handler: ProxyHandler<any> = {
+      get: (target, prop) => {
+        // If it's a promise-like call (then/catch), return the final value
+        if (prop === 'then') {
+          return returnValue.then.bind(returnValue);
+        }
+        // If it's limit(), return the final promise result
+        if (prop === 'limit') {
+          return vi.fn(() => returnValue);
+        }
+        // For any other method (select, eq, order, etc.), return the proxy itself
+        return vi.fn(() => new Proxy(() => {}, handler));
+      },
+      apply: (target, thisArg, args) => {
+        return new Proxy(() => {}, handler);
+      }
+    };
+    return new Proxy(() => {}, handler);
+  };
+
+  const mockResult = Promise.resolve({
+    data: [
+      { id: '1', dealer_id: 'A', year: 2023 },
+      { id: '2', dealer_id: 'A', year: 2022 }
+    ],
+    count: 2
+  });
+
+  return {
+    supabase: {
+      from: vi.fn(() => createRecursiveMock(mockResult)),
+    },
+  };
+});
 
 // Mock component dependencies to avoid rendering issues in node environment
 vi.mock('@/components/Search/SearchResults', () => ({ default: () => null }));
@@ -94,4 +70,3 @@ describe('Search Page - Conditional Diversification', () => {
     expect(spy).not.toHaveBeenCalled();
   });
 });
-

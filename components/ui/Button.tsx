@@ -21,18 +21,18 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           // Variant styles
           {
             // Primary (blue) - Main CTAs (Check Availability)
-            'bg-trust-blue text-white hover:opacity-90 focus-visible:ring-trust-blue':
+            'bg-trust-blue text-white hover:brightness-90 active:scale-98 focus-visible:ring-trust-blue':
               variant === 'primary' || variant === 'brand',
             // Dealer (violet) - Dealer-specific actions (Phase 2)
             'bg-dealer text-white hover:bg-dealer-hover focus-visible:ring-dealer': variant === 'dealer',
             // Secondary - Muted actions
-            'bg-muted text-foreground hover:bg-slate-300 focus-visible:ring-slate-400':
+            'bg-muted text-foreground hover:bg-trust-elevated active:scale-98 focus-visible:ring-slate-400':
               variant === 'secondary',
             // Outline - Bordered buttons
-            'border border-border bg-white text-foreground hover:bg-muted focus-visible:ring-slate-400':
+            'border border-border bg-white text-foreground hover:bg-trust-elevated active:scale-98 focus-visible:ring-slate-400':
               variant === 'outline',
             // Ghost - Text-only buttons
-            'text-foreground hover:bg-muted focus-visible:ring-slate-400 shadow-none': variant === 'ghost',
+            'text-foreground hover:bg-trust-elevated active:scale-98 focus-visible:ring-slate-400 shadow-none': variant === 'ghost',
           },
           // Size styles
           {

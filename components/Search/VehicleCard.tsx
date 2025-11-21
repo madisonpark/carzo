@@ -98,18 +98,17 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
           }}
         />
         
-        {/* Overlay with Price */}
-        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+        {/* Price - Now directly on image, adjust positioning */}
         <div className="absolute bottom-3 left-3 text-white font-bold text-lg shadow-black/20 drop-shadow-sm">
           {formattedPrice}
         </div>
 
         {/* Badge */}
-        {vehicle.condition && (
+        {conditionText === "New" && (
           <div className={`absolute top-3 left-3 flex items-center gap-1 font-bold text-[10px] uppercase tracking-wider px-2 py-1 rounded-sm shadow-sm ${
             conditionText === "New" 
               ? "bg-blue-100 text-blue-800 border border-blue-200" 
-              : "bg-gray-100 text-gray-800 border border-gray-200"
+              : "bg-gray-100 text-gray-800 border border-gray-200" // This part will now be dead code for "Used"
           }`}>
             {conditionText}
           </div>
@@ -156,7 +155,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
 
         {/* Primary CTA */}
         <button
-          className="w-full bg-trust-blue text-trust-on-brand px-4 py-3 rounded-md font-semibold text-sm hover:opacity-90 flex items-center justify-center gap-2 transition-opacity shadow-sm"
+          className="w-full bg-trust-blue text-trust-on-brand px-4 py-3 rounded-md font-semibold text-sm hover:brightness-90 active:scale-98 flex items-center justify-center gap-2 transition-all shadow-sm"
         >
           Check Availability
           <ArrowRight className="w-4 h-4" />

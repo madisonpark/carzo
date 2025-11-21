@@ -35,7 +35,8 @@ describe('Button', () => {
       const button = screen.getByRole('button');
       expect(button).toHaveClass('bg-trust-blue');
       expect(button).toHaveClass('text-white');
-      expect(button).toHaveClass('hover:opacity-90');
+      expect(button).toHaveClass('hover:brightness-90');
+      expect(button).toHaveClass('active:scale-98');
     });
 
     it('should render brand variant', () => {
@@ -44,7 +45,8 @@ describe('Button', () => {
       const button = screen.getByRole('button');
       expect(button).toHaveClass('bg-trust-blue');
       expect(button).toHaveClass('text-white');
-      expect(button).toHaveClass('hover:opacity-90');
+      expect(button).toHaveClass('hover:brightness-90');
+      expect(button).toHaveClass('active:scale-98');
     });
 
     it('should render dealer variant', () => {
@@ -62,7 +64,8 @@ describe('Button', () => {
       const button = screen.getByRole('button');
       expect(button).toHaveClass('bg-muted');
       expect(button).toHaveClass('text-foreground');
-      expect(button).toHaveClass('hover:bg-slate-300');
+      expect(button).toHaveClass('hover:bg-trust-elevated');
+      expect(button).toHaveClass('active:scale-98');
     });
 
     it('should render outline variant', () => {
@@ -72,7 +75,8 @@ describe('Button', () => {
       expect(button).toHaveClass('border');
       expect(button).toHaveClass('border-border');
       expect(button).toHaveClass('bg-white');
-      expect(button).toHaveClass('hover:bg-muted');
+      expect(button).toHaveClass('hover:bg-trust-elevated');
+      expect(button).toHaveClass('active:scale-98');
     });
 
     it('should render ghost variant', () => {
@@ -80,7 +84,8 @@ describe('Button', () => {
 
       const button = screen.getByRole('button');
       expect(button).toHaveClass('text-foreground');
-      expect(button).toHaveClass('hover:bg-muted');
+      expect(button).toHaveClass('hover:bg-trust-elevated');
+      expect(button).toHaveClass('active:scale-98');
       expect(button).not.toHaveClass('bg-primary');
       expect(button).not.toHaveClass('bg-brand');
     });

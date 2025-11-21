@@ -82,9 +82,11 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
               Located in: {vehicle.dealer_city}, {vehicle.dealer_state}
             </span>
           </div>
-          <Badge variant="brand" className="rounded-full">
-            {condition}
-          </Badge>
+          {condition === 'New' && (
+            <Badge variant="brand" className="rounded-full">
+              {condition}
+            </Badge>
+          )}
         </div>
       </div>
 

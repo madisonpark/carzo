@@ -57,7 +57,7 @@
     --text-muted: #64748B;   /* Slate-500 */
     --text-on-brand: #FFFFFF;
 
-    --brand-gold: #CA8A04;   /* Yellow-600 */
+    --brand-gold: #D4AF37;   /* Metallic Gold */
     --brand-navy: #0F172A;   /* Slate-900 (Primary Action) */
     --brand-link: #1D4ED8;   /* Blue-700 */
 
@@ -104,7 +104,7 @@
 
     --text-primary: #F8FAFC; /* Slate-50 */
     --text-muted: #94A3B8;   /* Slate-400 */
-    --text-on-brand: #FFFFFF;
+    --text-on-brand: #0F172A; /* Slate-900 (Text on inverted button) */
 
     --brand-gold: #FACC15;   /* Yellow-400 */
     --brand-navy: #E2E8F0;   /* Slate-200 (Primary Action in Dark?) - Wait, usually actions are darker or inverted. 

@@ -23,54 +23,18 @@ export function LocationSelector() {
   const [error, setError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-detect or load from cache/URL on mount
-  // Fix: Memoize to prevent dependency loop, but dependencies are tricky.
-  // Better to keep it outside or use a ref if we want to avoid re-creating it.
-  // Or simplify: we only need this on mount or when we *decide* to re-detect.
-  const detectLocation = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await fetch("/api/detect-location");
-      if (!response.ok) throw new Error("Failed to detect location");
+  const detectLocationRef = useRef(false);
+  const LOCATION_MATCH_THRESHOLD = 0.01;
 
-      const data = await response.json();
-      if (data.success && data.location) {
-        const loc = data.location;
-        // We need to call the update logic here, but we can't easily call updateLocationState 
-        // if it's defined below. Let's duplicate the logic or move it up.
-        // Moving logic inside or creating a separate helper.
-        setLocation(loc);
-        sessionStorage.setItem("userLocation", JSON.stringify(loc));
-        
-        // Update URL
-        // Note: We need to get current params, which we have from useSearchParams (but it's read-onlyish)
-        // We construct new URLSearchParams from window or the hook result.
-        // Using window.location.search is sometimes safer for "current" state in callbacks
-        // but useSearchParams is the Next.js way.
-        const params = new URLSearchParams(window.location.search);
-        params.set("lat", loc.latitude.toString());
-        params.set("lon", loc.longitude.toString());
-        router.replace(`/search?${params.toString()}`, { scroll: false });
-      }
-    } catch (error) {
-      // Safe error logging
-      if (process.env.NODE_ENV !== "production") {
-        console.error("Error detecting location:", error);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [router]); // Removed searchParams from deps to avoid loop, added router
-
-  const updateLocationState = (loc: UserLocation) => {
+  const updateLocationState = useCallback((loc: UserLocation) => {
     setLocation(loc);
     sessionStorage.setItem("userLocation", JSON.stringify(loc));
     
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(searchParams.toString());
     params.set("lat", loc.latitude.toString());
     params.set("lon", loc.longitude.toString());
     router.replace(`/search?${params.toString()}`, { scroll: false });
-  };
+  }, [router, searchParams]);
 
   useEffect(() => {
     // Priority: URL -> Cache -> Auto-detect
@@ -78,11 +42,33 @@ export function LocationSelector() {
     const lon = searchParams.get("lon");
     const cachedLocation = sessionStorage.getItem("userLocation");
 
+    const detectLocation = async () => {
+      if (detectLocationRef.current) return;
+      detectLocationRef.current = true;
+      setLoading(true);
+      try {
+        const response = await fetch("/api/detect-location");
+        if (!response.ok) throw new Error("Failed to detect location");
+
+        const data = await response.json();
+        if (data.success && data.location) {
+          updateLocationState(data.location);
+        }
+      } catch (error) {
+        if (process.env.NODE_ENV !== "production") {
+          console.error("Error detecting location:", error);
+        }
+      } finally {
+        setLoading(false);
+        detectLocationRef.current = false;
+      }
+    };
+
     if (lat && lon) {
       if (cachedLocation) {
         const loc = JSON.parse(cachedLocation);
         // Simple check if cache matches URL roughly
-        if (Math.abs(loc.latitude - parseFloat(lat)) < 0.01) {
+        if (Math.abs(loc.latitude - parseFloat(lat)) < LOCATION_MATCH_THRESHOLD) {
            setLocation(loc);
            return;
         }
@@ -94,8 +80,7 @@ export function LocationSelector() {
     } else {
       detectLocation();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run only on mount (and when deps change, but we want to avoid loop)
+  }, [searchParams, updateLocationState]); 
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -167,7 +152,7 @@ export function LocationSelector() {
           type="submit"
           size="sm"
           disabled={loading || zipCode.length !== 5}
-          className="h-8 px-3 bg-blue-600 hover:bg-blue-700 text-white"
+          className="h-8 px-3 bg-trust-blue hover:brightness-90 text-white"
           aria-label="Update location"
         >
           {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : "Update"}

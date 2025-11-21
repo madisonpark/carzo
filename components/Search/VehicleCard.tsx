@@ -5,8 +5,8 @@ import Link from "next/link";
 import { Camera, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui";
+import { useSearchParams } from "next/navigation";
 import {
-  getFlowFromUrl,
   preserveFlowParam,
   isDirectFlow,
   UserFlow,
@@ -19,10 +19,8 @@ interface VehicleCardProps {
 }
 
 export default function VehicleCard({ vehicle }: VehicleCardProps) {
-  const [flow] = useState<UserFlow>(() => {
-    if (typeof window === "undefined") return "full";
-    return getFlowFromUrl();
-  });
+  const searchParams = useSearchParams();
+  const flow = (searchParams.get("flow") as UserFlow) || "full";
 
   const formattedPrice =
     vehicle.price && vehicle.price > 0
@@ -126,7 +124,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
         <div className="grow"></div>
 
         <Button
-          className="w-full bg-trust-blue hover:brightness-90 active:scale-98"
+          className="w-full"
           aria-label={`Check availability for ${vehicle.year} ${vehicle.make} ${vehicle.model}`}
         >
           Check Availability

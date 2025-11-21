@@ -3,6 +3,7 @@
 import { Vehicle } from "@/lib/supabase";
 import VehicleCard from "./VehicleCard";
 import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui";
 import { diversifyByDealer } from "@/lib/dealer-diversity";
 
@@ -19,6 +20,8 @@ export default function SearchResults({
   total,
   currentFilters,
 }: SearchResultsProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [vehicleList, setVehicleList] = useState<Vehicle[]>(initialVehicles);
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -96,6 +99,12 @@ export default function SearchResults({
     }
   };
 
+  const clearFilters = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    const flow = params.get("flow");
+    router.push(flow ? `/search?flow=${flow}` : "/search");
+  };
+
   if (vehicleList.length === 0) {
     return (
       <div className="bg-white rounded-lg border border-border p-12 text-center">
@@ -117,7 +126,7 @@ export default function SearchResults({
         <h3 className="text-lg font-bold text-gray-900 mb-1">No vehicles found</h3>
         <p className="text-gray-500 mb-6">Try adjusting your filters.</p>
         <Button
-          onClick={() => window.location.href = '/search'}
+          onClick={clearFilters}
           className="bg-trust-blue text-white hover:brightness-90 active:scale-98"
         >
           Clear Filters
@@ -142,9 +151,11 @@ export default function SearchResults({
             id="sort-select"
             value={currentFilters.sortBy || "relevance"}
             onChange={(e) => {
-              const params = new URLSearchParams(window.location.search);
+              const params = new URLSearchParams(searchParams.toString());
               params.set("sortBy", e.target.value);
-              window.location.search = params.toString();
+              // Reset to page 1 logic is handled by URL change triggering server component re-render or initialVehicles update
+              params.delete("page"); 
+              router.push(`/search?${params.toString()}`);
             }}
             className="text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 cursor-pointer"
           >
@@ -179,7 +190,17 @@ export default function SearchResults({
       {hasMore && (
         <div className="mt-8 text-center">
           {error && (
-            <p className="text-red-500 mb-4 text-sm">{error}</p>
+            <div className="mb-4 flex flex-col items-center gap-2">
+              <p className="text-red-500 text-sm">{error}</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={loadMoreVehicles}
+                className="text-red-600 border-red-200 hover:bg-red-50"
+              >
+                Retry
+              </Button>
+            </div>
           )}
           <button
             onClick={loadMoreVehicles}

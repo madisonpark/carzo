@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { X, SlidersHorizontal } from "lucide-react";
 import { Input, Badge, Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
@@ -54,13 +54,14 @@ export default function FilterSidebar({
   currentFilters,
 }: FilterSidebarProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [minPrice, setMinPrice] = useState(currentFilters.minPrice || "");
   const [maxPrice, setMaxPrice] = useState(currentFilters.maxPrice || "");
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   const updateFilter = useCallback(
     (key: string, value: string) => {
-      const params = new URLSearchParams(window.location.search);
+      const params = new URLSearchParams(searchParams.toString());
       if (value) {
         params.set(key, value);
       } else {
@@ -69,7 +70,7 @@ export default function FilterSidebar({
       params.delete("page"); // Reset pagination
       router.push(`/search?${params.toString()}`);
     },
-    [router]
+    [router, searchParams]
   );
 
   const updateSort = (sortBy: string) => {
@@ -95,7 +96,9 @@ export default function FilterSidebar({
   }, [maxPrice, currentFilters.maxPrice, updateFilter]);
 
   const clearFilters = () => {
-    router.push("/search");
+    const params = new URLSearchParams(searchParams.toString());
+    const flow = params.get("flow");
+    router.push(flow ? `/search?flow=${flow}` : "/search");
   };
 
   const hasActiveFilters = Object.keys(currentFilters).some(

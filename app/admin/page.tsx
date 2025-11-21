@@ -100,7 +100,7 @@ function getFlowWinner(
   return "Tie";
 }
 
-async function getAnalytics(): Promise<AnalyticsData> {
+async function getAnalyticsData(): Promise<AnalyticsData> {
   // Get total clicks with flow information
   const { data: allClicks } = await supabaseAdmin
     .from("clicks")
@@ -266,7 +266,7 @@ export default async function AdminDashboard() {
     redirect("/admin/login");
   }
 
-  const analytics = await getAnalytics();
+  const analytics = await getAnalyticsData();
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -403,12 +403,12 @@ export default async function AdminDashboard() {
                       className="flex-1 bg-slate-200 rounded-full h-2"
                       role="progressbar"
                       aria-label="Flow A billable rate"
-                      aria-valuenow={(Math.min(
+                      aria-valuenow={Math.min(
                         100,
                         analytics.flowPerformance.direct.billableRate || 0
-                      )).toString()}
-                      aria-valuemin={(0).toString()}
-                      aria-valuemax={(100).toString()}
+                      )}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
                     >
                       <div
                         className="bg-green-500 h-2 rounded-full transition-all duration-500 w-progress"
@@ -480,12 +480,12 @@ export default async function AdminDashboard() {
                         className="flex-1 bg-slate-200 rounded-full h-2"
                         role="progressbar"
                         aria-label="Flow B click-through rate"
-                        aria-valuenow={(Math.min(
+                        aria-valuenow={Math.min(
                           100,
                           analytics.flowPerformance.vdpOnly.ctr || 0
-                        )).toString()}
-                        aria-valuemin={(0).toString()}
-                        aria-valuemax={(100).toString()}
+                        )}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
                       >
                         <div
                           className="bg-blue-500 h-2 rounded-full transition-all duration-500 w-progress"
@@ -509,15 +509,15 @@ export default async function AdminDashboard() {
                         className="flex-1 bg-slate-200 rounded-full h-2"
                         role="progressbar"
                         aria-label="Flow B billable rate"
-                        aria-valuenow={(Math.min(
+                        aria-valuenow={Math.min(
                           100,
                           analytics.flowPerformance.vdpOnly.billableRate || 0
-                        )).toString()}
-                        aria-valuemin={(0).toString()}
-                        aria-valuemax={(100).toString()}
+                        )}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
                       >
                         <div
-                          className="bg-green-500 h-2 rounded-full transition-all duration-300 w-progress"
+                          className="bg-green-500 h-2 rounded-full transition-all duration-500 w-progress"
                           style={{
                             '--progress-width': `${Math.min(
                               100,
@@ -577,12 +577,12 @@ export default async function AdminDashboard() {
                       className="flex-1 bg-slate-200 rounded-full h-2"
                       role="progressbar"
                       aria-label="Flow C billable rate"
-                      aria-valuenow={(Math.min(
+                      aria-valuenow={Math.min(
                         100,
                         analytics.flowPerformance.full.billableRate || 0
-                      )).toString()}
-                      aria-valuemin={(0).toString()}
-                      aria-valuemax={(100).toString()}
+                      )}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
                     >
                       <div
                         className="bg-green-500 h-2 rounded-full transition-all duration-500 w-progress"

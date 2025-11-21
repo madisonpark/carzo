@@ -36,57 +36,62 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
   const [downloading, setDownloading] = useState<string | null>(null);
 
   // Combine all campaigns into one sortable list (memoized for performance)
-  const allCampaigns = useMemo<Campaign[]>(() => [
-    // Body styles (all of them, will be globally sorted)
-    ...Object.entries(initialData.snapshot.by_body_style || {}).map(([name, count]) => ({
-      name: formatBodyStyle(name),
-      type: 'Body Style',
-      vehicles: count,
-      campaignType: 'body_style',
-      campaignValue: name,
-    })),
+  const allCampaigns = useMemo<Campaign[]>(() => {
+    // Safety check: return empty list if data is missing
+    if (!initialData?.snapshot || !initialData?.combinations) return [];
 
-    // Makes (sort by count, then take top N)
-    ...Object.entries(initialData.snapshot.by_make || {})
-      .sort((a, b) => (b[1] as number) - (a[1] as number)) // Sort by vehicle count FIRST
-      .slice(0, TOP_MAKES_LIMIT) // Then take top N
-      .map(([name, count]) => ({
-        name: name,
-        type: 'Make',
+    return [
+      // Body styles (all of them, will be globally sorted)
+      ...Object.entries(initialData.snapshot.by_body_style || {}).map(([name, count]) => ({
+        name: formatBodyStyle(name),
+        type: 'Body Style',
         vehicles: count,
-        campaignType: 'make',
+        campaignType: 'body_style',
         campaignValue: name,
       })),
 
-    // Make + Body Style combos (sort by count, then take top N)
-    ...(initialData.combinations.make_bodystyle || [])
-      .sort((a, b) => b.vehicle_count - a.vehicle_count) // Sort by vehicle count FIRST
-      .slice(0, TOP_COMBOS_LIMIT) // Then take top N
-      .map((combo) => {
-        const parts = combo.combo_name.split(' ');
-        const make = parts[0];
-        const bodyStyle = parts.slice(1).join(' ');
-        return {
-          name: `${make} ${formatBodyStyle(bodyStyle)}`,
-          type: 'Make + Body',
-          vehicles: combo.vehicle_count,
-          campaignType: 'make_body_style',
-          campaignValue: combo.combo_name,
-        };
-      }),
+      // Makes (sort by count, then take top N)
+      ...Object.entries(initialData.snapshot.by_make || {})
+        .sort((a, b) => (b[1] as number) - (a[1] as number)) // Sort by vehicle count FIRST
+        .slice(0, TOP_MAKES_LIMIT) // Then take top N
+        .map(([name, count]) => ({
+          name: name,
+          type: 'Make',
+          vehicles: count,
+          campaignType: 'make',
+          campaignValue: name,
+        })),
 
-    // Make + Model combos (sort by count, then take top N)
-    ...(initialData.combinations.make_model || [])
-      .sort((a, b) => b.vehicle_count - a.vehicle_count) // Sort by vehicle count FIRST
-      .slice(0, TOP_COMBOS_LIMIT) // Then take top N
-      .map((combo) => ({
-        name: combo.combo_name,
-        type: 'Make + Model',
-        vehicles: combo.vehicle_count,
-        campaignType: 'make_model',
-        campaignValue: combo.combo_name,
-      })),
-  ].sort((a, b) => b.vehicles - a.vehicles), [initialData]); // Sort all campaigns by vehicle count descending
+      // Make + Body Style combos (sort by count, then take top N)
+      ...(initialData.combinations.make_bodystyle || [])
+        .sort((a, b) => b.vehicle_count - a.vehicle_count) // Sort by vehicle count FIRST
+        .slice(0, TOP_COMBOS_LIMIT) // Then take top N
+        .map((combo) => {
+          const parts = combo.combo_name.split(' ');
+          const make = parts[0];
+          const bodyStyle = parts.slice(1).join(' ');
+          return {
+            name: `${make} ${formatBodyStyle(bodyStyle)}`,
+            type: 'Make + Body',
+            vehicles: combo.vehicle_count,
+            campaignType: 'make_body_style',
+            campaignValue: combo.combo_name,
+          };
+        }),
+
+      // Make + Model combos (sort by count, then take top N)
+      ...(initialData.combinations.make_model || [])
+        .sort((a, b) => b.vehicle_count - a.vehicle_count) // Sort by vehicle count FIRST
+        .slice(0, TOP_COMBOS_LIMIT) // Then take top N
+        .map((combo) => ({
+          name: combo.combo_name,
+          type: 'Make + Model',
+          vehicles: combo.vehicle_count,
+          campaignType: 'make_model',
+          campaignValue: combo.combo_name,
+        })),
+    ].sort((a, b) => b.vehicles - a.vehicles);
+  }, [initialData]); // Sort all campaigns by vehicle count descending
 
   const handleDownload = async (campaign: Campaign) => {
     setDownloading(campaign.campaignValue);
@@ -212,7 +217,8 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
           <div className="p-6 border-b border-slate-200">
             <h2 className="text-xl font-bold text-slate-900 mb-1">Available Campaigns</h2>
             <p className="text-sm text-slate-600">
-              {initialData.snapshot.total_vehicles.toLocaleString()} vehicles • Click to download
+              {/* Safely access total_vehicles with fallback to '0' */}
+              {initialData?.snapshot?.total_vehicles?.toLocaleString() ?? '0'} vehicles • Click to download
               multi-metro targeting
             </p>
           </div>
@@ -249,7 +255,8 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
                     </td>
                     <td className="py-4 px-4 text-right">
                       <span className="text-lg font-bold text-slate-900">
-                        {campaign.vehicles.toLocaleString()}
+                        {/* Safely access vehicles count with fallback */}
+                        {campaign.vehicles?.toLocaleString() ?? '0'}
                       </span>
                     </td>
                     <td className="py-4 px-6 text-center">

@@ -99,6 +99,8 @@ interface UtmParams {
   source?: string;
   medium?: string;
   campaign?: string;
+  term?: string;
+  content?: string;
   fbclid?: string;
   gclid?: string;
   ttclid?: string; // TikTok Click ID
@@ -118,6 +120,8 @@ export function getUtmParams(): UtmParams {
     source: params.get('utm_source') || sessionUtms.source || undefined,
     medium: params.get('utm_medium') || sessionUtms.medium || undefined,
     campaign: params.get('utm_campaign') || sessionUtms.campaign || undefined,
+    term: params.get('utm_term') || sessionUtms.term || undefined,
+    content: params.get('utm_content') || sessionUtms.content || undefined,
     fbclid: params.get('fbclid') || sessionUtms.fbclid || undefined,
     gclid: params.get('gclid') || sessionUtms.gclid || undefined,
     ttclid: params.get('ttclid') || sessionUtms.ttclid || undefined,

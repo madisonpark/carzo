@@ -418,15 +418,31 @@ describe('getUtmParams()', () => {
       expect(getUtmParams()).toEqual({ tblci: 'taboola_id_012' });
     });
 
+    it('should extract utm_term parameter', () => {
+      global.window.location = new URL(
+        'http://localhost:3000/search?utm_term=running_shoes'
+      ) as any;
+      expect(getUtmParams()).toEqual({ term: 'running_shoes' });
+    });
+
+    it('should extract utm_content parameter', () => {
+      global.window.location = new URL(
+        'http://localhost:3000/search?utm_content=logolink'
+      ) as any;
+      expect(getUtmParams()).toEqual({ content: 'logolink' });
+    });
+
     it('should extract all attribution parameters', () => {
       global.window.location = new URL(
-        'http://localhost:3000/search?utm_source=google&utm_medium=display&utm_campaign=toyota_2024&fbclid=fb_id_abc&gclid=g_id_xyz&ttclid=tt_id_123&tblci=tb_id_456'
+        'http://localhost:3000/search?utm_source=google&utm_medium=display&utm_campaign=toyota_2024&utm_term=suv&utm_content=video_ad&fbclid=fb_id_abc&gclid=g_id_xyz&ttclid=tt_id_123&tblci=tb_id_456'
       ) as any;
 
       expect(getUtmParams()).toEqual({
         source: 'google',
         medium: 'display',
         campaign: 'toyota_2024',
+        term: 'suv',
+        content: 'video_ad',
         fbclid: 'fb_id_abc',
         gclid: 'g_id_xyz',
         ttclid: 'tt_id_123',
@@ -455,6 +471,8 @@ describe('getUtmParams()', () => {
       expect(params.source).toBe('facebook');
       expect(params.medium).toBeUndefined();
       expect(params.campaign).toBeUndefined();
+      expect(params.term).toBeUndefined();
+      expect(params.content).toBeUndefined();
       expect(params.fbclid).toBeUndefined();
       expect(params.gclid).toBeUndefined();
       expect(params.ttclid).toBeUndefined();
@@ -481,6 +499,8 @@ describe('getUtmParams()', () => {
       expect(params.source).toBeUndefined(); // Empty string converted to undefined
       expect(params.medium).toBe('cpc');
       expect(params.campaign).toBeUndefined();
+      expect(params.term).toBeUndefined();
+      expect(params.content).toBeUndefined();
       expect(params.fbclid).toBeUndefined();
       expect(params.gclid).toBeUndefined();
       expect(params.ttclid).toBeUndefined();

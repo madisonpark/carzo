@@ -74,6 +74,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
       target={linkTarget}
       rel={linkRel}
       onClick={handleClick}
+      aria-label={`Check availability for ${vehicle.year} ${vehicle.make} ${vehicle.model}`}
       className="group bg-trust-card border border-border hover:border-foreground/30 transition-colors rounded-lg overflow-hidden flex flex-col h-full outline-none focus-visible:ring-2 focus-visible:ring-trust-blue"
     >
       {/* Image Section */}
@@ -123,17 +124,12 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
 
         <div className="grow"></div>
 
-        <Link
-          href={linkHref}
-          target={linkTarget}
-          rel={linkRel}
-          onClick={handleClick}
-          className="w-full inline-flex items-center justify-center rounded-md font-semibold shadow-sm transition-all duration-300 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-trust-blue text-white hover:brightness-90 active:scale-98 focus-visible:ring-trust-blue px-6 py-3 text-base"
-          aria-label={`Check availability for ${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+        <div
+          className="w-full inline-flex items-center justify-center rounded-md font-semibold shadow-sm transition-all duration-300 outline-none bg-trust-blue text-white px-6 py-3 text-base pointer-events-none"
         >
           Check Availability
           <ChevronRight className="ml-1 w-5 h-5" />
-        </Link>
+        </div>
       </div>
     </Link>
   );

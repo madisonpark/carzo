@@ -121,7 +121,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
         <div className="grow"></div>
 
         <button
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded py-3 shadow-sm flex items-center justify-center transition-colors active:scale-[0.98]"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded py-3 shadow-sm flex items-center justify-center transition-colors active:scale-[0.98] cursor-pointer"
         >
           Check Availability
           <ChevronRight className="ml-1 w-5 h-5" />

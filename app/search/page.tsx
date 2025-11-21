@@ -391,17 +391,17 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
       {/* Header */}
       <div className="bg-trust-card border-b border-trust-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 lg:py-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 lg:gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-trust-text">
+              <h1 className="text-2xl lg:text-3xl font-bold text-trust-text">
                 {params.make
                   ? `${params.make}${
                       params.model ? ` ${params.model}` : ""
                     } Vehicles`
                   : "Inventory"}
               </h1>
-              <p className="text-trust-muted mt-1">
+              <p className="text-sm text-trust-muted mt-1">
                 {searchResults.total.toLocaleString()} vehicles found
               </p>
             </div>

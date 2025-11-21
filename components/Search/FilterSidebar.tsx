@@ -119,7 +119,7 @@ export default function FilterSidebar({
           <select
             value={currentFilters.sortBy || "relevance"}
             onChange={(e) => updateSort(e.target.value)}
-            className="w-full appearance-none bg-white border border-gray-300 text-gray-700 py-2 px-3 pr-8 rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm h-10"
+            className="w-full appearance-none bg-white border border-gray-300 text-gray-700 py-2 px-3 pr-8 rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm h-10 cursor-pointer"
           >
             <option value="relevance">Sort: Relevance</option>
             <option value="price_asc">Sort: Price Low-High</option>
@@ -236,15 +236,14 @@ export default function FilterSidebar({
       <div className="hidden lg:block bg-white rounded-lg border border-border p-6 sticky top-4">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-lg font-bold text-gray-900">Filters</h2>
-          {hasActiveFilters && (
-            <button 
-              onClick={clearFilters}
-              className="text-xs text-blue-600 font-semibold hover:underline"
-            >
-              Reset
-            </button>
-          )}
-        </div>
+                    {hasActiveFilters && (
+                      <button
+                        onClick={clearFilters}
+                        className="text-xs text-blue-600 font-semibold hover:underline cursor-pointer"
+                      >
+                        Reset
+                      </button>
+                    )}        </div>
         
         <div className="space-y-6">
           <div>

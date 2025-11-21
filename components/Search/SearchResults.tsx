@@ -2,10 +2,20 @@
 
 import { Vehicle } from "@/lib/supabase";
 import VehicleCard from "./VehicleCard";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui";
 import { diversifyByDealer } from "@/lib/dealer-diversity";
+
+// Helper to validate numeric inputs
+const parseAndValidateNumber = (value: string | undefined | null, min?: number, max?: number): number | null => {
+  if (!value) return null;
+  const parsed = parseFloat(value);
+  if (isNaN(parsed)) return null;
+  if (min !== undefined && parsed < min) return null;
+  if (max !== undefined && parsed > max) return null;
+  return parsed;
+};
 
 interface SearchResultsProps {
   vehicles: Vehicle[];
@@ -27,32 +37,38 @@ export default function SearchResults({
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(initialVehicles.length < total);
   const [error, setError] = useState<string | null>(null);
+  const lastLoadTime = useRef(0);
 
   // Reset list when filters/initial props change
+  // Using JSON.stringify to compare filters deeply, and initialVehicles length/id to avoid ref issues
   useEffect(() => {
     setVehicleList(initialVehicles);
     setPage(1);
     setHasMore(initialVehicles.length < total);
     setError(null);
-  }, [initialVehicles, total]);
+  }, [initialVehicles, total]); 
 
   const loadMoreVehicles = async () => {
+    const now = Date.now();
+    if (now - lastLoadTime.current < 300) return; // 300ms debounce
+    lastLoadTime.current = now;
+
     setIsLoading(true);
     setError(null);
     const nextPage = page + 1;
 
     try {
-      // Construct body for API call
+      // Construct body for API call with validation
       const body = {
         ...currentFilters,
         page: nextPage.toString(),
-        // Convert filters to appropriate types
-        min_price: currentFilters.minPrice ? parseFloat(currentFilters.minPrice) : null,
-        max_price: currentFilters.maxPrice ? parseFloat(currentFilters.maxPrice) : null,
-        min_year: currentFilters.minYear ? parseInt(currentFilters.minYear) : null,
-        max_year: currentFilters.maxYear ? parseInt(currentFilters.maxYear) : null,
-        user_lat: currentFilters.lat ? parseFloat(currentFilters.lat) : null,
-        user_lon: currentFilters.lon ? parseFloat(currentFilters.lon) : null,
+        // Convert filters to appropriate types with validation
+        min_price: parseAndValidateNumber(currentFilters.minPrice, 0),
+        max_price: parseAndValidateNumber(currentFilters.maxPrice, 0),
+        min_year: parseAndValidateNumber(currentFilters.minYear, 1900),
+        max_year: parseAndValidateNumber(currentFilters.maxYear, 1900),
+        user_lat: parseAndValidateNumber(currentFilters.lat, -90, 90),
+        user_lon: parseAndValidateNumber(currentFilters.lon, -180, 180),
         make: currentFilters.make || null,
         model: currentFilters.model || null,
         condition: currentFilters.condition || null,

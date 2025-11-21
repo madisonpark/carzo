@@ -74,7 +74,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
       target={linkTarget}
       rel={linkRel}
       onClick={handleClick}
-      className="group bg-white border border-border hover:border-foreground/30 transition-colors rounded-lg overflow-hidden flex flex-col h-full"
+      className="group bg-white border border-border hover:border-foreground/30 transition-colors rounded-lg overflow-hidden flex flex-col h-full outline-none focus-visible:ring-2 focus-visible:ring-trust-blue"
     >
       {/* Image Section */}
       <div className="relative h-48 bg-gray-100 overflow-hidden shrink-0">
@@ -112,7 +112,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
         </div>
 
         <div className="mb-4">
-          <p className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+          <p className="text-2xl font-extrabold tracking-tight text-trust-text">
             {formattedPrice}
           </p>
           <div className="text-xs font-medium text-muted-foreground mt-1">

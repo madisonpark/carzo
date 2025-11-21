@@ -4,6 +4,7 @@ import { Vehicle } from "@/lib/supabase";
 import Link from "next/link";
 import { Camera, ChevronRight } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui";
 import {
   getFlowFromUrl,
   preserveFlowParam,
@@ -37,7 +38,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
     ? new Intl.NumberFormat("en-US").format(vehicle.miles)
     : null;
 
-  const isDirect = isDirectFlow(flow) && vehicle.dealer_vdp_url;
+  const isDirect = isDirectFlow(flow) && Boolean(vehicle.dealer_vdp_url);
   const linkHref = isDirect
     ? vehicle.dealer_vdp_url
     : preserveFlowParam(`/vehicles/${vehicle.vin}`);
@@ -61,7 +62,11 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
           ...getUtmParams(),
         }),
         keepalive: true,
-      }).catch((err) => console.error("Failed to track click:", err));
+      }).catch((err) => {
+        if (process.env.NODE_ENV !== "production") {
+          console.error("Failed to track click:", err);
+        }
+      });
     }
   };
 
@@ -120,12 +125,13 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
 
         <div className="grow"></div>
 
-        <button
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded py-3 shadow-sm flex items-center justify-center transition-colors active:scale-[0.98] cursor-pointer"
+        <Button
+          className="w-full bg-trust-blue hover:brightness-90 active:scale-98"
+          aria-label={`Check availability for ${vehicle.year} ${vehicle.make} ${vehicle.model}`}
         >
           Check Availability
           <ChevronRight className="ml-1 w-5 h-5" />
-        </button>
+        </Button>
       </div>
     </Link>
   );

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { X, SlidersHorizontal } from "lucide-react";
 import { Input, Badge, Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { FilterControls } from "./FilterControls";
 
 interface FilterSidebarProps {
   makes: string[];
@@ -101,6 +102,20 @@ export default function FilterSidebar({
     (key) => key !== "sortBy" && key !== "page" && key !== "lat" && key !== "lon" && currentFilters[key as keyof typeof currentFilters]
   );
 
+  // Prepare shared props for FilterControls
+  const filterControlProps = {
+    makes,
+    bodyStyles,
+    conditions,
+    years,
+    currentFilters,
+    updateFilter,
+    minPrice,
+    maxPrice,
+    setMinPrice,
+    setMaxPrice,
+  };
+
   return (
     <>
       {/* Mobile Sticky Header */}
@@ -108,18 +123,19 @@ export default function FilterSidebar({
         <Button
           onClick={() => setIsMobileDrawerOpen(true)}
           variant="outline"
-          className="flex-1 gap-2 bg-white border-gray-300 text-gray-700 font-medium"
+          className="flex-1 gap-2 bg-white border-gray-300 text-trust-text font-medium"
         >
           <SlidersHorizontal className="w-4 h-4" />
           Filters
-          {hasActiveFilters && <div className="w-2 h-2 bg-blue-600 rounded-full" />}
+          {hasActiveFilters && <div className="w-2 h-2 bg-trust-blue rounded-full" />}
         </Button>
         
         <div className="flex-1 relative">
           <select
             value={currentFilters.sortBy || "relevance"}
             onChange={(e) => updateSort(e.target.value)}
-            className="w-full appearance-none bg-white border border-gray-300 text-gray-700 py-2 px-3 pr-8 rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm h-10 cursor-pointer"
+            aria-label="Sort vehicles"
+            className="w-full appearance-none bg-white border border-gray-300 text-trust-text py-2 px-3 pr-8 rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-trust-blue focus:border-trust-blue text-sm h-10 cursor-pointer"
           >
             <option value="relevance">Sort: Relevance</option>
             <option value="price_asc">Sort: Price Low-High</option>
@@ -151,75 +167,18 @@ export default function FilterSidebar({
         )}
       >
         <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-900">Filters</h2>
+          <h2 className="text-lg font-bold text-trust-text">Filters</h2>
           <Button
             onClick={() => setIsMobileDrawerOpen(false)}
             variant="ghost"
             size="icon"
+            aria-label="Close filters"
           >
             <X className="w-5 h-5" />
           </Button>
         </div>
         <div className="p-6 space-y-6">
-          {/* Filter Content (Duplicated for mobile/desktop separation simplicity) */}
-           <div>
-            <label className="block text-sm font-bold text-gray-900 mb-2">Make</label>
-            <select
-              value={currentFilters.make || ""}
-              onChange={(e) => updateFilter("make", e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md bg-white"
-            >
-              <option value="">All Makes</option>
-              {makes.map((m) => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold text-gray-900 mb-2">Price Range</label>
-            <div className="flex gap-2">
-              <Input 
-                type="number" 
-                placeholder="Min" 
-                value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value)}
-                className="bg-white"
-              />
-              <Input 
-                type="number" 
-                placeholder="Max" 
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-                className="bg-white"
-              />
-            </div>
-          </div>
-
-          {/* Other Filters... simplified for this refactor to main components */}
-           <div>
-            <label className="block text-sm font-bold text-gray-900 mb-2">Condition</label>
-            <select
-              value={currentFilters.condition || ""}
-              onChange={(e) => updateFilter("condition", e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md bg-white"
-            >
-              <option value="">Any</option>
-              {conditions.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-          
-           <div>
-            <label className="block text-sm font-bold text-gray-900 mb-2">Body Style</label>
-            <select
-              value={currentFilters.bodyStyle || ""}
-              onChange={(e) => updateFilter("bodyStyle", e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md bg-white"
-            >
-              <option value="">Any</option>
-              {bodyStyles.map((b) => <option key={b} value={b}>{b}</option>)}
-            </select>
-          </div>
+          <FilterControls {...filterControlProps} />
 
           {hasActiveFilters && (
             <Button 
@@ -235,73 +194,18 @@ export default function FilterSidebar({
       {/* Desktop Sidebar */}
       <div className="hidden lg:block bg-white rounded-lg border border-border p-6 sticky top-4">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-bold text-gray-900">Filters</h2>
-                    {hasActiveFilters && (
-                      <button
-                        onClick={clearFilters}
-                        className="text-xs text-blue-600 font-semibold hover:underline cursor-pointer"
-                      >
-                        Reset
-                      </button>
-                    )}        </div>
-        
-        <div className="space-y-6">
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">Make</label>
-            <select
-              value={currentFilters.make || ""}
-              onChange={(e) => updateFilter("make", e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md text-sm"
+          <h2 className="text-lg font-bold text-trust-text">Filters</h2>
+          {hasActiveFilters && (
+            <button 
+              onClick={clearFilters}
+              className="text-xs text-trust-blue font-semibold hover:underline cursor-pointer"
             >
-              <option value="">All Makes</option>
-              {makes.map((m) => <option key={m} value={m}>{m}</option>)}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">Price</label>
-            <div className="grid grid-cols-2 gap-2">
-              <Input 
-                type="number" 
-                placeholder="Min" 
-                value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value)}
-                className="text-sm"
-              />
-              <Input 
-                type="number" 
-                placeholder="Max" 
-                value={maxPrice}
-                onChange={(e) => setMaxPrice(e.target.value)}
-                className="text-sm"
-              />
-            </div>
-          </div>
-
-           <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">Condition</label>
-            <select
-              value={currentFilters.condition || ""}
-              onChange={(e) => updateFilter("condition", e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md text-sm"
-            >
-              <option value="">Any</option>
-              {conditions.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-
-           <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">Body Style</label>
-            <select
-              value={currentFilters.bodyStyle || ""}
-              onChange={(e) => updateFilter("bodyStyle", e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md text-sm"
-            >
-              <option value="">Any</option>
-              {bodyStyles.map((b) => <option key={b} value={b}>{b}</option>)}
-            </select>
-          </div>
+              Reset
+            </button>
+          )}
         </div>
+        
+        <FilterControls {...filterControlProps} />
       </div>
     </>
   );

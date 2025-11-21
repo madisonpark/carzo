@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { MapPin, Loader2, X, Check } from "lucide-react";
+import { MapPin, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +24,9 @@ export function LocationSelector() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Auto-detect or load from cache/URL on mount
+  // Fix: Memoize to prevent dependency loop, but dependencies are tricky.
+  // Better to keep it outside or use a ref if we want to avoid re-creating it.
+  // Or simplify: we only need this on mount or when we *decide* to re-detect.
   const detectLocation = useCallback(async () => {
     setLoading(true);
     try {
@@ -33,24 +36,39 @@ export function LocationSelector() {
       const data = await response.json();
       if (data.success && data.location) {
         const loc = data.location;
-        updateLocationState(loc);
+        // We need to call the update logic here, but we can't easily call updateLocationState 
+        // if it's defined below. Let's duplicate the logic or move it up.
+        // Moving logic inside or creating a separate helper.
+        setLocation(loc);
+        sessionStorage.setItem("userLocation", JSON.stringify(loc));
+        
+        // Update URL
+        // Note: We need to get current params, which we have from useSearchParams (but it's read-onlyish)
+        // We construct new URLSearchParams from window or the hook result.
+        // Using window.location.search is sometimes safer for "current" state in callbacks
+        // but useSearchParams is the Next.js way.
+        const params = new URLSearchParams(window.location.search);
+        params.set("lat", loc.latitude.toString());
+        params.set("lon", loc.longitude.toString());
+        router.replace(`/search?${params.toString()}`, { scroll: false });
       }
     } catch (error) {
-      console.error("Error detecting location:", error);
+      // Safe error logging
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Error detecting location:", error);
+      }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [router]); // Removed searchParams from deps to avoid loop, added router
 
   const updateLocationState = (loc: UserLocation) => {
     setLocation(loc);
     sessionStorage.setItem("userLocation", JSON.stringify(loc));
     
-    // Update URL
     const params = new URLSearchParams(window.location.search);
     params.set("lat", loc.latitude.toString());
     params.set("lon", loc.longitude.toString());
-    // We don't need to reload the page, just update the URL for sharing/refresh
     router.replace(`/search?${params.toString()}`, { scroll: false });
   };
 
@@ -61,23 +79,23 @@ export function LocationSelector() {
     const cachedLocation = sessionStorage.getItem("userLocation");
 
     if (lat && lon) {
-      // If URL has coords but no city state, try to infer from cache or just show coords (or reverse geocode if we had an endpoint)
-      // For now, rely on cache for city/state names if available, or fallback to generic text
       if (cachedLocation) {
         const loc = JSON.parse(cachedLocation);
+        // Simple check if cache matches URL roughly
         if (Math.abs(loc.latitude - parseFloat(lat)) < 0.01) {
            setLocation(loc);
            return;
         }
       }
-      // If no cache match, we might want to trigger a reverse lookup or just detect
+      // If URL has coords but no matching cache, we re-detect to get city/state
       detectLocation(); 
     } else if (cachedLocation) {
       updateLocationState(JSON.parse(cachedLocation));
     } else {
       detectLocation();
     }
-  }, [detectLocation, searchParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only on mount (and when deps change, but we want to avoid loop)
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -109,7 +127,11 @@ export function LocationSelector() {
       setIsEditing(false);
       setZipCode("");
     } catch (err) {
-      setError("Lookup failed");
+      const message = err instanceof Error ? err.message : "Lookup failed";
+      if (process.env.NODE_ENV !== "production") {
+        console.error("ZIP lookup error:", err);
+      }
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -128,6 +150,7 @@ export function LocationSelector() {
               setError("");
             }}
             placeholder="Zip Code"
+            aria-label="Enter 5-digit Zip Code"
             className={cn(
               "w-32 pl-3 pr-3 py-1.5 text-sm bg-white border rounded-md outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition-all",
               error ? "border-red-500 focus-visible:ring-red-500" : "border-gray-300"
@@ -145,6 +168,7 @@ export function LocationSelector() {
           size="sm"
           disabled={loading || zipCode.length !== 5}
           className="h-8 px-3 bg-blue-600 hover:bg-blue-700 text-white"
+          aria-label="Update location"
         >
           {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : "Update"}
         </Button>
@@ -157,6 +181,7 @@ export function LocationSelector() {
             setError("");
           }}
           className="h-8 w-8 p-0 hover:bg-gray-100"
+          aria-label="Cancel location update"
         >
           <X className="w-4 h-4 text-gray-500" />
         </Button>
@@ -170,6 +195,7 @@ export function LocationSelector() {
         onClick={() => setIsEditing(true)}
         className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-gray-200 hover:border-blue-300 hover:shadow-sm transition-all cursor-pointer"
         title="Change location"
+        aria-label={location ? `Change location, currently near ${location.city}, ${location.state}` : "Set location"}
       >
         <div className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-50 text-blue-600 group-hover:bg-blue-100 transition-colors">
           <MapPin className="w-3.5 h-3.5" />

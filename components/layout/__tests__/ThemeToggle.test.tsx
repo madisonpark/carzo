@@ -53,8 +53,8 @@ describe('ThemeToggle', () => {
       );
 
       const button = screen.getByRole('button');
-      // Ghost variant should have hover:bg-muted class
-      expect(button).toHaveClass('hover:bg-muted');
+      // Ghost variant should have hover:bg-trust-elevated class
+      expect(button).toHaveClass('hover:bg-trust-elevated');
     });
 
     it('applies icon size variant', () => {

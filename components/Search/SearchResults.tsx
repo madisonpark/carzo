@@ -4,6 +4,7 @@ import { Vehicle } from "@/lib/supabase";
 import VehicleCard from "./VehicleCard";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui";
+import { diversifyByDealer } from "@/lib/dealer-diversity";
 
 interface SearchResultsProps {
   vehicles: Vehicle[];
@@ -22,16 +23,19 @@ export default function SearchResults({
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(initialVehicles.length < total);
+  const [error, setError] = useState<string | null>(null);
 
   // Reset list when filters/initial props change
   useEffect(() => {
     setVehicleList(initialVehicles);
     setPage(1);
     setHasMore(initialVehicles.length < total);
+    setError(null);
   }, [initialVehicles, total]);
 
   const loadMoreVehicles = async () => {
     setIsLoading(true);
+    setError(null);
     const nextPage = page + 1;
 
     try {
@@ -39,10 +43,7 @@ export default function SearchResults({
       const body = {
         ...currentFilters,
         page: nextPage.toString(),
-        // Convert filters to appropriate types if needed by API, 
-        // but API usually handles string parsing or we send strings.
-        // The SearchPage uses direct DB or API. Let's try to use the API route.
-        // If latitude/longitude are in currentFilters, API should handle it.
+        // Convert filters to appropriate types
         min_price: currentFilters.minPrice ? parseFloat(currentFilters.minPrice) : null,
         max_price: currentFilters.maxPrice ? parseFloat(currentFilters.maxPrice) : null,
         min_year: currentFilters.minYear ? parseInt(currentFilters.minYear) : null,
@@ -64,19 +65,32 @@ export default function SearchResults({
         body: JSON.stringify(body),
       });
 
-      if (!response.ok) throw new Error("Failed to fetch");
+      if (response.status === 429) {
+        setError("Too many requests. Please try again in a moment.");
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
 
       const { data } = await response.json();
       
       if (data && data.length > 0) {
-        setVehicleList((prev) => [...prev, ...data]);
+        // Apply diversification before appending to ensure local variety
+        const diversifiedData = diversifyByDealer(data, data.length);
+        
+        setVehicleList((prev) => [...prev, ...diversifiedData]);
         setPage(nextPage);
         if (data.length < 24) setHasMore(false);
       } else {
         setHasMore(false);
       }
     } catch (error) {
-      console.error("Error loading more vehicles:", error);
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Error loading more vehicles:", error);
+      }
+      setError("Failed to load more vehicles. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -104,7 +118,7 @@ export default function SearchResults({
         <p className="text-gray-500 mb-6">Try adjusting your filters.</p>
         <Button
           onClick={() => window.location.href = '/search'}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          className="bg-trust-blue text-white hover:brightness-90 active:scale-98"
         >
           Clear Filters
         </Button>
@@ -132,7 +146,7 @@ export default function SearchResults({
               params.set("sortBy", e.target.value);
               window.location.search = params.toString();
             }}
-            className="text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className="text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 cursor-pointer"
           >
             <option value="relevance">Relevance</option>
             <option value="price_asc">Price: Low to High</option>
@@ -146,19 +160,31 @@ export default function SearchResults({
       </div>
 
       {/* Results Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-8" role="feed" aria-busy={isLoading}>
         {vehicleList.map((vehicle) => (
-          <VehicleCard key={vehicle.id} vehicle={vehicle} />
+          <div key={vehicle.id} role="article">
+            <VehicleCard vehicle={vehicle} />
+          </div>
         ))}
+      </div>
+
+      {/* ARIA Live Region for Status Updates */}
+      <div role="status" aria-live="polite" className="sr-only">
+        {isLoading && "Loading more vehicles..."}
+        {!isLoading && hasMore && `Loaded ${vehicleList.length} of ${total} vehicles`}
+        {error && `Error: ${error}`}
       </div>
 
       {/* Load More Button */}
       {hasMore && (
         <div className="mt-8 text-center">
+          {error && (
+            <p className="text-red-500 mb-4 text-sm">{error}</p>
+          )}
           <button
             onClick={loadMoreVehicles}
             disabled={isLoading}
-            className="w-full md:w-auto px-8 py-3 bg-white border border-gray-300 text-gray-700 font-semibold rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 cursor-pointer"
+            className="w-full md:w-auto px-8 py-3 bg-white border border-gray-300 text-gray-700 font-semibold rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 cursor-pointer active:scale-98 transition-transform"
           >
             {isLoading ? "Loading..." : "Load More Vehicles"}
           </button>

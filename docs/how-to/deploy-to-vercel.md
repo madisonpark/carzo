@@ -1,14 +1,19 @@
 # How to Deploy to Vercel
 
-This guide walks through deploying Carzo to Vercel with proper environment variables, cron jobs, and domain configuration.
+## 1. Overview
+This document outlines the strategy and detailed steps for deploying the Carzo application from a local development environment to Vercel production. It covers environment setup, database synchronization, and verification steps.
 
-## Prerequisites
+## 2. Deployment Prerequisites
+- **Vercel Account:** Access to the Vercel team/project.
+- **Supabase Project:** Production instance ready (distinct from local dev).
+- **Environment Variables:** All secrets from `.env.local` ready for Vercel.
+- **Domain Access:** DNS control for `carzo.net`.
 
-- GitHub repository with Carzo code
-- Vercel account (free tier works)
-- Supabase project set up
-- LotLinx credentials
-- MaxMind GeoIP account
+## 3. Architecture & Infrastructure
+*   **Frontend/API:** Next.js on Vercel (Serverless Functions).
+*   **Database:** Supabase (PostgreSQL + PostGIS).
+*   **Cron Jobs:** Vercel Cron (Feed Sync, Maintenance).
+*   **Assets:** LotLinx CDN (Remote Images).
 
 ---
 
@@ -48,16 +53,16 @@ npm install
 Add all environment variables before first deployment:
 
 1. Go to **Settings** → **Environment Variables**
-2. Add each variable with values from `.env.local`
+2. Add each variable with values from your local `.env.local` file.
 3. Select environments: **Production**, **Preview**, **Development**
 
-**List of required variables:**
+**List of required variables (see `.env.example` for full list):**
 
 ```bash
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-SUPABASE_SERVICE_ROLE_KEY=eyJ...
+SUPABASE_SERVICE_ROLE_KEY=eyJ... # CRITICAL: For cron jobs and admin functions
 
 # LotLinx Feed
 LOTLINX_FEED_USERNAME=your_username
@@ -65,7 +70,7 @@ LOTLINX_FEED_PASSWORD=your_password
 LOTLINX_PUBLISHER_ID=12345
 
 # Vercel Cron
-CRON_SECRET=your_random_secret
+CRON_SECRET=your_random_secret_here # Generate with: openssl rand -base64 32
 
 # Domain
 NEXT_PUBLIC_SITE_URL=https://carzo.net
@@ -73,9 +78,15 @@ NEXT_PUBLIC_SITE_URL=https://carzo.net
 # Admin
 ADMIN_PASSWORD=your_admin_password
 
-# MaxMind GeoIP2
-MAXMIND_ACCOUNT_ID=123456
-MAXMIND_LICENSE_KEY=your_license_key
+# MaxMind GeoIP2 (for IP-based location detection)
+MAXMIND_ACCOUNT_ID=your_maxmind_account_id
+MAXMIND_LICENSE_KEY=your_maxmind_license_key
+
+# Error Monitoring (Sentry)
+NEXT_PUBLIC_SENTRY_DSN=your_sentry_dsn_here
+
+# Facebook Pixel
+NEXT_PUBLIC_FB_PIXEL_ID=your_facebook_pixel_id_here
 ```
 
 ### Generate CRON_SECRET
@@ -146,22 +157,8 @@ TTL: 3600
 
 ### Check Cron Configuration
 
-Vercel auto-registers cron jobs from `vercel.json`:
+Vercel auto-registers cron jobs from `vercel.json`. Refer to `vercel.json` for the current cron job configuration and schedules.
 
-```json
-{
-  "crons": [
-    {
-      "path": "/api/cron/sync-feed",
-      "schedule": "0 3,9,15,21 * * *"
-    },
-    {
-      "path": "/api/cron/cleanup-rate-limits",
-      "schedule": "0 * * * *"
-    }
-  ]
-}
-```
 
 ### Test Cron Endpoints
 
@@ -188,22 +185,27 @@ curl "https://carzo.net/api/cron/cleanup-rate-limits" \
 
 ### Apply Migrations to Production
 
-```bash
-# Link to production Supabase project
-supabase link --project-ref your-prod-project-ref
-
-# Check migration status
-supabase migration list
-
-# Push all pending migrations
-supabase db push
-```
+1.  **Link to production Supabase project:**
+    ```bash
+    supabase link --project-ref your-prod-project-ref
+    ```
+2.  **Check migration status:**
+    ```bash
+    supabase migration list
+    ```
+3.  **Apply all pending migrations safely:**
+    ```bash
+    supabase migration up --linked
+    ```
+    *Note:* Avoid `supabase db push` in production as it bypasses migration version control and `supabase db reset` is destructive and should **NEVER** be used on production.
 
 ### Verify Schema
 
 ```bash
-# Check tables exist
+# Verify tables exist
 supabase db execute --sql "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';"
+# Verify specific new columns exist (e.g., from attribution plan)
+supabase db execute --sql "SELECT column_name FROM information_schema.columns WHERE table_name='clicks' AND column_name IN ('user_agent', 'ip_address', 'fbclid', 'gclid', 'ttclid', 'tblci', 'utm_term', 'utm_content');"
 ```
 
 ---
@@ -374,9 +376,23 @@ https://carzo-git-feature-branch.vercel.app
 
 ---
 
+## Solo Founder Optimizations
+As a one-person startup, speed and simplicity are key. Consider these adjustments:
+*   **Vercel Toolbar:** Use it in production for instant feedback on layout shifts and errors without complex monitoring tools.
+*   **Cost Control:** Stay on the Hobby plan until you hit limits. The current architecture (ISR + cached feed) is highly efficient.
+*   **Manual Backups:** Before running `supabase migration up --linked` on production, simply use the Supabase Dashboard to create a manual backup. It's faster than writing complex rollback scripts.
+*   **Log Monitoring:** Don't over-engineer alerting yet. Just check Vercel Logs once a day to ensure cron jobs ran.
+
+---
+
 ## Related Documentation
 
 - [Environment Variables](../reference/environment-variables.md)
 - [Vercel Configuration](../reference/vercel-config.md)
-- [Database Migrations](./create-migration.md)
+- [Create Migration](./create-migration.md)
+- [Deployment Strategy](../explanation/deployment-strategy.md) - High-level overview and strategic decisions.
+- [Logging & Attribution Strategy](../explanation/logging-attribution-strategy.md) - Details on error tracking and marketing attribution.
 - [Vercel Docs](https://vercel.com/docs)
+
+**Last Updated**: 2025-11-20
+

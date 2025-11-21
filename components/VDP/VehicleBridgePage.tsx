@@ -46,7 +46,7 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
   const remainingPhotos = Math.max(0, (vehicle.total_photos || 15) - 3);
 
   // Condition with fallback
-  const condition = vehicle.condition || 'Used';
+  const condition = vehicle.condition?.toLowerCase() === 'new' ? 'New' : 'Used';
 
   // Description teaser (first 200 chars)
   const descriptionTeaser = vehicle.description
@@ -197,7 +197,7 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
                   })}
                 >
                   <Camera className="w-6 h-6" />
-                  See Full Photo Gallery
+                  Check Availability
                   <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
                 </a>
               </Button>
@@ -383,7 +383,7 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
             })}
             className="group inline-flex items-center gap-3 bg-gradient-to-r from-brand to-brand-hover hover:from-brand-hover hover:to-brand text-white font-bold text-lg px-10 py-5 rounded-xl shadow-2xl transition-all duration-300 hover:scale-105"
           >
-            View Complete Listing
+            Check Availability
             <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
           </a>
         </div>
@@ -412,7 +412,7 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
               })}
               className="group flex-shrink-0 inline-flex items-center gap-2 bg-gradient-to-r from-primary to-primary-hover hover:from-primary-hover hover:to-primary text-white font-bold text-sm px-6 py-3 rounded-lg shadow-xl transition-all duration-300 active:scale-95"
             >
-              View Details
+              Check Availability
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </a>
           </div>

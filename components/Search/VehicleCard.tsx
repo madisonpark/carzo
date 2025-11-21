@@ -2,8 +2,8 @@
 
 import { Vehicle } from "@/lib/supabase";
 import Link from "next/link";
-import { Camera, MapPin, ChevronRight, ExternalLink } from "lucide-react";
-import { Button, Badge } from "@/components/ui";
+import { Camera, MapPin, ArrowRight, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui";
 import { useState } from "react";
 import {
   getFlowFromUrl,
@@ -25,12 +25,15 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
     return getFlowFromUrl();
   });
 
-  const formattedPrice = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(vehicle.price);
+  const formattedPrice =
+    vehicle.price && vehicle.price > 0
+      ? new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        }).format(vehicle.price)
+      : "Call for Price";
 
   const formattedMileage = vehicle.miles
     ? new Intl.NumberFormat("en-US").format(vehicle.miles)
@@ -69,16 +72,20 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
     }
   };
 
+  // Standardize condition text
+  const conditionText =
+    vehicle.condition?.toLowerCase() === "new" ? "New" : "Used";
+
   return (
     <Link
       href={linkHref}
       target={linkTarget}
       rel={linkRel}
       onClick={handleClick}
-      className="group bg-background rounded-lg border border-border overflow-hidden hover:shadow-xl dark:hover:shadow-brand/20 transition-all duration-200 flex flex-col h-full"
+      className="group bg-trust-card border border-trust-border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col h-full"
     >
-      {/* Image - Fixed height */}
-      <div className="relative h-48 bg-muted overflow-hidden shrink-0">
+      {/* Image Area */}
+      <div className="relative h-48 bg-trust-elevated overflow-hidden shrink-0">
         <img
           src={
             (vehicle.primary_image_url && vehicle.primary_image_url.trim()) ||
@@ -90,49 +97,54 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
             e.currentTarget.src = "/placeholder-vehicle.svg";
           }}
         />
+        
+        {/* Overlay with Price */}
+        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent pointer-events-none" />
+        <div className="absolute bottom-3 left-3 text-white font-bold text-lg shadow-black/20 drop-shadow-sm">
+          {formattedPrice}
+        </div>
+
+        {/* Badge */}
         {vehicle.condition && (
-          <Badge variant="brand" className="absolute top-2 left-2">
-            {vehicle.condition}
-          </Badge>
+          <div className="absolute top-3 left-3 flex items-center gap-1 bg-white/90 backdrop-blur text-trust-navy font-bold text-[10px] uppercase tracking-wider px-2 py-1 rounded-sm shadow-sm">
+            {conditionText}
+          </div>
         )}
+        
+        {/* Photo Count */}
         {vehicle.total_photos && (
-          <div className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 bg-black/75 text-white text-xs font-medium rounded">
+          <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 bg-black/60 backdrop-blur text-white text-xs font-medium rounded-sm">
             <Camera className="w-3 h-3" />
             {vehicle.total_photos}
           </div>
         )}
       </div>
 
-      {/* Content - Flex grow to fill remaining space */}
+      {/* Content */}
       <div className="p-4 flex flex-col grow">
-        {/* Title - Fixed height with line clamp */}
+        {/* Title */}
         <div className="mb-2 min-h-12">
-          <h3 className="text-base font-bold text-foreground group-hover:text-brand transition-colors line-clamp-1">
+          <h3 className="text-base font-bold text-trust-text group-hover:text-trust-link transition-colors line-clamp-1">
             {vehicle.year} {vehicle.make} {vehicle.model}
           </h3>
           {vehicle.trim && (
-            <p className="text-sm text-muted-foreground line-clamp-1">
+            <p className="text-sm text-trust-muted line-clamp-1">
               {vehicle.trim}
             </p>
           )}
         </div>
 
-        {/* Price */}
-        <p className="text-xl font-bold text-foreground mb-3">
-          {formattedPrice}
-        </p>
-
-        {/* Details - Single line */}
-        <div className="text-sm text-muted-foreground mb-3 space-y-1">
+        {/* Details */}
+        <div className="text-sm text-trust-muted mb-4 space-y-1">
           {formattedMileage && <div>{formattedMileage} miles</div>}
           {vehicle.transmission && <div>{vehicle.transmission}</div>}
         </div>
 
-        {/* Spacer to push location and button to bottom */}
+        {/* Spacer */}
         <div className="grow"></div>
 
         {/* Location */}
-        <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
+        <div className="flex items-center justify-between text-sm text-trust-muted mb-4">
           <div className="flex items-center gap-1">
             <MapPin className="w-3.5 h-3.5 shrink-0" />
             <span className="line-clamp-1">
@@ -141,31 +153,19 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
           </div>
           {vehicle.distance_miles !== undefined &&
             vehicle.distance_miles !== Infinity && (
-              <span className="text-brand font-semibold ml-2 shrink-0">
+              <span className="text-trust-link font-semibold ml-2 shrink-0">
                 {Math.round(vehicle.distance_miles)} mi
               </span>
             )}
         </div>
 
-        {/* CTA */}
-        <Button
-          variant="primary"
-          className="w-full hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] gap-2"
+        {/* Primary CTA */}
+        <button
+          className="w-full bg-trust-navy text-trust-on-brand px-4 py-3 rounded-md font-semibold text-sm hover:opacity-90 flex items-center justify-center gap-2 transition-opacity shadow-sm"
         >
-          {isDirect ? (
-            <>
-              <ExternalLink className="w-4 h-4" />
-              View at Dealer
-              <ChevronRight className="w-5 h-5" />
-            </>
-          ) : (
-            <>
-              <Camera className="w-4 h-4" />
-              See Full Photo Gallery
-              <ChevronRight className="w-5 h-5" />
-            </>
-          )}
-        </Button>
+          Check Availability
+          <ArrowRight className="w-4 h-4" />
+        </button>
       </div>
     </Link>
   );

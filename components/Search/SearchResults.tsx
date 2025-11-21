@@ -80,7 +80,7 @@ export default function SearchResults({
               const flow = params.get('flow');
               router.push(flow ? `/search?flow=${flow}` : '/search');
             }}
-            variant="brand"
+            className="bg-trust-navy text-trust-on-brand hover:opacity-90"
           >
             View All Vehicles
           </Button>
@@ -91,7 +91,7 @@ export default function SearchResults({
                 const flow = params.get('flow');
                 router.push(flow ? `/search?flow=${flow}` : '/search');
               }}
-              variant="outline"
+              className="bg-white border border-trust-border text-trust-text hover:bg-trust-elevated"
             >
               Clear Filters
             </Button>

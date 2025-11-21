@@ -69,7 +69,7 @@ describe('Button', () => {
       render(<Button variant="outline">Outline</Button>);
 
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('border-2');
+      expect(button).toHaveClass('border');
       expect(button).toHaveClass('border-border');
       expect(button).toHaveClass('bg-white');
       expect(button).toHaveClass('hover:bg-muted');
@@ -140,7 +140,7 @@ describe('Button', () => {
       expect(button).toHaveClass('inline-flex');
       expect(button).toHaveClass('items-center');
       expect(button).toHaveClass('justify-center');
-      expect(button).toHaveClass('rounded-lg');
+      expect(button).toHaveClass('rounded-md');
       expect(button).toHaveClass('font-semibold');
     });
 
@@ -319,7 +319,7 @@ describe('Button', () => {
       render(<Button variant="outline" size="icon" aria-label="Settings">⚙️</Button>);
 
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('border-2');
+      expect(button).toHaveClass('border');
       expect(button).toHaveClass('h-10');
       expect(button).toHaveClass('w-10');
     });

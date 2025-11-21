@@ -15,7 +15,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <Comp
         className={cn(
           // Base styles
-          'inline-flex items-center justify-center rounded-lg font-semibold transition-all duration-300',
+          'inline-flex items-center justify-center rounded-md font-semibold shadow-sm transition-all duration-300',
           'outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
           'disabled:opacity-50 disabled:cursor-not-allowed',
           // Variant styles
@@ -31,10 +31,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             'bg-muted text-foreground hover:bg-slate-300 focus-visible:ring-slate-400':
               variant === 'secondary',
             // Outline - Bordered buttons
-            'border-2 border-border bg-white text-foreground hover:bg-muted focus-visible:ring-slate-400':
+            'border border-border bg-white text-foreground hover:bg-muted focus-visible:ring-slate-400':
               variant === 'outline',
             // Ghost - Text-only buttons
-            'text-foreground hover:bg-muted focus-visible:ring-slate-400': variant === 'ghost',
+            'text-foreground hover:bg-muted focus-visible:ring-slate-400 shadow-none': variant === 'ghost',
           },
           // Size styles
           {

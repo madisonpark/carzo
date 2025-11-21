@@ -150,7 +150,7 @@ export function getFlowCTA(flow: UserFlow): string {
   const ctas: Record<UserFlow, string> = {
     direct: 'View at Dealer',
     'vdp-only': 'See This Vehicle',
-    full: 'See Full Photo Gallery',
+    full: 'Check Availability',
   };
 
   return ctas[flow];

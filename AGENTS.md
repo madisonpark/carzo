@@ -193,7 +193,7 @@ Apply to:
 "Confirm, Tempt, Convert" approach:
 - Verified listing badge (trust)
 - Photo gallery tease (blurred thumbnails + "+X More")
-- Primary CTA: "See Full Photo Gallery" (opens dealer site in new tab)
+- Primary CTA: "Check Availability" (opens dealer site in new tab)
 - Secondary CTAs: "View FREE Vehicle History", "Estimate Monthly Payments"
 - ALL CTAs go to same dealer URL, open in new tab
 

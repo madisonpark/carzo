@@ -380,28 +380,28 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   ]);
 
   return (
-    <div className="min-h-screen bg-muted/30 dark:bg-muted/10">
+    <div className="min-h-screen bg-trust-bg">
       {/* Skip to main content link for accessibility */}
       <a
         href="#main-content"
-        className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:top-4 focus-visible:left-4 focus-visible:z-50 focus-visible:px-4 focus-visible:py-2 focus-visible:bg-brand focus-visible:text-white focus-visible:rounded-lg"
+        className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:top-4 focus-visible:left-4 focus-visible:z-50 focus-visible:px-4 focus-visible:py-2 focus-visible:bg-trust-navy focus-visible:text-white focus-visible:rounded-lg"
       >
         Skip to main content
       </a>
 
       {/* Header */}
-      <div className="bg-background border-b border-border">
+      <div className="bg-trust-card border-b border-trust-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">
+              <h1 className="text-3xl font-bold text-trust-text">
                 {params.make
                   ? `${params.make}${
                       params.model ? ` ${params.model}` : ""
                     } Vehicles`
                   : "Search Vehicles"}
               </h1>
-              <p className="text-muted-foreground mt-1">
+              <p className="text-trust-muted mt-1">
                 {searchResults.total.toLocaleString()} vehicles found
               </p>
             </div>

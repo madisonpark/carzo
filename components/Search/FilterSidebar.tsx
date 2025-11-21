@@ -392,16 +392,15 @@ export default function FilterSidebar({
   return (
     <>
       {/* Mobile Filter Button - Fixed at bottom on mobile */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border shadow-lg p-4">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-trust-card border-t border-trust-border shadow-lg p-4">
         <Button
           onClick={() => setIsMobileDrawerOpen(true)}
-          variant="brand"
-          className="w-full gap-2"
+          className="w-full gap-2 bg-white border border-trust-border text-trust-text hover:bg-trust-elevated shadow-sm"
         >
           <SlidersHorizontal className="w-5 h-5" />
           Filters
           {activeFilterCount > 0 && (
-            <Badge variant="secondary" className="bg-background">
+            <Badge variant="secondary" className="bg-trust-elevated">
               {activeFilterCount}
             </Badge>
           )}
@@ -420,12 +419,12 @@ export default function FilterSidebar({
       {/* Mobile Drawer */}
       <div
         className={cn(
-          "lg:hidden fixed top-0 left-0 bottom-0 w-full max-w-sm bg-background z-60 overflow-y-auto transition-transform duration-300 ease-in-out shadow-2xl",
+          "lg:hidden fixed top-0 left-0 bottom-0 w-full max-w-sm bg-trust-card z-60 overflow-y-auto transition-transform duration-300 ease-in-out shadow-2xl",
           isMobileDrawerOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="sticky top-0 bg-background border-b border-border p-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-foreground">Filters</h2>
+        <div className="sticky top-0 bg-trust-card border-b border-trust-border p-4 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-trust-text">Filters</h2>
           <Button
             onClick={() => setIsMobileDrawerOpen(false)}
             variant="ghost"
@@ -441,7 +440,7 @@ export default function FilterSidebar({
       </div>
 
       {/* Desktop Sidebar - Hidden on mobile */}
-      <div className="hidden lg:block bg-background rounded-xl border border-border p-6 sticky top-8">
+      <div className="hidden lg:block bg-trust-card rounded-xl border border-trust-border p-6 sticky top-8">
         <FilterContent {...filterContentProps} />
       </div>
     </>

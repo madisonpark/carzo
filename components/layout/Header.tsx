@@ -144,6 +144,7 @@ export function Header() {
                 height={isFocusMode ? 28 : 32}
                 priority
                 className="transition-all duration-300"
+                style={{ objectFit: 'contain' }}
               />
             ) : (
               <div className={cn(isFocusMode ? 'h-7 w-[100px]' : 'h-8 w-[120px]')} />

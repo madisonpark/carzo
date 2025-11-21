@@ -12,21 +12,58 @@ export const metadata = {
 async function fetchInventoryData() {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
-  const [snapshotResponse, combinationsResponse] = await Promise.all([
-    fetch(`${baseUrl}/api/admin/inventory-snapshot`, {
-      headers: { Authorization: `Bearer ${process.env.ADMIN_PASSWORD}` },
-      cache: "no-store",
-    }),
-    fetch(`${baseUrl}/api/admin/combinations`, {
-      headers: { Authorization: `Bearer ${process.env.ADMIN_PASSWORD}` },
-      cache: "no-store",
-    }),
-  ]);
+  try {
+    const [snapshotResponse, combinationsResponse] = await Promise.all([
+      fetch(`${baseUrl}/api/admin/inventory-snapshot`, {
+        headers: { Authorization: `Bearer ${process.env.ADMIN_PASSWORD}` },
+        cache: "no-store",
+      }),
+      fetch(`${baseUrl}/api/admin/combinations`, {
+        headers: { Authorization: `Bearer ${process.env.ADMIN_PASSWORD}` },
+        cache: "no-store",
+      }),
+    ]);
 
-  const snapshot = await snapshotResponse.json();
-  const combinations = await combinationsResponse.json();
+    // Handle Snapshot Response
+    let snapshot = { total_vehicles: 0, by_body_style: {}, by_make: {} };
+    if (snapshotResponse.ok) {
+      snapshot = await snapshotResponse.json();
+    } else {
+      console.error(
+        "Failed to fetch inventory snapshot:",
+        snapshotResponse.status,
+        await snapshotResponse.text()
+      );
+    }
 
-  return { snapshot, combinations };
+    // Handle Combinations Response
+    let combinations = { make_bodystyle: [], make_model: [] };
+    if (combinationsResponse.ok) {
+      combinations = await combinationsResponse.json();
+    } else {
+      console.error(
+        "Failed to fetch combinations:",
+        combinationsResponse.status,
+        await combinationsResponse.text()
+      );
+    }
+
+    return { snapshot, combinations };
+  } catch (error) {
+    console.error("Error fetching inventory data:", error);
+    // Return safe fallback data so the page doesn't crash
+    return {
+      snapshot: {
+        total_vehicles: 0,
+        by_body_style: {},
+        by_make: {}
+      },
+      combinations: {
+        make_bodystyle: [],
+        make_model: []
+      }
+    };
+  }
 }
 
 export default async function CampaignPlanningPage() {

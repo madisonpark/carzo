@@ -5,8 +5,7 @@ import { diversifyByDealer } from "@/lib/dealer-diversity";
 import { shouldApplyDiversification } from "@/lib/search-utils";
 import SearchResults from "@/components/Search/SearchResults";
 import FilterSidebar from "@/components/Search/FilterSidebar";
-import LocationDetector from "@/components/Search/LocationDetector";
-import ZipCodeInput from "@/components/Location/ZipCodeInput";
+import { LocationSelector } from "@/components/Search/LocationSelector";
 
 interface SearchPageProps {
   searchParams: Promise<{
@@ -412,13 +411,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 </div>
               }
             >
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                <LocationDetector />
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span>or</span>
-                  <ZipCodeInput placeholder="Enter zip code" className="w-48" />
-                </div>
-              </div>
+              <LocationSelector />
             </Suspense>
           </div>
         </div>

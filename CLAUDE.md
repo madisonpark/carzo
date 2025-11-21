@@ -431,7 +431,7 @@ export async function POST(request: NextRequest) {
 import { Button, Input, Badge, Card } from '@/components/ui';
 
 // ALWAYS use semantic colors (not hard-coded)
-<Button variant="primary">Primary CTA</Button>  // Red
+<Button variant="primary">Primary CTA</Button>  // Blue (Trust System)
 <Button variant="brand">Brand Action</Button>   // Blue
 <Badge variant="success">Certified</Badge>      // Green
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getUserId, getSessionId } from '@/lib/user-tracking';
+import { getUserId, getSessionId, getUtmParams } from '@/lib/user-tracking';
 import { trackPurchase } from '@/lib/facebook-pixel';
 
 interface TrackClickOptions {
@@ -47,6 +47,8 @@ export function useClickTracking() {
       };
     }
 
+    const utmParams = getUtmParams();
+
     try {
       const response = await fetch('/api/track-click', {
         method: 'POST',
@@ -59,6 +61,7 @@ export function useClickTracking() {
           userId,
           sessionId,
           ctaClicked,
+          ...utmParams,
         }),
       });
 

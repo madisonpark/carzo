@@ -11,7 +11,7 @@ import {
   isDirectFlow,
   UserFlow,
 } from "@/lib/flow-detection";
-import { getUserId, getSessionId } from "@/lib/user-tracking";
+import { getUserId, getSessionId, getUtmParams } from "@/lib/user-tracking";
 import { trackPurchase } from "@/lib/facebook-pixel";
 
 interface VehicleCardProps {
@@ -62,6 +62,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
           sessionId: getSessionId(),
           ctaClicked: "serp_direct",
           flow: "direct",
+          ...getUtmParams(),
         }),
         keepalive: true,
       }).catch((err) => console.error("Failed to track click:", err));

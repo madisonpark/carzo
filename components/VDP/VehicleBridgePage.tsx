@@ -6,7 +6,7 @@ import { Vehicle } from '@/lib/supabase';
 import { useClickTracking } from '@/hooks/useClickTracking';
 import { Badge, Button } from '@/components/ui';
 import { isVDPOnlyFlow, UserFlow } from '@/lib/flow-detection';
-import { getUserId, getSessionId } from '@/lib/user-tracking';
+import { getUserId, getSessionId, getUtmParams } from '@/lib/user-tracking';
 import { trackPurchase } from '@/lib/facebook-pixel';
 
 interface VehicleBridgePageProps {
@@ -441,6 +441,9 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
  */
 function VDPRedirect({ vehicle }: { vehicle: Vehicle }) {
   const [error, setError] = useState<string | null>(null);
+  const userId = getUserId();
+  const sessionId = getSessionId();
+  const utmParams = getUtmParams();
 
   useEffect(() => {
     // Validate dealer URL exists
@@ -457,6 +460,9 @@ function VDPRedirect({ vehicle }: { vehicle: Vehicle }) {
         vehicleId: vehicle.id,
         pageType: 'vdp',
         flow: 'vdp-only',
+        userId,
+        sessionId,
+        ...utmParams,
       }),
       keepalive: true,
     }).catch((err) => console.error('Failed to track impression:', err));
@@ -471,10 +477,11 @@ function VDPRedirect({ vehicle }: { vehicle: Vehicle }) {
       body: JSON.stringify({
         vehicleId: vehicle.id,
         dealerId: vehicle.dealer_id,
-        userId: getUserId(),
-        sessionId: getSessionId(),
+        userId,
+        sessionId,
         ctaClicked: 'vdp_redirect',
         flow: 'vdp-only',
+        ...utmParams,
       }),
       keepalive: true,
     }).catch((err) => console.error('Failed to track click:', err));

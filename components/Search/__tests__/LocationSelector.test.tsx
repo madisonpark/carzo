@@ -49,6 +49,9 @@ describe('LocationSelector', () => {
     // Reset SearchParams
     const keys = Array.from(mockSearchParams.keys());
     for (const key of keys) mockSearchParams.delete(key);
+    
+    // Suppress console.error
+    vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   it('should render initial state correctly', async () => {

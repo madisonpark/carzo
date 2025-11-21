@@ -68,8 +68,8 @@ export default function SearchResults({
         // Convert filters to appropriate types with validation
         min_price: parseAndValidateNumber(currentFilters.minPrice, 0),
         max_price: parseAndValidateNumber(currentFilters.maxPrice, 0),
-        min_year: parseAndValidateNumber(currentFilters.minYear, 1900),
-        max_year: parseAndValidateNumber(currentFilters.maxYear, 1900),
+        min_year: parseAndValidateNumber(currentFilters.minYear, 1990),
+        max_year: parseAndValidateNumber(currentFilters.maxYear, 1990),
         user_lat: parseAndValidateNumber(currentFilters.lat, -90, 90),
         user_lon: parseAndValidateNumber(currentFilters.lon, -180, 180),
         make: currentFilters.make || null,

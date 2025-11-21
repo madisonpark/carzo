@@ -160,8 +160,40 @@ describe('SearchResults', () => {
     expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('sortBy=price_asc'));
   });
 
-  it('should display error message and retry button on API failure', async () => {
-    (global.fetch as any).mockRejectedValueOnce(new Error('API Error'));
+  it('should handle rate limit 429', async () => {
+    (global.fetch as any).mockResolvedValueOnce({
+        status: 429,
+        ok: false,
+        statusText: 'Too Many Requests'
+    });
+
+    const user = userEvent.setup();
+    render(
+      <SearchResults 
+        vehicles={mockVehicles as any} 
+        total={10} 
+        page={1} 
+        totalPages={2} 
+        currentFilters={{}} 
+      />
+    );
+
+    const loadMoreBtn = screen.getByRole('button', { name: /Load More Vehicles/i });
+    await user.click(loadMoreBtn);
+
+    await waitFor(() => {
+      expect(screen.getAllByText(/Too many requests/)[0]).toBeInTheDocument();
+    });
+  });
+
+  it('should retry loading vehicles when retry button is clicked', async () => {
+    // First call fails
+    (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
+    // Second call succeeds
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ data: [{ id: '3', make: 'Ford', model: 'Focus' }] }),
+    });
 
     const user = userEvent.setup();
     render(
@@ -179,7 +211,13 @@ describe('SearchResults', () => {
 
     await waitFor(() => {
       expect(screen.getAllByText(/Failed to load more vehicles/)[0]).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+    });
+
+    const retryBtn = screen.getByRole('button', { name: /Retry/i });
+    await user.click(retryBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('Ford Focus')).toBeInTheDocument();
     });
   });
 });

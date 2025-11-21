@@ -1,55 +1,93 @@
-'use client';
+"use client";
 
-import { Vehicle } from '@/lib/supabase';
-import VehicleCard from './VehicleCard';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui';
+import { Vehicle } from "@/lib/supabase";
+import VehicleCard from "./VehicleCard";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui";
 
 interface SearchResultsProps {
   vehicles: Vehicle[];
   total: number;
-  page: number;
-  totalPages: number;
+  page: number; // Kept for initial state, but we use load more
+  totalPages: number; // Kept for reference
   currentFilters: Record<string, string | undefined>;
 }
 
 export default function SearchResults({
-  vehicles,
+  vehicles: initialVehicles,
   total,
-  page,
-  totalPages,
   currentFilters,
 }: SearchResultsProps) {
-  const router = useRouter();
-  // Only consider actual user-selectable filters (not location, page, or default sort)
-  const filterKeys = ['make', 'model', 'condition', 'bodyStyle', 'minPrice', 'maxPrice', 'minYear', 'maxYear'];
-  const hasActiveFilters = filterKeys.some(key => currentFilters[key]);
-  const currentSort = currentFilters.sortBy || 'relevance';
+  const [vehicleList, setVehicleList] = useState<Vehicle[]>(initialVehicles);
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(initialVehicles.length < total);
 
-  const goToPage = (newPage: number) => {
-    const params = new URLSearchParams(window.location.search);
-    params.set('page', newPage.toString());
-    // Flow parameter automatically preserved
-    router.push(`/search?${params.toString()}`);
+  // Reset list when filters/initial props change
+  useEffect(() => {
+    setVehicleList(initialVehicles);
+    setPage(1);
+    setHasMore(initialVehicles.length < total);
+  }, [initialVehicles, total]);
+
+  const loadMoreVehicles = async () => {
+    setIsLoading(true);
+    const nextPage = page + 1;
+
+    try {
+      // Construct body for API call
+      const body = {
+        ...currentFilters,
+        page: nextPage.toString(),
+        // Convert filters to appropriate types if needed by API, 
+        // but API usually handles string parsing or we send strings.
+        // The SearchPage uses direct DB or API. Let's try to use the API route.
+        // If latitude/longitude are in currentFilters, API should handle it.
+        min_price: currentFilters.minPrice ? parseFloat(currentFilters.minPrice) : null,
+        max_price: currentFilters.maxPrice ? parseFloat(currentFilters.maxPrice) : null,
+        min_year: currentFilters.minYear ? parseInt(currentFilters.minYear) : null,
+        max_year: currentFilters.maxYear ? parseInt(currentFilters.maxYear) : null,
+        user_lat: currentFilters.lat ? parseFloat(currentFilters.lat) : null,
+        user_lon: currentFilters.lon ? parseFloat(currentFilters.lon) : null,
+        make: currentFilters.make || null,
+        model: currentFilters.model || null,
+        condition: currentFilters.condition || null,
+        body_style: currentFilters.bodyStyle || null,
+        sort_by: currentFilters.sortBy || 'relevance',
+        limit: 24,
+        offset: (nextPage - 1) * 24,
+      };
+
+      const response = await fetch("/api/search-vehicles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch");
+
+      const { data } = await response.json();
+      
+      if (data && data.length > 0) {
+        setVehicleList((prev) => [...prev, ...data]);
+        setPage(nextPage);
+        if (data.length < 24) setHasMore(false);
+      } else {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error("Error loading more vehicles:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const updateSort = (sortBy: string) => {
-    const params = new URLSearchParams(window.location.search);
-    params.set('sortBy', sortBy);
-    params.delete('page'); // Reset to page 1 when sorting
-    // Flow parameter automatically preserved
-    router.push(`/search?${params.toString()}`);
-  };
-
-  if (vehicles.length === 0) {
+  if (vehicleList.length === 0) {
     return (
-      <div className="bg-background rounded-xl border border-border p-12 text-center">
-        {/* Empty State Icon */}
-        <div className="inline-flex items-center justify-center w-20 h-20 bg-muted rounded-full mb-6">
+      <div className="bg-white rounded-lg border border-border p-12 text-center">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
           <svg
-            className="w-10 h-10 text-muted-foreground"
+            className="w-8 h-8 text-gray-400"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -62,62 +100,39 @@ export default function SearchResults({
             />
           </svg>
         </div>
-
-        {/* Message */}
-        <h3 className="text-2xl font-bold text-foreground mb-2">
-          No vehicles found
-        </h3>
-        <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-          We couldn&apos;t find any vehicles matching your search criteria. Try adjusting your filters
-          or browse all available vehicles.
-        </p>
-
-        {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Button
-            onClick={() => {
-              const params = new URLSearchParams(window.location.search);
-              const flow = params.get('flow');
-              router.push(flow ? `/search?flow=${flow}` : '/search');
-            }}
-            className="bg-trust-blue text-trust-on-brand hover:opacity-90"
-          >
-            View All Vehicles
-          </Button>
-          {hasActiveFilters && (
-            <Button
-              onClick={() => {
-                const params = new URLSearchParams(window.location.search);
-                const flow = params.get('flow');
-                router.push(flow ? `/search?flow=${flow}` : '/search');
-              }}
-              className="bg-white border border-trust-border text-trust-text hover:bg-trust-elevated"
-            >
-              Clear Filters
-            </Button>
-          )}
-        </div>
+        <h3 className="text-lg font-bold text-gray-900 mb-1">No vehicles found</h3>
+        <p className="text-gray-500 mb-6">Try adjusting your filters.</p>
+        <Button
+          onClick={() => window.location.href = '/search'}
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+        >
+          Clear Filters
+        </Button>
       </div>
     );
   }
 
   return (
     <div>
-      {/* Sort Controls */}
-      <div className="flex items-center justify-between mb-6">
-        <p className="text-sm text-muted-foreground">
-          Showing <span className="font-semibold">{vehicles.length}</span> of{' '}
+      {/* Sort Controls - Desktop Only (Mobile uses FilterSidebar sticky) */}
+      <div className="hidden lg:flex items-center justify-between mb-4">
+        <p className="text-sm text-gray-500">
+          Showing <span className="font-semibold">{vehicleList.length}</span> of{" "}
           <span className="font-semibold">{total.toLocaleString()}</span> vehicles
         </p>
         <div className="flex items-center gap-2">
-          <label htmlFor="sort-select" className="text-sm font-medium text-foreground">
+          <label htmlFor="sort-select" className="text-sm font-medium text-gray-700">
             Sort by:
           </label>
           <select
             id="sort-select"
-            value={currentSort}
-            onChange={(e) => updateSort(e.target.value)}
-            className="px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            value={currentFilters.sortBy || "relevance"}
+            onChange={(e) => {
+              const params = new URLSearchParams(window.location.search);
+              params.set("sortBy", e.target.value);
+              window.location.search = params.toString();
+            }}
+            className="text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500"
           >
             <option value="relevance">Relevance</option>
             <option value="price_asc">Price: Low to High</option>
@@ -132,64 +147,26 @@ export default function SearchResults({
 
       {/* Results Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-8">
-        {vehicles.map((vehicle) => (
+        {vehicleList.map((vehicle) => (
           <VehicleCard key={vehicle.id} vehicle={vehicle} />
         ))}
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          <Button
-            onClick={() => goToPage(page - 1)}
-            disabled={page === 1}
-            variant="outline"
-            size="icon"
+      {/* Load More Button */}
+      {hasMore && (
+        <div className="mt-8 text-center">
+          <button
+            onClick={loadMoreVehicles}
+            disabled={isLoading}
+            className="w-full md:w-auto px-8 py-3 bg-white border border-gray-300 text-gray-700 font-semibold rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
           >
-            <ChevronLeft className="w-5 h-5" />
-          </Button>
-
-          <div className="flex items-center gap-2">
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              let pageNum;
-              if (totalPages <= 5) {
-                pageNum = i + 1;
-              } else if (page <= 3) {
-                pageNum = i + 1;
-              } else if (page >= totalPages - 2) {
-                pageNum = totalPages - 4 + i;
-              } else {
-                pageNum = page - 2 + i;
-              }
-
-              return (
-                <Button
-                  key={pageNum}
-                  onClick={() => goToPage(pageNum)}
-                  variant={page === pageNum ? 'brand' : 'outline'}
-                  size="icon"
-                >
-                  {pageNum}
-                </Button>
-              );
-            })}
-          </div>
-
-          <Button
-            onClick={() => goToPage(page + 1)}
-            disabled={page === totalPages}
-            variant="outline"
-            size="icon"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </Button>
+            {isLoading ? "Loading..." : "Load More Vehicles"}
+          </button>
         </div>
       )}
-
-      {/* Results Summary */}
-      <p className="text-center text-sm text-muted-foreground mt-6">
-        Showing {(page - 1) * 24 + 1}-{Math.min(page * 24, total)} of {total.toLocaleString()}{' '}
-        vehicles
+      
+      <p className="text-center text-xs text-gray-400 mt-4">
+        Showing {vehicleList.length} of {total.toLocaleString()} vehicles
       </p>
     </div>
   );

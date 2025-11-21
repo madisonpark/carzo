@@ -2,8 +2,7 @@
 
 import { Vehicle } from "@/lib/supabase";
 import Link from "next/link";
-import { Camera, MapPin, ArrowRight, ExternalLink } from "lucide-react";
-import { Button } from "@/components/ui";
+import { Camera, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import {
   getFlowFromUrl,
@@ -19,7 +18,6 @@ interface VehicleCardProps {
 }
 
 export default function VehicleCard({ vehicle }: VehicleCardProps) {
-  // Initialize flow state directly instead of using useEffect to avoid cascading renders
   const [flow] = useState<UserFlow>(() => {
     if (typeof window === "undefined") return "full";
     return getFlowFromUrl();
@@ -39,22 +37,17 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
     ? new Intl.NumberFormat("en-US").format(vehicle.miles)
     : null;
 
-  // Determine link destination based on flow
-  const isDirect = isDirectFlow(flow) && vehicle.dealer_vdp_url; // Only direct if URL exists
+  const isDirect = isDirectFlow(flow) && vehicle.dealer_vdp_url;
   const linkHref = isDirect
-    ? vehicle.dealer_vdp_url // Flow A: Direct to dealer
-    : preserveFlowParam(`/vehicles/${vehicle.vin}`); // Flow C: To VDP
+    ? vehicle.dealer_vdp_url
+    : preserveFlowParam(`/vehicles/${vehicle.vin}`);
 
   const linkTarget = isDirect ? "_blank" : "_self";
   const linkRel = isDirect ? "noopener noreferrer" : undefined;
 
-  // Track click for Flow A (direct to dealer)
   const handleClick = () => {
     if (isDirect) {
-      // Fire Facebook Pixel Purchase event
       trackPurchase();
-
-      // Track click with keepalive for reliable tracking when opening new tab
       fetch("/api/track-click", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -72,20 +65,16 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
     }
   };
 
-  // Standardize condition text
-  const conditionText =
-    vehicle.condition?.toLowerCase() === "new" ? "New" : "Used";
-
   return (
     <Link
       href={linkHref}
       target={linkTarget}
       rel={linkRel}
       onClick={handleClick}
-      className="group bg-trust-card border border-trust-border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col h-full"
+      className="group bg-white border border-border hover:border-foreground/30 transition-colors rounded-lg overflow-hidden flex flex-col h-full"
     >
-      {/* Image Area */}
-      <div className="relative h-48 bg-trust-elevated overflow-hidden shrink-0">
+      {/* Image Section */}
+      <div className="relative h-48 bg-gray-100 overflow-hidden shrink-0">
         <img
           src={
             (vehicle.primary_image_url && vehicle.primary_image_url.trim()) ||
@@ -98,67 +87,44 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
           }}
         />
         
-        {/* Price - Now directly on image, adjust positioning */}
-        <div className="absolute bottom-3 left-3 text-white font-bold text-lg shadow-black/20 drop-shadow-sm">
-          {formattedPrice}
-        </div>
-
-        {/* Badge */}
-        {conditionText === "New" && (
-          <div className={`absolute top-3 left-3 flex items-center gap-1 font-bold text-[10px] uppercase tracking-wider px-2 py-1 rounded-sm shadow-sm ${
-            conditionText === "New" 
-              ? "bg-blue-100 text-blue-800 border border-blue-200" 
-              : "bg-gray-100 text-gray-800 border border-gray-200" // This part will now be dead code for "Used"
-          }`}>
-            {conditionText}
-          </div>
-        )}
-        
-        {/* Photo Count */}
         {vehicle.total_photos && (
-          <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 bg-black/60 backdrop-blur text-white text-xs font-medium rounded-sm">
+          <div className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 bg-black/50 text-white text-xs font-medium rounded-sm backdrop-blur-sm">
             <Camera className="w-3 h-3" />
             {vehicle.total_photos}
           </div>
         )}
       </div>
 
-      {/* Content */}
+      {/* Content Section */}
       <div className="p-5 flex flex-col grow">
-        {/* Title */}
-        <div className="mb-2 min-h-12">
-          <h3 className="text-base font-bold text-trust-text group-hover:text-trust-link transition-colors line-clamp-1">
-            {vehicle.year} {vehicle.make} {vehicle.model}
-          </h3>
-          {vehicle.trim && (
-            <p className="text-sm text-trust-muted line-clamp-1">
+        <div className="flex justify-between items-start mb-2">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900 line-clamp-1">
+              {vehicle.year} {vehicle.make} {vehicle.model}
+            </h3>
+            <p className="text-sm text-muted-foreground line-clamp-1">
               {vehicle.trim}
             </p>
-          )}
-        </div>
-
-        {/* Spacer */}
-        <div className="grow"></div>
-
-        {/* Specs Row (Mileage & Location) */}
-        <div className="flex items-center justify-between text-sm text-trust-muted mb-4 pt-2 border-t border-trust-border/50">
-          <div className="flex items-center gap-3">
-             {formattedMileage && <span>{formattedMileage} mi</span>}
-             {vehicle.dealer_state && (
-               <div className="flex items-center gap-1 pl-3 border-l border-trust-border/50">
-                 <MapPin className="w-3.5 h-3.5 shrink-0" />
-                 <span>{vehicle.dealer_state}</span>
-               </div>
-             )}
           </div>
         </div>
 
-        {/* Primary CTA */}
+        <div className="mb-4">
+          <p className="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+            {formattedPrice}
+          </p>
+          <div className="text-xs font-medium text-muted-foreground mt-1">
+            {formattedMileage && <span>{formattedMileage} mi</span>}
+            {vehicle.transmission && <span> • {vehicle.transmission}</span>}
+          </div>
+        </div>
+
+        <div className="grow"></div>
+
         <button
-          className="w-full bg-trust-blue text-trust-on-brand px-4 py-3 rounded-md font-semibold text-sm hover:brightness-90 active:scale-98 flex items-center justify-center gap-2 transition-all shadow-sm"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded py-3 shadow-sm flex items-center justify-center transition-colors active:scale-[0.98]"
         >
           Check Availability
-          <ArrowRight className="w-4 h-4" />
+          <ChevronRight className="ml-1 w-5 h-5" />
         </button>
       </div>
     </Link>

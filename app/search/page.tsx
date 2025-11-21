@@ -380,7 +380,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   ]);
 
   return (
-    <div className="min-h-screen bg-trust-bg">
+    <div className="min-h-screen bg-[#F3F4F6] dark:bg-zinc-900">
       {/* Skip to main content link for accessibility */}
       <a
         href="#main-content"

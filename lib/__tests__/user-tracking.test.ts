@@ -353,6 +353,7 @@ describe('hasClickedDealer() and markDealerClicked()', () => {
 describe('getUtmParams()', () => {
   beforeEach(() => {
     setupWindow();
+    sessionStorage.clear(); // Ensure clean sessionStorage for each test
   });
 
   describe('Server-side (window undefined)', () => {
@@ -370,26 +371,23 @@ describe('getUtmParams()', () => {
   });
 
   describe('Client-side (window defined)', () => {
-    it('should return empty object when no UTM params', () => {
-      global.window.location = new URL('http://localhost:3000/search') as any;
+    beforeEach(() => {
+      global.window = { location: new URL('http://localhost:3000') } as any;
+      sessionStorage.clear(); // Ensure clean sessionStorage for each test
+    });
 
+    it('should return empty object when no UTM params', () => {
       expect(getUtmParams()).toEqual({});
     });
 
     it('should extract utm_source parameter', () => {
       global.window.location = new URL('http://localhost:3000/search?utm_source=facebook') as any;
-
-      expect(getUtmParams()).toEqual({
-        source: 'facebook',
-      });
+      expect(getUtmParams()).toEqual({ source: 'facebook' });
     });
 
     it('should extract utm_medium parameter', () => {
       global.window.location = new URL('http://localhost:3000/search?utm_medium=cpc') as any;
-
-      expect(getUtmParams()).toEqual({
-        medium: 'cpc',
-      });
+      expect(getUtmParams()).toEqual({ medium: 'cpc' });
     });
 
     it('should extract utm_campaign parameter', () => {
@@ -397,20 +395,58 @@ describe('getUtmParams()', () => {
         'http://localhost:3000/search?utm_campaign=spring_sale'
       ) as any;
 
-      expect(getUtmParams()).toEqual({
-        campaign: 'spring_sale',
-      });
+      expect(getUtmParams()).toEqual({ campaign: 'spring_sale' });
     });
 
-    it('should extract all UTM parameters', () => {
+    it('should extract fbclid parameter', () => {
+      global.window.location = new URL('http://localhost:3000/search?fbclid=fb_id_123') as any;
+      expect(getUtmParams()).toEqual({ fbclid: 'fb_id_123' });
+    });
+
+    it('should extract gclid parameter', () => {
+      global.window.location = new URL('http://localhost:3000/search?gclid=g_id_456') as any;
+      expect(getUtmParams()).toEqual({ gclid: 'g_id_456' });
+    });
+
+    it('should extract ttclid parameter', () => {
+      global.window.location = new URL('http://localhost:3000/search?ttclid=tiktok_id_789') as any;
+      expect(getUtmParams()).toEqual({ ttclid: 'tiktok_id_789' });
+    });
+
+    it('should extract tblci parameter', () => {
+      global.window.location = new URL('http://localhost:3000/search?tblci=taboola_id_012') as any;
+      expect(getUtmParams()).toEqual({ tblci: 'taboola_id_012' });
+    });
+
+    it('should extract utm_term parameter', () => {
       global.window.location = new URL(
-        'http://localhost:3000/search?utm_source=google&utm_medium=display&utm_campaign=toyota_2024'
+        'http://localhost:3000/search?utm_term=running_shoes'
+      ) as any;
+      expect(getUtmParams()).toEqual({ term: 'running_shoes' });
+    });
+
+    it('should extract utm_content parameter', () => {
+      global.window.location = new URL(
+        'http://localhost:3000/search?utm_content=logolink'
+      ) as any;
+      expect(getUtmParams()).toEqual({ content: 'logolink' });
+    });
+
+    it('should extract all attribution parameters', () => {
+      global.window.location = new URL(
+        'http://localhost:3000/search?utm_source=google&utm_medium=display&utm_campaign=toyota_2024&utm_term=suv&utm_content=video_ad&fbclid=fb_id_abc&gclid=g_id_xyz&ttclid=tt_id_123&tblci=tb_id_456'
       ) as any;
 
       expect(getUtmParams()).toEqual({
         source: 'google',
         medium: 'display',
         campaign: 'toyota_2024',
+        term: 'suv',
+        content: 'video_ad',
+        fbclid: 'fb_id_abc',
+        gclid: 'g_id_xyz',
+        ttclid: 'tt_id_123',
+        tblci: 'tb_id_456',
       });
     });
 
@@ -435,6 +471,12 @@ describe('getUtmParams()', () => {
       expect(params.source).toBe('facebook');
       expect(params.medium).toBeUndefined();
       expect(params.campaign).toBeUndefined();
+      expect(params.term).toBeUndefined();
+      expect(params.content).toBeUndefined();
+      expect(params.fbclid).toBeUndefined();
+      expect(params.gclid).toBeUndefined();
+      expect(params.ttclid).toBeUndefined();
+      expect(params.tblci).toBeUndefined();
     });
 
     it('should handle URL-encoded UTM values', () => {
@@ -456,17 +498,63 @@ describe('getUtmParams()', () => {
 
       expect(params.source).toBeUndefined(); // Empty string converted to undefined
       expect(params.medium).toBe('cpc');
+      expect(params.campaign).toBeUndefined();
+      expect(params.term).toBeUndefined();
+      expect(params.content).toBeUndefined();
+      expect(params.fbclid).toBeUndefined();
+      expect(params.gclid).toBeUndefined();
+      expect(params.ttclid).toBeUndefined();
+      expect(params.tblci).toBeUndefined();
     });
 
     it('should extract UTM params from complex URL', () => {
       global.window.location = new URL(
-        'http://localhost:3000/vehicles/ABC123?flow=direct&make=toyota&utm_source=google&utm_medium=display&utm_campaign=q1_2024#photos'
+        'http://localhost:3000/vehicles/ABC123?flow=direct&make=toyota&utm_source=google&utm_medium=display&utm_campaign=q1_2024'
       ) as any;
 
       expect(getUtmParams()).toEqual({
         source: 'google',
         medium: 'display',
         campaign: 'q1_2024',
+      });
+    });
+
+    it('should persist UTM params to sessionStorage', () => {
+      global.window.location = new URL('http://localhost:3000/search?utm_source=facebook&gclid=test_gclid') as any;
+      getUtmParams(); // Call to trigger persistence
+      const stored = sessionStorage.getItem('carzo_utm_params');
+      expect(stored).toEqual(JSON.stringify({ source: 'facebook', gclid: 'test_gclid' }));
+    });
+
+    it('should retrieve UTM params from sessionStorage if not in URL', () => {
+      sessionStorage.setItem('carzo_utm_params', JSON.stringify({ source: 'persisted_source', fbclid: 'persisted_fbclid' }));
+      global.window.location = new URL('http://localhost:3000/search') as any; // No UTMs in URL
+
+      const params = getUtmParams();
+      expect(params).toEqual({ source: 'persisted_source', fbclid: 'persisted_fbclid' });
+    });
+
+    it('should prioritize URL params over sessionStorage', () => {
+      sessionStorage.setItem('carzo_utm_params', JSON.stringify({ source: 'persisted_source', medium: 'persisted_medium' }));
+      global.window.location = new URL('http://localhost:3000/search?utm_source=new_source&gclid=new_gclid') as any;
+
+      const params = getUtmParams();
+      expect(params).toEqual({ source: 'new_source', medium: 'persisted_medium', gclid: 'new_gclid' });
+    });
+
+    it('should merge URL params with sessionStorage, preferring URL', () => {
+      sessionStorage.setItem('carzo_utm_params', JSON.stringify({ source: 'old_source', medium: 'old_medium', campaign: 'old_campaign', fbclid: 'old_fb', gclid: 'old_g' }));
+      global.window.location = new URL(
+        'http://localhost:3000/search?utm_source=new_source&gclid=new_g'
+      ) as any;
+
+      const params = getUtmParams();
+      expect(params).toEqual({
+        source: 'new_source',
+        medium: 'old_medium',
+        campaign: 'old_campaign',
+        fbclid: 'old_fb',
+        gclid: 'new_g',
       });
     });
   });
@@ -477,6 +565,7 @@ describe('clearTrackingData()', () => {
     clearCookies();
     clearSession();
     setupWindow();
+    sessionStorage.removeItem('carzo_utm_params'); // Ensure clean state for UTMs
   });
 
   afterEach(() => {
@@ -535,6 +624,12 @@ describe('clearTrackingData()', () => {
       expect(sessionStorage.getItem('carzo_clicked_dealers')).toBeNull();
     });
 
+    it('should clear UTM params from sessionStorage', () => {
+      sessionStorage.setItem('carzo_utm_params', JSON.stringify({ source: 'test' }));
+      clearTrackingData();
+      expect(sessionStorage.getItem('carzo_utm_params')).toBeNull();
+    });
+
     it('should clear all tracking data at once', () => {
       // Set all tracking data
       document.cookie = 'carzo_user_id=user-123; path=/';
@@ -543,6 +638,7 @@ describe('clearTrackingData()', () => {
         'carzo_clicked_dealers',
         JSON.stringify(['dealer-1'])
       );
+      sessionStorage.setItem('carzo_utm_params', JSON.stringify({ source: 'test' }));
 
       clearTrackingData();
 
@@ -553,12 +649,14 @@ describe('clearTrackingData()', () => {
 
       expect(sessionStorage.getItem('carzo_session_id')).toBeNull();
       expect(sessionStorage.getItem('carzo_clicked_dealers')).toBeNull();
+      expect(sessionStorage.getItem('carzo_utm_params')).toBeNull();
     });
 
     it('should allow re-initialization after clearing', () => {
       // Start fresh
       clearCookies();
       clearSession();
+      sessionStorage.removeItem('carzo_utm_params');
 
       // Set initial data
       markDealerClicked('dealer-1');
@@ -591,6 +689,7 @@ describe('Integration tests: Real-world scenarios', () => {
     clearCookies();
     clearSession();
     setupWindow();
+    sessionStorage.clear(); // Ensure clean state for UTMs
   });
 
   afterEach(() => {
@@ -630,6 +729,7 @@ describe('Integration tests: Real-world scenarios', () => {
 
     // Simulate page refresh by clearing sessionStorage but keeping cookies
     sessionStorage.clear();
+    sessionStorage.removeItem('carzo_utm_params');
 
     const userId2 = getUserId();
 
@@ -641,9 +741,11 @@ describe('Integration tests: Real-world scenarios', () => {
     const userId1 = getUserId();
     const sessionId1 = getSessionId();
     markDealerClicked('dealer-1');
+    sessionStorage.setItem('carzo_utm_params', JSON.stringify({ source: 'test' }));
 
     // Clear only session data (not cookie)
     sessionStorage.clear();
+    sessionStorage.removeItem('carzo_utm_params');
 
     const userId2 = getUserId();
     const sessionId2 = getSessionId();
@@ -656,6 +758,9 @@ describe('Integration tests: Real-world scenarios', () => {
 
     // Clicked dealers should be reset
     expect(hasClickedDealer('dealer-1')).toBe(false);
+
+    // UTM params should be reset
+    expect(getUtmParams()).toEqual({});
   });
 
   it('should handle multiple dealers in single session', () => {
@@ -676,7 +781,7 @@ describe('Integration tests: Real-world scenarios', () => {
   it('should extract UTM params from ad campaign URL', () => {
     // Simulate user clicking Facebook ad
     global.window.location = new URL(
-      'http://localhost:3000/search?make=toyota&utm_source=facebook&utm_medium=cpc&utm_campaign=toyota_spring_2024&flow=direct'
+      'http://localhost:3000/search?make=toyota&utm_source=facebook&utm_medium=cpc&utm_campaign=toyota_spring_2024&fbclid=abc123xyz&gclid=def456uvw&flow=direct'
     ) as any;
 
     const utmParams = getUtmParams();
@@ -685,6 +790,8 @@ describe('Integration tests: Real-world scenarios', () => {
       source: 'facebook',
       medium: 'cpc',
       campaign: 'toyota_spring_2024',
+      fbclid: 'abc123xyz',
+      gclid: 'def456uvw',
     });
   });
 });

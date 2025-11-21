@@ -27,11 +27,11 @@ vi.mock('@/lib/supabase', () => ({
 }));
 
 // Helper to create mock NextRequest
-function createMockRequest(body: unknown): NextRequest {
+function createMockRequest(body: unknown, headers?: Record<string, string>): NextRequest {
   const request = {
     text: vi.fn().mockResolvedValue(JSON.stringify(body)),
     json: vi.fn().mockResolvedValue(body),
-    headers: new Headers(),
+    headers: new Headers(headers),
     url: 'http://localhost:3000/api/track-click',
     method: 'POST',
   } as unknown as NextRequest;
@@ -54,6 +54,7 @@ describe('POST /api/track-click', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    vi.spyOn(console, 'warn').mockImplementation(() => {}); // Capture console warnings
     // Get mocked Supabase instance
     const { supabaseAdmin } = await import('@/lib/supabase');
     mockSupabase = supabaseAdmin as unknown as MockSupabaseClient;
@@ -98,17 +99,30 @@ describe('POST /api/track-click', () => {
 
     // Parameterized test for missing required fields
     it.each([
-      { field: 'vehicleId', body: { dealerId: 'dealer-123', userId: 'user-456' } },
-      { field: 'dealerId', body: { vehicleId: 'vehicle-123', userId: 'user-456' } },
-      { field: 'userId', body: { vehicleId: 'vehicle-123', dealerId: 'dealer-123' } },
-    ])('should return 400 when missing $field', async ({ body }) => {
-      const request = createMockRequest(body);
+      { missingField: 'vehicleId' },
+      { missingField: 'dealerId' },
+      { missingField: 'userId' },
+    ])('should return 400 when missing $missingField', async ({ missingField }) => {
+      const baseBody = {
+        vehicleId: 'vehicle-123',
+        dealerId: 'dealer-123',
+        userId: 'user-456',
+      };
+      // Create a body with the specific field missing
+      const requestBody = { ...baseBody, [missingField]: undefined };
+      delete requestBody[missingField];
+
+      const request = createMockRequest(requestBody);
 
       const response = await POST(request);
       const data = await response.json();
 
       expect(response.status).toBe(400);
       expect(data.error).toContain('Missing required fields');
+      expect(console.warn).toHaveBeenCalledWith(
+        'Track Click: Missing required fields (vehicleId, dealerId, userId). Body:',
+        expect.any(Object)
+      );
     });
   });
 
@@ -541,6 +555,145 @@ describe('POST /api/track-click', () => {
         dealerId: 'dealer-456',
         userId: 'user-789',
       });
+    });
+  });
+
+  describe('Attribution and User Context', () => {
+    it('should log user_agent, anonymized ip_address and all UTM params', async () => {
+      mockNoClickHistory();
+      mockSuccessfulClickInsert();
+
+      const request = createMockRequest(
+        {
+          vehicleId: 'vehicle-123',
+          dealerId: 'dealer-123',
+          userId: 'user-456',
+          sessionId: 'session-123',
+          ctaClicked: 'primary',
+          flow: 'full',
+          utm_source: 'google',
+          utm_medium: 'cpc',
+          utm_campaign: 'summer_sale',
+          utm_term: 'suv',
+          utm_content: 'video_ad',
+          fbclid: 'fb_cl_id',
+          gclid: 'g_cl_id',
+          ttclid: 'tt_cl_id',
+          tblci: 'tb_cl_id',
+        },
+        {
+          'User-Agent': 'Test-Agent/1.0',
+          'X-Forwarded-For': '192.168.1.100, 10.0.0.1', // Example with multiple IPs
+        }
+      );
+
+      await POST(request);
+
+      expect(mockSupabase.insert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user_agent: 'Test-Agent/1.0',
+          ip_address: '192.168.1.0', // Anonymized
+          utm_source: 'google',
+          utm_medium: 'cpc',
+          utm_campaign: 'summer_sale',
+          utm_term: 'suv',
+          utm_content: 'video_ad',
+          fbclid: 'fb_cl_id',
+          gclid: 'g_cl_id',
+          ttclid: 'tt_cl_id',
+          tblci: 'tb_cl_id',
+        })
+      );
+    });
+
+    it('should anonymize IPv4 address (last octet to 0)', async () => {
+      mockNoClickHistory();
+      mockSuccessfulClickInsert();
+
+      const request = createMockRequest(
+        {
+          vehicleId: 'v1',
+          dealerId: 'd1',
+          userId: 'u1',
+        },
+        { 'X-Forwarded-For': '192.168.1.100' }
+      );
+
+      await POST(request);
+
+      expect(mockSupabase.insert).toHaveBeenCalledWith(
+        expect.objectContaining({ ip_address: '192.168.1.0' })
+      );
+    });
+
+    it('should anonymize IPv6 address (last 5 parts to 0)', async () => {
+      mockNoClickHistory();
+      mockSuccessfulClickInsert();
+
+      const request = createMockRequest(
+        {
+          vehicleId: 'v1',
+          dealerId: 'd1',
+          userId: 'u1',
+        },
+        { 'X-Forwarded-For': '2001:0db8:85a3:0000:0000:8a2e:0370:7334' }
+      );
+
+      await POST(request);
+
+      expect(mockSupabase.insert).toHaveBeenCalledWith(
+        expect.objectContaining({ ip_address: '2001:0db8:85a3:0:0:0:0:0' })
+      );
+    });
+
+    it('should handle missing user-agent and ip_address', async () => {
+      mockNoClickHistory();
+      mockSuccessfulClickInsert();
+
+      const request = createMockRequest(
+        {
+          vehicleId: 'v1',
+          dealerId: 'd1',
+          userId: 'u1',
+        },
+        // No headers
+      );
+
+      await POST(request);
+
+      expect(mockSupabase.insert).toHaveBeenCalledWith(
+        expect.objectContaining({ user_agent: 'unknown', ip_address: null })
+      );
+    });
+
+    it('should handle missing UTM parameters (set to null)', async () => {
+      mockNoClickHistory();
+      mockSuccessfulClickInsert();
+
+      const request = createMockRequest(
+        {
+          vehicleId: 'v1',
+          dealerId: 'd1',
+          userId: 'u1',
+        },
+        // No UTMs in body
+      );
+
+      await POST(request);
+
+      expect(mockSupabase.insert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          utm_source: null,
+          utm_medium: null,
+          utm_campaign: null,
+          utm_term: null,
+          utm_content: null,
+          fbclid: null,
+          gclid: null,
+          ttclid: null,
+          tblci: null,
+        })
+      );
     });
   });
 });

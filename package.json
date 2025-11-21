@@ -16,6 +16,7 @@
   "dependencies": {
     "@maxmind/geoip2-node": "^6.2.0",
     "@radix-ui/react-slot": "^1.2.4",
+    "@sentry/nextjs": "^10.26.0",
     "@supabase/supabase-js": "^2.81.1",
     "adm-zip": "^0.5.16",
     "clsx": "^2.1.1",

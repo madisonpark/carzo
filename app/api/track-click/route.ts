@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { anonymizeIp } from '@/lib/utils'; // Import anonymizeIp from utils
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,6 +8,7 @@ export async function POST(request: NextRequest) {
     try {
       const text = await request.text();
       if (!text || text.trim() === '') {
+        console.warn('Track Click: Empty request body received.');
         return NextResponse.json(
           { error: 'Empty request body' },
           { status: 400 }
@@ -14,17 +16,45 @@ export async function POST(request: NextRequest) {
       }
       body = JSON.parse(text);
     } catch (e) {
-      console.error('JSON parse error:', e);
+      console.error('Track Click: JSON parse error:', e);
       return NextResponse.json(
         { error: 'Invalid JSON in request body' },
         { status: 400 }
       );
     }
 
-    const { vehicleId, dealerId, userId, sessionId, ctaClicked, flow } = body;
+    const {
+      vehicleId,
+      dealerId,
+      userId,
+      sessionId,
+      ctaClicked,
+      flow,
+      utm_source,
+      utm_medium,
+      utm_campaign,
+      utm_term,
+      utm_content,
+      fbclid,
+      gclid,
+      ttclid,
+      tblci,
+    } = body;
+
+    // Extract User-Agent and IP
+    const userAgent = request.headers.get('user-agent') || 'unknown';
+    const ipAddressHeader = request.headers.get('x-forwarded-for');
+    let ipAddress: string | null = null;
+    if (ipAddressHeader) {
+      // x-forwarded-for can contain multiple IPs, the first is usually the client
+      ipAddress = ipAddressHeader.split(',')[0].trim();
+      ipAddress = anonymizeIp(ipAddress); // Anonymize IP for privacy
+    }
+
 
     // Validate required fields
     if (!vehicleId || !dealerId || !userId) {
+      console.warn('Track Click: Missing required fields (vehicleId, dealerId, userId). Body:', body);
       return NextResponse.json(
         { error: 'Missing required fields: vehicleId, dealerId, userId' },
         { status: 400 }
@@ -39,13 +69,18 @@ export async function POST(request: NextRequest) {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const { data: clickHistory } = await supabaseAdmin
+    const { data: clickHistory, error: historyError } = await supabaseAdmin
       .from('dealer_click_history')
       .select('*')
       .eq('user_id', userId)
       .eq('dealer_id', dealerId)
       .gte('first_click_at', thirtyDaysAgo.toISOString())
       .single();
+
+    if (historyError && historyError.code !== 'PGRST116') { // PGRST116: No rows found, which is expected for new clicks
+      console.error('Track Click: Error fetching click history:', historyError);
+      return NextResponse.json({ error: 'Failed to fetch click history' }, { status: 500 });
+    }
 
     // Determine if this click is billable (first time clicking this dealer in 30 days)
     const isBillable = !clickHistory;
@@ -59,18 +94,30 @@ export async function POST(request: NextRequest) {
       is_billable: isBillable,
       cta_clicked: ctaClicked || 'primary',
       flow: normalizedFlow,
+      user_agent: userAgent,
+      ip_address: ipAddress,
+      utm_source: utm_source || null,
+      utm_medium: utm_medium || null,
+      utm_campaign: utm_campaign || null,
+      utm_term: utm_term || null,
+      utm_content: utm_content || null,
+      fbclid: fbclid || null,
+      gclid: gclid || null,
+      ttclid: ttclid || null,
+      tblci: tblci || null,
       created_at: new Date().toISOString(),
     });
 
     if (clickError) {
       // Check if it's a foreign key constraint error (vehicle doesn't exist)
       if (clickError.code === '23503') {
+        console.warn('Track Click: Vehicle not found for click. Vehicle ID:', vehicleId);
         return NextResponse.json(
           { error: 'Vehicle not found', billable: false },
           { status: 404 }
         );
       }
-      console.error('Error logging click:', clickError);
+      console.error('Track Click: Error logging click:', clickError);
       return NextResponse.json({ error: 'Failed to log click' }, { status: 500 });
     }
 
@@ -106,7 +153,7 @@ export async function POST(request: NextRequest) {
       userId,
     });
   } catch (error) {
-    console.error('Error in track-click API:', error);
+    console.error('Track Click: Uncaught error in API:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

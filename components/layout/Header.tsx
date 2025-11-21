@@ -119,7 +119,7 @@ export function Header() {
     <header
       className={cn(
         'sticky top-0 z-50 w-full border-b border-border',
-        'bg-background/80 backdrop-blur-md',
+        'bg-trust-card shadow-sm', // Solid background for readability
         'transition-transform duration-300',
         isFocusMode ? 'h-14' : 'h-16',
         !isVisible && '-translate-y-full' // Hide header when not visible

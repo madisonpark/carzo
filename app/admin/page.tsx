@@ -403,21 +403,21 @@ export default async function AdminDashboard() {
                       className="flex-1 bg-slate-200 rounded-full h-2"
                       role="progressbar"
                       aria-label="Flow A billable rate"
-                      aria-valuenow={Math.min(
+                      aria-valuenow={(Math.min(
                         100,
                         analytics.flowPerformance.direct.billableRate || 0
-                      )}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
+                      )).toString()}
+                      aria-valuemin={(0).toString()}
+                      aria-valuemax={(100).toString()}
                     >
                       <div
-                        className="bg-green-500 h-2 rounded-full transition-all duration-500"
+                        className="bg-green-500 h-2 rounded-full transition-all duration-500 w-progress"
                         style={{
-                          width: `${Math.min(
+                          '--progress-width': `${Math.min(
                             100,
                             analytics.flowPerformance.direct.billableRate || 0
                           )}%`,
-                        }}
+                        } as React.CSSProperties}
                       />
                     </div>
                     <p className="text-lg font-bold text-slate-900">
@@ -480,21 +480,21 @@ export default async function AdminDashboard() {
                         className="flex-1 bg-slate-200 rounded-full h-2"
                         role="progressbar"
                         aria-label="Flow B click-through rate"
-                        aria-valuenow={Math.min(
+                        aria-valuenow={(Math.min(
                           100,
                           analytics.flowPerformance.vdpOnly.ctr || 0
-                        )}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
+                        )).toString()}
+                        aria-valuemin={(0).toString()}
+                        aria-valuemax={(100).toString()}
                       >
                         <div
-                          className="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                          className="bg-blue-500 h-2 rounded-full transition-all duration-500 w-progress"
                           style={{
-                            width: `${Math.min(
+                            '--progress-width': `${Math.min(
                               100,
                               analytics.flowPerformance.vdpOnly.ctr || 0
                             )}%`,
-                          }}
+                          } as React.CSSProperties}
                         />
                       </div>
                       <p className="text-lg font-bold text-slate-900">
@@ -509,22 +509,22 @@ export default async function AdminDashboard() {
                         className="flex-1 bg-slate-200 rounded-full h-2"
                         role="progressbar"
                         aria-label="Flow B billable rate"
-                        aria-valuenow={Math.min(
+                        aria-valuenow={(Math.min(
                           100,
                           analytics.flowPerformance.vdpOnly.billableRate || 0
-                        )}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
+                        )).toString()}
+                        aria-valuemin={(0).toString()}
+                        aria-valuemax={(100).toString()}
                       >
                         <div
-                          className="bg-green-500 h-2 rounded-full transition-all duration-500"
+                          className="bg-green-500 h-2 rounded-full transition-all duration-300 w-progress"
                           style={{
-                            width: `${Math.min(
+                            '--progress-width': `${Math.min(
                               100,
                               analytics.flowPerformance.vdpOnly.billableRate ||
                                 0
                             )}%`,
-                          }}
+                          } as React.CSSProperties}
                         />
                       </div>
                       <p className="text-lg font-bold text-slate-900">
@@ -577,27 +577,28 @@ export default async function AdminDashboard() {
                       className="flex-1 bg-slate-200 rounded-full h-2"
                       role="progressbar"
                       aria-label="Flow C billable rate"
-                      aria-valuenow={Math.min(
+                      aria-valuenow={(Math.min(
                         100,
                         analytics.flowPerformance.full.billableRate || 0
-                      )}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
+                      )).toString()}
+                      aria-valuemin={(0).toString()}
+                      aria-valuemax={(100).toString()}
                     >
                       <div
-                        className="bg-green-500 h-2 rounded-full transition-all duration-500"
+                        className="bg-green-500 h-2 rounded-full transition-all duration-500 w-progress"
                         style={{
-                          width: `${Math.min(
+                          '--progress-width': `${Math.min(
                             100,
                             analytics.flowPerformance.full.billableRate || 0
                           )}%`,
-                        }}
+                        } as React.CSSProperties}
                       />
                     </div>
                     <p className="text-lg font-bold text-slate-900">
                       {(
                         analytics.flowPerformance.full.billableRate || 0
-                      ).toFixed(1)}%
+                      ).toFixed(1)}
+                      %
                     </p>
                   </div>
                 </div>

@@ -201,4 +201,9 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none; /* Chrome, Safari, Opera */
   }
+
+  /* Dynamic width for progress bars */
+  .w-progress {
+    width: var(--progress-width, 0%);
+  }
 }

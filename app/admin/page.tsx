@@ -421,7 +421,9 @@ export default async function AdminDashboard() {
                       />
                     </div>
                     <p className="text-lg font-bold text-slate-900">
-                      {analytics.flowPerformance.direct.billableRate.toFixed(1)}
+                      {(
+                        analytics.flowPerformance.direct.billableRate || 0
+                      ).toFixed(1)}
                       %
                     </p>
                   </div>
@@ -519,15 +521,16 @@ export default async function AdminDashboard() {
                           style={{
                             width: `${Math.min(
                               100,
-                              analytics.flowPerformance.vdpOnly.billableRate || 0
+                              analytics.flowPerformance.vdpOnly.billableRate ||
+                                0
                             )}%`,
                           }}
                         />
                       </div>
                       <p className="text-lg font-bold text-slate-900">
-                        {analytics.flowPerformance.vdpOnly.billableRate.toFixed(
-                          1
-                        )}
+                        {(
+                          analytics.flowPerformance.vdpOnly.billableRate || 0
+                        ).toFixed(1)}
                         %
                       </p>
                     </div>
@@ -592,7 +595,9 @@ export default async function AdminDashboard() {
                       />
                     </div>
                     <p className="text-lg font-bold text-slate-900">
-                      {analytics.flowPerformance.full.billableRate.toFixed(1)}%
+                      {(
+                        analytics.flowPerformance.full.billableRate || 0
+                      ).toFixed(1)}%
                     </p>
                   </div>
                 </div>

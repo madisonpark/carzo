@@ -33,18 +33,18 @@ describe('Button', () => {
       render(<Button variant="primary">Primary</Button>);
 
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('bg-primary');
+      expect(button).toHaveClass('bg-trust-blue');
       expect(button).toHaveClass('text-white');
-      expect(button).toHaveClass('hover:bg-primary-hover');
+      expect(button).toHaveClass('hover:opacity-90');
     });
 
     it('should render brand variant', () => {
       render(<Button variant="brand">Brand</Button>);
 
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('bg-brand');
+      expect(button).toHaveClass('bg-trust-blue');
       expect(button).toHaveClass('text-white');
-      expect(button).toHaveClass('hover:bg-brand-hover');
+      expect(button).toHaveClass('hover:opacity-90');
     });
 
     it('should render dealer variant', () => {
@@ -290,7 +290,7 @@ describe('Button', () => {
       );
 
       const link = screen.getByRole('link');
-      expect(link).toHaveClass('bg-primary');
+      expect(link).toHaveClass('bg-trust-blue');
       expect(link).toHaveClass('px-8');
       expect(link).toHaveClass('py-4');
     });
@@ -301,7 +301,7 @@ describe('Button', () => {
       render(<Button variant="primary" size="sm">Primary Small</Button>);
 
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('bg-primary');
+      expect(button).toHaveClass('bg-trust-blue');
       expect(button).toHaveClass('px-3');
       expect(button).toHaveClass('text-sm');
     });
@@ -310,7 +310,7 @@ describe('Button', () => {
       render(<Button variant="brand" size="lg">Brand Large</Button>);
 
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('bg-brand');
+      expect(button).toHaveClass('bg-trust-blue');
       expect(button).toHaveClass('px-8');
       expect(button).toHaveClass('text-lg');
     });

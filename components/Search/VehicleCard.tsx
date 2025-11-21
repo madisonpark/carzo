@@ -106,7 +106,11 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
 
         {/* Badge */}
         {vehicle.condition && (
-          <div className="absolute top-3 left-3 flex items-center gap-1 bg-white/90 backdrop-blur text-trust-navy font-bold text-[10px] uppercase tracking-wider px-2 py-1 rounded-sm shadow-sm">
+          <div className={`absolute top-3 left-3 flex items-center gap-1 font-bold text-[10px] uppercase tracking-wider px-2 py-1 rounded-sm shadow-sm ${
+            conditionText === "New" 
+              ? "bg-blue-100 text-blue-800 border border-blue-200" 
+              : "bg-gray-100 text-gray-800 border border-gray-200"
+          }`}>
             {conditionText}
           </div>
         )}
@@ -121,7 +125,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
       </div>
 
       {/* Content */}
-      <div className="p-4 flex flex-col grow">
+      <div className="p-5 flex flex-col grow">
         {/* Title */}
         <div className="mb-2 min-h-12">
           <h3 className="text-base font-bold text-trust-text group-hover:text-trust-link transition-colors line-clamp-1">
@@ -134,34 +138,25 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
           )}
         </div>
 
-        {/* Details */}
-        <div className="text-sm text-trust-muted mb-4 space-y-1">
-          {formattedMileage && <div>{formattedMileage} miles</div>}
-          {vehicle.transmission && <div>{vehicle.transmission}</div>}
-        </div>
-
         {/* Spacer */}
         <div className="grow"></div>
 
-        {/* Location */}
-        <div className="flex items-center justify-between text-sm text-trust-muted mb-4">
-          <div className="flex items-center gap-1">
-            <MapPin className="w-3.5 h-3.5 shrink-0" />
-            <span className="line-clamp-1">
-              {vehicle.dealer_city}, {vehicle.dealer_state}
-            </span>
+        {/* Specs Row (Mileage & Location) */}
+        <div className="flex items-center justify-between text-sm text-trust-muted mb-4 pt-2 border-t border-trust-border/50">
+          <div className="flex items-center gap-3">
+             {formattedMileage && <span>{formattedMileage} mi</span>}
+             {vehicle.dealer_state && (
+               <div className="flex items-center gap-1 pl-3 border-l border-trust-border/50">
+                 <MapPin className="w-3.5 h-3.5 shrink-0" />
+                 <span>{vehicle.dealer_state}</span>
+               </div>
+             )}
           </div>
-          {vehicle.distance_miles !== undefined &&
-            vehicle.distance_miles !== Infinity && (
-              <span className="text-trust-link font-semibold ml-2 shrink-0">
-                {Math.round(vehicle.distance_miles)} mi
-              </span>
-            )}
         </div>
 
         {/* Primary CTA */}
         <button
-          className="w-full bg-trust-navy text-trust-on-brand px-4 py-3 rounded-md font-semibold text-sm hover:opacity-90 flex items-center justify-center gap-2 transition-opacity shadow-sm"
+          className="w-full bg-trust-blue text-trust-on-brand px-4 py-3 rounded-md font-semibold text-sm hover:opacity-90 flex items-center justify-center gap-2 transition-opacity shadow-sm"
         >
           Check Availability
           <ArrowRight className="w-4 h-4" />

@@ -20,11 +20,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           'disabled:opacity-50 disabled:cursor-not-allowed',
           // Variant styles
           {
-            // Primary (red) - Main CTAs
-            'bg-primary text-white hover:bg-primary-hover focus-visible:ring-primary':
-              variant === 'primary',
-            // Brand (blue) - Brand actions
-            'bg-brand text-white hover:bg-brand-hover focus-visible:ring-brand': variant === 'brand',
+            // Primary (blue) - Main CTAs (Check Availability)
+            'bg-trust-blue text-white hover:opacity-90 focus-visible:ring-trust-blue':
+              variant === 'primary' || variant === 'brand',
             // Dealer (violet) - Dealer-specific actions (Phase 2)
             'bg-dealer text-white hover:bg-dealer-hover focus-visible:ring-dealer': variant === 'dealer',
             // Secondary - Muted actions

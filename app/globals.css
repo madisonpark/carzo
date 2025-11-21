@@ -16,6 +16,7 @@
   --color-trust-text: var(--text-primary);
   --color-trust-muted: var(--text-muted);
   --color-trust-on-brand: var(--text-on-brand);
+  --color-trust-blue: var(--brand-blue);
   --color-trust-gold: var(--brand-gold);
   --color-trust-navy: var(--brand-navy);
   --color-trust-link: var(--brand-link);
@@ -48,18 +49,19 @@
 
 @layer base {
   :root {
-    /* Trust Palette - Light Mode */
+    /* Trust Palette - Mainstream Trust (Lighter) */
     --bg-page: #F8FAFC;      /* Slate-50 */
     --bg-card: #FFFFFF;      /* White */
     --bg-elevated: #F1F5F9;  /* Slate-100 */
     
-    --text-primary: #1E293B; /* Slate-800 */
-    --text-muted: #64748B;   /* Slate-500 */
+    --text-primary: #0F172A; /* Slate-900 (High contrast) */
+    --text-muted: #475569;   /* Slate-600 (High legibility) */
     --text-on-brand: #FFFFFF;
 
+    --brand-blue: #2563EB;   /* Blue-600 (Standard Primary) */
     --brand-gold: #D4AF37;   /* Metallic Gold */
-    --brand-navy: #0F172A;   /* Slate-900 (Primary Action) */
-    --brand-link: #1D4ED8;   /* Blue-700 */
+    --brand-navy: #0F172A;   /* Slate-900 */
+    --brand-link: #2563EB;   /* Blue-600 */
 
     --border-subtle: #E2E8F0; /* Slate-200 */
     --border-strong: #CBD5E1; /* Slate-300 */

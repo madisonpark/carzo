@@ -399,7 +399,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                   ? `${params.make}${
                       params.model ? ` ${params.model}` : ""
                     } Vehicles`
-                  : "Search Vehicles"}
+                  : "Inventory"}
               </h1>
               <p className="text-trust-muted mt-1">
                 {searchResults.total.toLocaleString()} vehicles found

@@ -80,7 +80,7 @@ export default function SearchResults({
               const flow = params.get('flow');
               router.push(flow ? `/search?flow=${flow}` : '/search');
             }}
-            className="bg-trust-navy text-trust-on-brand hover:opacity-90"
+            className="bg-trust-blue text-trust-on-brand hover:opacity-90"
           >
             View All Vehicles
           </Button>
@@ -131,7 +131,7 @@ export default function SearchResults({
       </div>
 
       {/* Results Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-8">
         {vehicles.map((vehicle) => (
           <VehicleCard key={vehicle.id} vehicle={vehicle} />
         ))}

@@ -184,7 +184,7 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
                 asChild
                 variant="primary"
                 size="lg"
-                className="w-full gap-3 mb-4 bg-primary-gradient hover:scale-105 group"
+                className="w-full gap-3 mb-4 bg-trust-blue hover:bg-trust-blue/90 hover:scale-105 group"
               >
                 <a
                   href={vehicle.dealer_vdp_url}
@@ -381,7 +381,7 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
               dealerId: vehicle.dealer_id,
               ctaClicked: 'primary',
             })}
-            className="group inline-flex items-center gap-3 bg-gradient-to-r from-brand to-brand-hover hover:from-brand-hover hover:to-brand text-white font-bold text-lg px-10 py-5 rounded-xl shadow-2xl transition-all duration-300 hover:scale-105"
+            className="group inline-flex items-center gap-3 bg-trust-blue hover:bg-trust-blue/90 text-white font-bold text-lg px-10 py-5 rounded-xl shadow-2xl transition-all duration-300 hover:scale-105"
           >
             Check Availability
             <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
@@ -410,7 +410,7 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
                 dealerId: vehicle.dealer_id,
                 ctaClicked: 'primary',
               })}
-              className="group flex-shrink-0 inline-flex items-center gap-2 bg-gradient-to-r from-primary to-primary-hover hover:from-primary-hover hover:to-primary text-white font-bold text-sm px-6 py-3 rounded-lg shadow-xl transition-all duration-300 active:scale-95"
+              className="group flex-shrink-0 inline-flex items-center gap-2 bg-trust-blue hover:bg-trust-blue/90 text-white font-bold text-sm px-6 py-3 rounded-lg shadow-xl transition-all duration-300 active:scale-95"
             >
               Check Availability
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

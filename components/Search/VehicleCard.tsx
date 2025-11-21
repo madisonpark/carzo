@@ -14,6 +14,20 @@ import {
 import { getUserId, getSessionId, getUtmParams } from "@/lib/user-tracking";
 import { trackPurchase } from "@/lib/facebook-pixel";
 
+const fetchWithRetry = async (url: string, options: RequestInit, retries = 2, delay = 500) => {
+  try {
+    const response = await fetch(url, options);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response;
+  } catch (err) {
+    if (retries > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return fetchWithRetry(url, options, retries - 1, delay * 2);
+    }
+    throw err;
+  }
+};
+
 interface VehicleCardProps {
   vehicle: Vehicle & { distance_miles?: number };
 }
@@ -47,7 +61,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
   const handleClick = () => {
     if (isDirect) {
       trackPurchase();
-      fetch("/api/track-click", {
+      fetchWithRetry("/api/track-click", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -62,7 +76,7 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
         keepalive: true,
       }).catch((err) => {
         if (process.env.NODE_ENV !== "production") {
-          console.error("Failed to track click:", err);
+          console.error("Failed to track click after retries:", err);
         }
       });
     }

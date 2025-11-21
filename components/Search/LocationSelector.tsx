@@ -30,8 +30,12 @@ export function LocationSelector() {
     setLocation(loc);
     try {
       sessionStorage.setItem("userLocation", JSON.stringify(loc));
-    } catch (e) {
-      console.warn("Failed to save location to sessionStorage", e);
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'QuotaExceededError') {
+        console.error("SessionStorage QuotaExceededError:", err);
+      } else if (process.env.NODE_ENV !== "production") {
+        console.error("Failed to save location to sessionStorage:", err);
+      }
     }
     
     const params = new URLSearchParams(searchParams.toString());
@@ -47,8 +51,11 @@ export function LocationSelector() {
     let cachedLocation: string | null = null;
     try {
       cachedLocation = sessionStorage.getItem("userLocation");
-    } catch (e) {
-      // Ignore storage errors
+    } catch (err) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Failed to read location from sessionStorage:", err);
+      }
+      // Continue without cached location if there's an error
     }
 
     const detectLocation = async () => {
@@ -65,18 +72,12 @@ export function LocationSelector() {
         } else {
            throw new Error("No location data");
         }
-      } catch (error) {
+      } catch (err) {
         if (process.env.NODE_ENV !== "production") {
-          console.error("Error detecting location:", error);
+          console.error("Error detecting location:", err);
         }
         // Fallback to URL params if detection fails but we have coordinates
         if (lat && lon) {
-           // We don't have city/state, but we can set a generic location or just 
-           // keep the coordinates active (which they are by being in the URL).
-           // The feedback says "Fallback to URL coords directly".
-           // We need a UserLocation object to set `location` state so the UI shows something.
-           // We can try to reverse geocode or just show "Custom Location".
-           // For now, let's create a dummy location so the UI isn't broken/empty if it relies on `location`
            const fallbackLoc: UserLocation = {
              city: "Location",
              state: "Set",
@@ -84,15 +85,8 @@ export function LocationSelector() {
              longitude: parseFloat(lon)
            };
            setLocation(fallbackLoc);
-           // We don't save to session storage or update URL (it's already there)
-           // But updateLocationState does those things.
-           // Maybe just setLocation?
-           setLocation(fallbackLoc);
         } else {
-             // If no URL params and detection failed, we might want to set error
-             // But user is "left with..." (maybe nothing?). 
-             // We can set error state if we want to show a message.
-             if (error instanceof Error) setError(error.message);
+           setError("Unable to detect location. Please enter ZIP code.");
         }
       } finally {
         setLoading(false);

@@ -7,6 +7,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui";
 import { diversifyByDealer } from "@/lib/dealer-diversity";
 
+const DEBOUNCE_MS = 300;
+const RESULTS_PER_PAGE = 24;
+
 // Helper to validate numeric inputs
 const parseAndValidateNumber = (value: string | undefined | null, min?: number, max?: number): number | null => {
   if (!value) return null;
@@ -50,7 +53,7 @@ export default function SearchResults({
 
   const loadMoreVehicles = async () => {
     const now = Date.now();
-    if (now - lastLoadTime.current < 300) return; // 300ms debounce
+    if (now - lastLoadTime.current < DEBOUNCE_MS) return; // Debounce
     lastLoadTime.current = now;
 
     setIsLoading(true);
@@ -74,8 +77,8 @@ export default function SearchResults({
         condition: currentFilters.condition || null,
         body_style: currentFilters.bodyStyle || null,
         sort_by: currentFilters.sortBy || 'relevance',
-        limit: 24,
-        offset: (nextPage - 1) * 24,
+        limit: RESULTS_PER_PAGE,
+        offset: (nextPage - 1) * RESULTS_PER_PAGE,
       };
 
       const response = await fetch("/api/search-vehicles", {
@@ -101,7 +104,7 @@ export default function SearchResults({
         
         setVehicleList((prev) => [...prev, ...diversifiedData]);
         setPage(nextPage);
-        if (data.length < 24) setHasMore(false);
+        if (data.length < RESULTS_PER_PAGE) setHasMore(false);
       } else {
         setHasMore(false);
       }

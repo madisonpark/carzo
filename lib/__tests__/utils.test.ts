@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { cn } from '../utils';
+import { cn, anonymizeIp } from '../utils';
 
 describe('cn() utility function', () => {
   describe('Basic functionality', () => {
@@ -226,5 +226,38 @@ describe('cn() utility function', () => {
 
       expect(cn(defaultClasses, customClassName)).toBe('px-4 py-2 bg-blue-500');
     });
+  });
+});
+
+describe('anonymizeIp() utility function', () => {
+  it('should anonymize a standard IPv4 address', () => {
+    expect(anonymizeIp('192.168.1.100')).toBe('192.168.1.0');
+    expect(anonymizeIp('10.0.0.255')).toBe('10.0.0.0');
+  });
+
+  it('should anonymize a standard IPv6 address', () => {
+    // Standard full IPv6
+    expect(anonymizeIp('2001:0db8:85a3:0000:0000:8a2e:0370:7334')).toBe('2001:0db8:85a3:0:0:0:0:0');
+    // Compressed IPv6
+    expect(anonymizeIp('2001:db8:85a3::8a2e:370:7334')).toBe('2001:db8:85a3:0:0:0:0:0');
+  });
+
+  it('should handle IPv4 addresses with fewer than 4 octets', () => {
+    expect(anonymizeIp('192.168.1')).toBe('192.168.1');
+  });
+
+  it('should return the original string for invalid IP formats (non-IPv4/IPv6)', () => {
+    expect(anonymizeIp('invalid-ip')).toBe('invalid-ip');
+    expect(anonymizeIp('123.123')).toBe('123.123');
+    expect(anonymizeIp('localhost')).toBe('localhost');
+  });
+
+  it('should handle empty string input', () => {
+    expect(anonymizeIp('')).toBeNull();
+  });
+
+  it('should handle null or undefined input gracefully', () => {
+    expect(anonymizeIp(null as any)).toBeNull();
+    expect(anonymizeIp(undefined as any)).toBeNull();
   });
 });

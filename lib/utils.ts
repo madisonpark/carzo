@@ -24,9 +24,9 @@ export function cn(...inputs: ClassValue[]) {
  * @param ip - The IP address string
  * @returns Anonymized IP address string
  */
-export function anonymizeIp(ip: string | null | undefined): string | null | undefined {
+export function anonymizeIp(ip: string | null | undefined): string | null {
   if (!ip) {
-    return ip;
+    return null;
   }
   if (ip.includes(':')) {
     // IPv6

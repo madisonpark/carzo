@@ -3,11 +3,13 @@ import { createClient } from '@supabase/supabase-js';
 import { validateAdminAuth } from '@/lib/admin-auth';
 import { sanitizeCsvField } from '@/lib/csv';
 
+
 export const dynamic = 'force-dynamic';
 
 // Input validation limits (prevent DoS via large inputs)
 const MAX_METRO_LENGTH = 100;
 const MAX_FILTER_LENGTH = 50;
+const VALID_FILTER_REGEX = /^[a-zA-Z0-9\s-]+$/;
 
 /**
  * Generate destination URL for the campaign landing page
@@ -69,18 +71,34 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  if (make && make.length > MAX_FILTER_LENGTH) {
-    return NextResponse.json(
-      { error: `make parameter too long (max ${MAX_FILTER_LENGTH} characters)` },
-      { status: 400 }
-    );
+  if (make) {
+    if (make.length > MAX_FILTER_LENGTH) {
+      return NextResponse.json(
+        { error: `make parameter too long (max ${MAX_FILTER_LENGTH} characters)` },
+        { status: 400 }
+      );
+    }
+    if (!VALID_FILTER_REGEX.test(make)) {
+      return NextResponse.json(
+        { error: 'make parameter contains invalid characters' },
+        { status: 400 }
+      );
+    }
   }
 
-  if (bodyStyle && bodyStyle.length > MAX_FILTER_LENGTH) {
-    return NextResponse.json(
-      { error: `body_style parameter too long (max ${MAX_FILTER_LENGTH} characters)` },
-      { status: 400 }
-    );
+  if (bodyStyle) {
+    if (bodyStyle.length > MAX_FILTER_LENGTH) {
+      return NextResponse.json(
+        { error: `body_style parameter too long (max ${MAX_FILTER_LENGTH} characters)` },
+        { status: 400 }
+      );
+    }
+    if (!VALID_FILTER_REGEX.test(bodyStyle)) {
+      return NextResponse.json(
+        { error: 'body_style parameter contains invalid characters' },
+        { status: 400 }
+      );
+    }
   }
 
   const supabase = createClient(
@@ -232,6 +250,46 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json(rows);
     } else if (platform === 'tiktok') {
+      // Validate that matching inventory exists in this metro
+      let query = supabase
+        .from('vehicles')
+        .select('id', { count: 'exact', head: true })
+        .eq('dealer_city', city)
+        .eq('dealer_state', state)
+        .eq('is_active', true);
+
+      if (make) {
+        query = query.eq('make', make);
+      }
+
+      if (bodyStyle) {
+        query = query.eq('body_style', bodyStyle);
+      }
+
+      const { count, error } = await query;
+
+      if (error) throw error;
+
+      if (count === 0) {
+        const filters = [];
+        if (make) filters.push(`make: ${make}`);
+        if (bodyStyle) filters.push(`body_style: ${bodyStyle}`);
+
+        const filterContext = filters.length > 0
+          ? ` with filters (${filters.join(', ')})`
+          : '';
+
+        return NextResponse.json(
+          {
+            error: `No active dealers found for metro: ${metro}${filterContext}`,
+            suggestion: filters.length > 0
+              ? 'Try removing filters or choosing a different metro'
+              : 'Metro may have no active inventory'
+          },
+          { status: 404 }
+        );
+      }
+
       // Export DMA (will work once DMA column is added)
       const destinationUrl = generateDestinationUrl(make, bodyStyle);
       const rows = [{ dma: metro, destination_url: destinationUrl }]; 

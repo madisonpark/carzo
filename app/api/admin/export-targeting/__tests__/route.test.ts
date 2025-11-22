@@ -7,6 +7,11 @@ vi.mock('@/lib/admin-auth', () => ({
   validateAdminAuth: vi.fn(() => Promise.resolve({ authorized: true, response: null })),
 }));
 
+// Mock CSV utility
+vi.mock('@/lib/csv', () => ({
+  sanitizeCsvField: vi.fn((val) => `"${val}"`),
+}));
+
 // Mock Supabase
 const mockQuery = {
   data: null,
@@ -62,6 +67,34 @@ describe('GET /api/admin/export-targeting', () => {
 
       expect(response.status).toBe(400);
       expect(data.error).toBe('metro parameter required');
+    });
+
+    it('should return 400 when make parameter contains invalid characters', async () => {
+      const request = createMockRequest({
+        metro: 'Tampa, FL',
+        platform: 'facebook',
+        make: 'Toyota<script>',
+      });
+
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.error).toContain('make parameter contains invalid characters');
+    });
+
+    it('should return 400 when body_style parameter contains invalid characters', async () => {
+      const request = createMockRequest({
+        metro: 'Tampa, FL',
+        platform: 'facebook',
+        body_style: 'suv; drop table',
+      });
+
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.error).toContain('body_style parameter contains invalid characters');
     });
   });
 
@@ -309,6 +342,10 @@ describe('GET /api/admin/export-targeting', () => {
 
   describe('TikTok Platform', () => {
     it('should return CSV with DMA and destination_url', async () => {
+      // Mock the count query for TikTok
+      mockQuery.count = 5;
+      mockQuery.data = [{ id: '1' }];
+
       const request = createMockRequest({
         metro: 'Tampa, FL',
         platform: 'tiktok',
@@ -324,6 +361,24 @@ describe('GET /api/admin/export-targeting', () => {
       expect(response.headers.get('Content-Type')).toBe('text/csv');
       expect(text).toContain('dma,destination_url');
       expect(text).toContain('Tampa, FL,https://carzo.net/search?make=Ford&body_style=truck');
+    });
+
+    it('should return 404 when TikTok export has no matching vehicles', async () => {
+      // Mock count = 0
+      mockQuery.count = 0;
+      mockQuery.data = [];
+
+      const request = createMockRequest({
+        metro: 'Tampa, FL',
+        platform: 'tiktok',
+        make: 'Lamborghini', // Unlikely inventory
+      });
+
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(404);
+      expect(data.error).toContain('No active dealers found');
     });
   });
 

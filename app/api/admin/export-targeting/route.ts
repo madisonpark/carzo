@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { validateAdminAuth } from '@/lib/admin-auth';
-import { sanitizeCsvField } from '@/lib/csv';
+import { sanitizeCsvField, generateCsv } from '@/lib/csv';
 
 
 export const dynamic = 'force-dynamic';
@@ -295,7 +295,10 @@ export async function GET(request: NextRequest) {
       const rows = [{ dma: metro, destination_url: destinationUrl }]; 
 
       if (format === 'csv') {
-        const csv = ['dma,destination_url', `${metro},${destinationUrl}`].join('\n');
+        const csv = generateCsv(
+          ['dma', 'destination_url'], 
+          [[metro, destinationUrl]]
+        );
 
         return new NextResponse(csv, {
           headers: {

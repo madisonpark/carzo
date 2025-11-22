@@ -99,12 +99,13 @@ export default function SearchResults({
       const { data } = await response.json();
       
       if (data && data.length > 0) {
+        const vehiclesData = data as Vehicle[];
         // Apply diversification before appending to ensure local variety
-        const diversifiedData = diversifyByDealer(data, data.length);
+        const diversifiedData = diversifyByDealer(vehiclesData, vehiclesData.length);
         
         setVehicleList((prev) => [...prev, ...diversifiedData]);
         setPage(nextPage);
-        if (data.length < RESULTS_PER_PAGE) setHasMore(false);
+        if (vehiclesData.length < RESULTS_PER_PAGE) setHasMore(false);
       } else {
         setHasMore(false);
       }

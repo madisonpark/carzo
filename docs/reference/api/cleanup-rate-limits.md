@@ -100,7 +100,7 @@ $$ LANGUAGE plpgsql;
 ```typescript
 // app/api/cron/cleanup-rate-limits/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   // Verify cron secret
@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
 
   try {
     // Call cleanup function
-    const { data, error } = await supabase.rpc('cleanup_rate_limits');
+    const { data, error } = await supabaseAdmin.rpc('cleanup_rate_limits');
 
     if (error) {
       throw error;

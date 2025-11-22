@@ -33,18 +33,20 @@ describe('Button', () => {
       render(<Button variant="primary">Primary</Button>);
 
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('bg-primary');
+      expect(button).toHaveClass('bg-trust-blue');
       expect(button).toHaveClass('text-white');
-      expect(button).toHaveClass('hover:bg-primary-hover');
+      expect(button).toHaveClass('hover:brightness-90');
+      expect(button).toHaveClass('active:scale-98');
     });
 
     it('should render brand variant', () => {
       render(<Button variant="brand">Brand</Button>);
 
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('bg-brand');
+      expect(button).toHaveClass('bg-trust-blue');
       expect(button).toHaveClass('text-white');
-      expect(button).toHaveClass('hover:bg-brand-hover');
+      expect(button).toHaveClass('hover:brightness-90');
+      expect(button).toHaveClass('active:scale-98');
     });
 
     it('should render dealer variant', () => {
@@ -62,17 +64,19 @@ describe('Button', () => {
       const button = screen.getByRole('button');
       expect(button).toHaveClass('bg-muted');
       expect(button).toHaveClass('text-foreground');
-      expect(button).toHaveClass('hover:bg-slate-300');
+      expect(button).toHaveClass('hover:bg-trust-elevated');
+      expect(button).toHaveClass('active:scale-98');
     });
 
     it('should render outline variant', () => {
       render(<Button variant="outline">Outline</Button>);
 
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('border-2');
+      expect(button).toHaveClass('border');
       expect(button).toHaveClass('border-border');
       expect(button).toHaveClass('bg-white');
-      expect(button).toHaveClass('hover:bg-muted');
+      expect(button).toHaveClass('hover:bg-trust-elevated');
+      expect(button).toHaveClass('active:scale-98');
     });
 
     it('should render ghost variant', () => {
@@ -80,7 +84,8 @@ describe('Button', () => {
 
       const button = screen.getByRole('button');
       expect(button).toHaveClass('text-foreground');
-      expect(button).toHaveClass('hover:bg-muted');
+      expect(button).toHaveClass('hover:bg-trust-elevated');
+      expect(button).toHaveClass('active:scale-98');
       expect(button).not.toHaveClass('bg-primary');
       expect(button).not.toHaveClass('bg-brand');
     });
@@ -140,7 +145,7 @@ describe('Button', () => {
       expect(button).toHaveClass('inline-flex');
       expect(button).toHaveClass('items-center');
       expect(button).toHaveClass('justify-center');
-      expect(button).toHaveClass('rounded-lg');
+      expect(button).toHaveClass('rounded-md');
       expect(button).toHaveClass('font-semibold');
     });
 
@@ -290,7 +295,7 @@ describe('Button', () => {
       );
 
       const link = screen.getByRole('link');
-      expect(link).toHaveClass('bg-primary');
+      expect(link).toHaveClass('bg-trust-blue');
       expect(link).toHaveClass('px-8');
       expect(link).toHaveClass('py-4');
     });
@@ -301,7 +306,7 @@ describe('Button', () => {
       render(<Button variant="primary" size="sm">Primary Small</Button>);
 
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('bg-primary');
+      expect(button).toHaveClass('bg-trust-blue');
       expect(button).toHaveClass('px-3');
       expect(button).toHaveClass('text-sm');
     });
@@ -310,7 +315,7 @@ describe('Button', () => {
       render(<Button variant="brand" size="lg">Brand Large</Button>);
 
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('bg-brand');
+      expect(button).toHaveClass('bg-trust-blue');
       expect(button).toHaveClass('px-8');
       expect(button).toHaveClass('text-lg');
     });
@@ -319,7 +324,7 @@ describe('Button', () => {
       render(<Button variant="outline" size="icon" aria-label="Settings">⚙️</Button>);
 
       const button = screen.getByRole('button');
-      expect(button).toHaveClass('border-2');
+      expect(button).toHaveClass('border');
       expect(button).toHaveClass('h-10');
       expect(button).toHaveClass('w-10');
     });

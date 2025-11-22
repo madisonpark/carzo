@@ -118,7 +118,7 @@ describe('Header', () => {
       );
 
       const header = screen.getByRole('banner');
-      expect(header).toHaveClass('backdrop-blur-md');
+      expect(header).toHaveClass('bg-trust-card');
     });
 
     it('has default height (h-16)', () => {

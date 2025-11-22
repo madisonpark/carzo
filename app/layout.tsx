@@ -18,14 +18,24 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: {
     template: "%s | Carzo - Find Your Perfect Vehicle",
-    default: "Carzo - Browse Quality Vehicles from Trusted Dealerships"
+    default: "Carzo - Browse Quality Vehicles from Trusted Dealerships",
   },
-  description: "Search thousands of quality new and used vehicles from certified dealerships nationwide. Find your perfect car, truck, or SUV at Carzo.",
-  keywords: ["used cars", "new cars", "vehicles for sale", "car dealerships", "buy cars online", "find vehicles", "carzo"],
+  description:
+    "Search thousands of quality new and used vehicles from certified dealerships nationwide. Find your perfect car, truck, or SUV at Carzo.",
+  keywords: [
+    "used cars",
+    "new cars",
+    "vehicles for sale",
+    "car dealerships",
+    "buy cars online",
+    "find vehicles",
+    "carzo",
+  ],
   authors: [{ name: "Carzo" }],
   openGraph: {
     title: "Carzo - Find Your Perfect Vehicle",
-    description: "Browse thousands of quality vehicles from trusted dealerships nationwide",
+    description:
+      "Browse thousands of quality vehicles from trusted dealerships nationwide",
     type: "website",
     siteName: "Carzo",
     locale: "en_US",
@@ -33,7 +43,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Carzo - Find Your Perfect Vehicle",
-    description: "Browse thousands of quality vehicles from trusted dealerships",
+    description:
+      "Browse thousands of quality vehicles from trusted dealerships",
   },
   robots: {
     index: true,
@@ -53,7 +64,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-trust-bg text-trust-text`}
       >
         <FacebookPixel />
         <ThemeProvider>

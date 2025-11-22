@@ -15,26 +15,24 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <Comp
         className={cn(
           // Base styles
-          'inline-flex items-center justify-center rounded-lg font-semibold transition-all duration-300',
+          'inline-flex items-center justify-center rounded-md font-semibold shadow-sm transition-all duration-300 cursor-pointer',
           'outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
           'disabled:opacity-50 disabled:cursor-not-allowed',
           // Variant styles
           {
-            // Primary (red) - Main CTAs
-            'bg-primary text-white hover:bg-primary-hover focus-visible:ring-primary':
-              variant === 'primary',
-            // Brand (blue) - Brand actions
-            'bg-brand text-white hover:bg-brand-hover focus-visible:ring-brand': variant === 'brand',
+            // Primary (blue) - Main CTAs (Check Availability)
+            'bg-trust-blue text-white hover:brightness-90 active:scale-98 focus-visible:ring-trust-blue':
+              variant === 'primary' || variant === 'brand',
             // Dealer (violet) - Dealer-specific actions (Phase 2)
             'bg-dealer text-white hover:bg-dealer-hover focus-visible:ring-dealer': variant === 'dealer',
             // Secondary - Muted actions
-            'bg-muted text-foreground hover:bg-slate-300 focus-visible:ring-slate-400':
+            'bg-muted text-foreground hover:bg-trust-elevated active:scale-98 focus-visible:ring-slate-400':
               variant === 'secondary',
             // Outline - Bordered buttons
-            'border-2 border-border bg-white text-foreground hover:bg-muted focus-visible:ring-slate-400':
+            'border border-border bg-white text-foreground hover:bg-trust-elevated active:scale-98 focus-visible:ring-slate-400':
               variant === 'outline',
             // Ghost - Text-only buttons
-            'text-foreground hover:bg-muted focus-visible:ring-slate-400': variant === 'ghost',
+            'text-foreground hover:bg-trust-elevated active:scale-98 focus-visible:ring-slate-400 shadow-none': variant === 'ghost',
           },
           // Size styles
           {

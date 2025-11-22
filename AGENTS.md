@@ -193,7 +193,7 @@ Apply to:
 "Confirm, Tempt, Convert" approach:
 - Verified listing badge (trust)
 - Photo gallery tease (blurred thumbnails + "+X More")
-- Primary CTA: "See Full Photo Gallery" (opens dealer site in new tab)
+- Primary CTA: "Check Availability" (opens dealer site in new tab)
 - Secondary CTAs: "View FREE Vehicle History", "Estimate Monthly Payments"
 - ALL CTAs go to same dealer URL, open in new tab
 
@@ -218,10 +218,12 @@ Apply to:
 
 ### Styling
 - **Always use semantic color tokens** (never hard-coded colors)
-  - `bg-primary`, `text-primary` - Red (#dc2626) for primary CTAs
-  - `bg-brand`, `text-brand` - Blue (#2563eb) for brand accents
-  - `bg-dealer` - Violet (#7c3aed) for dealer-specific elements
-  - `bg-muted`, `text-muted-foreground` - Gray for muted elements
+  - `bg-trust-blue` - Primary CTA and Brand Blue (#2563EB)
+  - `bg-trust-navy` - Dark accents (#0F172A)
+  - `bg-trust-card` - White card background
+  - `bg-trust-bg` - Page background (Slate-50/F8FAFC)
+  - `text-trust-text` - Primary text (Slate-900)
+  - `text-trust-muted` - Secondary text (Slate-600)
 - **Use `cn()` utility** from `lib/utils.ts` for conditional classes
 - **Use UI components** from `components/ui` instead of raw HTML
 - **Mobile-first** approach (base styles for 320px+, use `lg:` for desktop)

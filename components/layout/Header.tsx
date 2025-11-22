@@ -87,13 +87,42 @@ export function Header() {
     return () => window.removeEventListener('resize', handleResize);
   }, [mobileMenuOpen]);
 
+  // Scroll Direction Detection for Semi-Sticky Header
+  const [isVisible, setIsVisible] = React.useState(true);
+  const [lastScrollY, setLastScrollY] = React.useState(0);
+
+  React.useEffect(() => {
+    const handleScroll = () => {
+      // Only apply logic on mobile (or small screens) if desired, 
+      // but typically this pattern is good for all sizes or just mobile.
+      // The prompt specifically asks for mobile, but "modern best practice" usually applies broadly or conditionally.
+      // Let's apply it generally but ensure it handles top-of-page correctly.
+      
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY < 10) {
+        setIsVisible(true); // Always show at top
+      } else if (currentScrollY > lastScrollY) {
+        setIsVisible(false); // Hide on scroll down
+      } else {
+        setIsVisible(true); // Show on scroll up
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
+
   return (
     <header
       className={cn(
         'sticky top-0 z-50 w-full border-b border-border',
-        'bg-background/80 backdrop-blur-md',
-        'transition-all duration-300',
-        isFocusMode ? 'h-14' : 'h-16'
+        'bg-trust-card shadow-sm', // Solid background for readability
+        'transition-transform duration-300',
+        isFocusMode ? 'h-14' : 'h-16',
+        !isVisible && '-translate-y-full' // Hide header when not visible
       )}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
@@ -115,6 +144,7 @@ export function Header() {
                 height={isFocusMode ? 28 : 32}
                 priority
                 className="transition-all duration-300"
+                style={{ objectFit: 'contain' }}
               />
             ) : (
               <div className={cn(isFocusMode ? 'h-7 w-[100px]' : 'h-8 w-[120px]')} />

@@ -317,7 +317,7 @@ describe('getFlowCTA()', () => {
   });
 
   it('should return correct CTA for full flow', () => {
-    expect(getFlowCTA('full')).toBe('See Full Photo Gallery');
+    expect(getFlowCTA('full')).toBe('Check Availability');
   });
 
   it('should return different CTAs for each flow', () => {
@@ -333,7 +333,7 @@ describe('getFlowCTA()', () => {
     // All should be action-oriented
     expect(directCTA).toContain('View');
     expect(vdpOnlyCTA).toContain('See');
-    expect(fullCTA).toContain('See');
+    expect(fullCTA).toContain('Check');
   });
 });
 
@@ -388,7 +388,7 @@ describe('Integration tests: Real-world scenarios', () => {
 
     // Get appropriate CTA
     const cta = getFlowCTA(detectedFlow);
-    expect(cta).toBe('See Full Photo Gallery');
+    expect(cta).toBe('Check Availability');
 
     // Navigate preserving flow (should not add flow param for 'full')
     const nextPath = preserveFlowParam('/vehicles/ABC123');

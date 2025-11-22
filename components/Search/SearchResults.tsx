@@ -1,55 +1,135 @@
-'use client';
+"use client";
 
-import { Vehicle } from '@/lib/supabase';
-import VehicleCard from './VehicleCard';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui';
+import { Vehicle } from "@/lib/supabase";
+import VehicleCard from "./VehicleCard";
+import { useState, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui";
+import { diversifyByDealer } from "@/lib/dealer-diversity";
+
+const DEBOUNCE_MS = 300;
+const RESULTS_PER_PAGE = 24;
+
+// Helper to validate numeric inputs
+const parseAndValidateNumber = (value: string | undefined | null, min?: number, max?: number): number | null => {
+  if (!value) return null;
+  const parsed = parseFloat(value);
+  if (isNaN(parsed)) return null;
+  if (min !== undefined && parsed < min) return null;
+  if (max !== undefined && parsed > max) return null;
+  return parsed;
+};
 
 interface SearchResultsProps {
   vehicles: Vehicle[];
   total: number;
-  page: number;
-  totalPages: number;
+  page: number; // Kept for initial state, but we use load more
+  totalPages: number; // Kept for reference
   currentFilters: Record<string, string | undefined>;
 }
 
 export default function SearchResults({
-  vehicles,
+  vehicles: initialVehicles,
   total,
-  page,
-  totalPages,
   currentFilters,
 }: SearchResultsProps) {
   const router = useRouter();
-  // Only consider actual user-selectable filters (not location, page, or default sort)
-  const filterKeys = ['make', 'model', 'condition', 'bodyStyle', 'minPrice', 'maxPrice', 'minYear', 'maxYear'];
-  const hasActiveFilters = filterKeys.some(key => currentFilters[key]);
-  const currentSort = currentFilters.sortBy || 'relevance';
+  const searchParams = useSearchParams();
+  const [vehicleList, setVehicleList] = useState<Vehicle[]>(initialVehicles);
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(initialVehicles.length < total);
+  const [error, setError] = useState<string | null>(null);
+  const lastLoadTime = useRef(0);
 
-  const goToPage = (newPage: number) => {
-    const params = new URLSearchParams(window.location.search);
-    params.set('page', newPage.toString());
-    // Flow parameter automatically preserved
-    router.push(`/search?${params.toString()}`);
+  // Reset list when filters/initial props change
+  // Using JSON.stringify to compare filters deeply, and initialVehicles length/id to avoid ref issues
+  useEffect(() => {
+    setVehicleList(initialVehicles);
+    setPage(1);
+    setHasMore(initialVehicles.length < total);
+    setError(null);
+  }, [initialVehicles, total]); 
+
+  const loadMoreVehicles = async () => {
+    const now = Date.now();
+    if (now - lastLoadTime.current < DEBOUNCE_MS) return; // Debounce
+    lastLoadTime.current = now;
+
+    setIsLoading(true);
+    setError(null);
+    const nextPage = page + 1;
+
+    try {
+      // Construct body for API call with validation
+      const body = {
+        ...currentFilters,
+        page: nextPage.toString(),
+        // Convert filters to appropriate types with validation
+        min_price: parseAndValidateNumber(currentFilters.minPrice, 0),
+        max_price: parseAndValidateNumber(currentFilters.maxPrice, 0),
+        min_year: parseAndValidateNumber(currentFilters.minYear, 1990),
+        max_year: parseAndValidateNumber(currentFilters.maxYear, 1990),
+        user_lat: parseAndValidateNumber(currentFilters.lat, -90, 90),
+        user_lon: parseAndValidateNumber(currentFilters.lon, -180, 180),
+        make: currentFilters.make || null,
+        model: currentFilters.model || null,
+        condition: currentFilters.condition || null,
+        body_style: currentFilters.bodyStyle || null,
+        sort_by: currentFilters.sortBy || 'relevance',
+        limit: RESULTS_PER_PAGE,
+        offset: (nextPage - 1) * RESULTS_PER_PAGE,
+      };
+
+      const response = await fetch("/api/search-vehicles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (response.status === 429) {
+        setError("Too many requests. Please try again in a moment.");
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const { data } = await response.json();
+      
+      if (data && data.length > 0) {
+        // Apply diversification before appending to ensure local variety
+        const diversifiedData = diversifyByDealer(data, data.length);
+        
+        setVehicleList((prev) => [...prev, ...diversifiedData]);
+        setPage(nextPage);
+        if (data.length < RESULTS_PER_PAGE) setHasMore(false);
+      } else {
+        setHasMore(false);
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Error loading more vehicles:", error);
+      }
+      setError("Failed to load more vehicles. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const updateSort = (sortBy: string) => {
-    const params = new URLSearchParams(window.location.search);
-    params.set('sortBy', sortBy);
-    params.delete('page'); // Reset to page 1 when sorting
-    // Flow parameter automatically preserved
-    router.push(`/search?${params.toString()}`);
+  const clearFilters = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    const flow = params.get("flow");
+    router.push(flow ? `/search?flow=${flow}` : "/search");
   };
 
-  if (vehicles.length === 0) {
+  if (vehicleList.length === 0) {
     return (
-      <div className="bg-background rounded-xl border border-border p-12 text-center">
-        {/* Empty State Icon */}
-        <div className="inline-flex items-center justify-center w-20 h-20 bg-muted rounded-full mb-6">
+      <div className="bg-white rounded-lg border border-border p-12 text-center">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
           <svg
-            className="w-10 h-10 text-muted-foreground"
+            className="w-8 h-8 text-gray-400"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -62,62 +142,41 @@ export default function SearchResults({
             />
           </svg>
         </div>
-
-        {/* Message */}
-        <h3 className="text-2xl font-bold text-foreground mb-2">
-          No vehicles found
-        </h3>
-        <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-          We couldn&apos;t find any vehicles matching your search criteria. Try adjusting your filters
-          or browse all available vehicles.
-        </p>
-
-        {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Button
-            onClick={() => {
-              const params = new URLSearchParams(window.location.search);
-              const flow = params.get('flow');
-              router.push(flow ? `/search?flow=${flow}` : '/search');
-            }}
-            variant="brand"
-          >
-            View All Vehicles
-          </Button>
-          {hasActiveFilters && (
-            <Button
-              onClick={() => {
-                const params = new URLSearchParams(window.location.search);
-                const flow = params.get('flow');
-                router.push(flow ? `/search?flow=${flow}` : '/search');
-              }}
-              variant="outline"
-            >
-              Clear Filters
-            </Button>
-          )}
-        </div>
+        <h3 className="text-lg font-bold text-gray-900 mb-1">No vehicles found</h3>
+        <p className="text-gray-500 mb-6">Try adjusting your filters.</p>
+        <Button
+          onClick={clearFilters}
+          className="bg-trust-blue text-white hover:brightness-90 active:scale-98"
+        >
+          Clear Filters
+        </Button>
       </div>
     );
   }
 
   return (
     <div>
-      {/* Sort Controls */}
-      <div className="flex items-center justify-between mb-6">
-        <p className="text-sm text-muted-foreground">
-          Showing <span className="font-semibold">{vehicles.length}</span> of{' '}
+      {/* Sort Controls - Desktop Only (Mobile uses FilterSidebar sticky) */}
+      <div className="hidden lg:flex items-center justify-between mb-4">
+        <p className="text-sm text-gray-500">
+          Showing <span className="font-semibold">{vehicleList.length}</span> of{" "}
           <span className="font-semibold">{total.toLocaleString()}</span> vehicles
         </p>
         <div className="flex items-center gap-2">
-          <label htmlFor="sort-select" className="text-sm font-medium text-foreground">
+          <label htmlFor="sort-select" className="text-sm font-medium text-gray-700">
             Sort by:
           </label>
           <select
             id="sort-select"
-            value={currentSort}
-            onChange={(e) => updateSort(e.target.value)}
-            className="px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            value={currentFilters.sortBy || "relevance"}
+            onChange={(e) => {
+              const params = new URLSearchParams(searchParams.toString());
+              params.set("sortBy", e.target.value);
+              // Reset to page 1 logic is handled by URL change triggering server component re-render or initialVehicles update
+              params.delete("page"); 
+              router.push(`/search?${params.toString()}`);
+            }}
+            className="text-sm border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 cursor-pointer"
           >
             <option value="relevance">Relevance</option>
             <option value="price_asc">Price: Low to High</option>
@@ -131,65 +190,49 @@ export default function SearchResults({
       </div>
 
       {/* Results Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {vehicles.map((vehicle) => (
-          <VehicleCard key={vehicle.id} vehicle={vehicle} />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-8" role="feed" aria-busy={isLoading}>
+        {vehicleList.map((vehicle) => (
+          <div key={vehicle.id} role="article">
+            <VehicleCard vehicle={vehicle} />
+          </div>
         ))}
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          <Button
-            onClick={() => goToPage(page - 1)}
-            disabled={page === 1}
-            variant="outline"
-            size="icon"
+      {/* ARIA Live Region for Status Updates */}
+      <div role="status" aria-live="polite" className="sr-only">
+        {isLoading && "Loading more vehicles..."}
+        {!isLoading && hasMore && `Loaded ${vehicleList.length} of ${total} vehicles`}
+        {error && `Error: ${error}`}
+      </div>
+
+      {/* Load More Button */}
+      {hasMore && (
+        <div className="mt-8 text-center">
+          {error && (
+            <div className="mb-4 flex flex-col items-center gap-2">
+              <p className="text-red-500 text-sm">{error}</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={loadMoreVehicles}
+                className="text-red-600 border-red-200 hover:bg-red-50"
+              >
+                Retry
+              </Button>
+            </div>
+          )}
+          <button
+            onClick={loadMoreVehicles}
+            disabled={isLoading}
+            className="w-full md:w-auto px-8 py-3 bg-white border border-gray-300 text-gray-700 font-semibold rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 cursor-pointer active:scale-98 transition-transform"
           >
-            <ChevronLeft className="w-5 h-5" />
-          </Button>
-
-          <div className="flex items-center gap-2">
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              let pageNum;
-              if (totalPages <= 5) {
-                pageNum = i + 1;
-              } else if (page <= 3) {
-                pageNum = i + 1;
-              } else if (page >= totalPages - 2) {
-                pageNum = totalPages - 4 + i;
-              } else {
-                pageNum = page - 2 + i;
-              }
-
-              return (
-                <Button
-                  key={pageNum}
-                  onClick={() => goToPage(pageNum)}
-                  variant={page === pageNum ? 'brand' : 'outline'}
-                  size="icon"
-                >
-                  {pageNum}
-                </Button>
-              );
-            })}
-          </div>
-
-          <Button
-            onClick={() => goToPage(page + 1)}
-            disabled={page === totalPages}
-            variant="outline"
-            size="icon"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </Button>
+            {isLoading ? "Loading..." : "Load More Vehicles"}
+          </button>
         </div>
       )}
-
-      {/* Results Summary */}
-      <p className="text-center text-sm text-muted-foreground mt-6">
-        Showing {(page - 1) * 24 + 1}-{Math.min(page * 24, total)} of {total.toLocaleString()}{' '}
-        vehicles
+      
+      <p className="text-center text-xs text-gray-400 mt-4">
+        Showing {vehicleList.length} of {total.toLocaleString()} vehicles
       </p>
     </div>
   );

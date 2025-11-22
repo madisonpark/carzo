@@ -2,11 +2,11 @@
 
 import { Vehicle } from "@/lib/supabase";
 import Link from "next/link";
-import { Camera, MapPin, ChevronRight, ExternalLink } from "lucide-react";
-import { Button, Badge } from "@/components/ui";
+import { Camera, ChevronRight } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui";
+import { useSearchParams } from "next/navigation";
 import {
-  getFlowFromUrl,
   preserveFlowParam,
   isDirectFlow,
   UserFlow,
@@ -14,45 +14,54 @@ import {
 import { getUserId, getSessionId, getUtmParams } from "@/lib/user-tracking";
 import { trackPurchase } from "@/lib/facebook-pixel";
 
+const fetchWithRetry = async (url: string, options: RequestInit, retries = 2, delay = 500) => {
+  try {
+    const response = await fetch(url, options);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response;
+  } catch (err) {
+    if (retries > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return fetchWithRetry(url, options, retries - 1, delay * 2);
+    }
+    throw err;
+  }
+};
+
 interface VehicleCardProps {
   vehicle: Vehicle & { distance_miles?: number };
 }
 
 export default function VehicleCard({ vehicle }: VehicleCardProps) {
-  // Initialize flow state directly instead of using useEffect to avoid cascading renders
-  const [flow] = useState<UserFlow>(() => {
-    if (typeof window === "undefined") return "full";
-    return getFlowFromUrl();
-  });
+  const searchParams = useSearchParams();
+  const flow = (searchParams.get("flow") as UserFlow) || "full";
 
-  const formattedPrice = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(vehicle.price);
+  const formattedPrice =
+    vehicle.price && vehicle.price > 0
+      ? new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        }).format(vehicle.price)
+      : "Call for Price";
 
   const formattedMileage = vehicle.miles
     ? new Intl.NumberFormat("en-US").format(vehicle.miles)
     : null;
 
-  // Determine link destination based on flow
-  const isDirect = isDirectFlow(flow) && vehicle.dealer_vdp_url; // Only direct if URL exists
+  const isDirect = isDirectFlow(flow) && Boolean(vehicle.dealer_vdp_url);
   const linkHref = isDirect
-    ? vehicle.dealer_vdp_url // Flow A: Direct to dealer
-    : preserveFlowParam(`/vehicles/${vehicle.vin}`); // Flow C: To VDP
+    ? vehicle.dealer_vdp_url
+    : preserveFlowParam(`/vehicles/${vehicle.vin}`);
 
   const linkTarget = isDirect ? "_blank" : "_self";
   const linkRel = isDirect ? "noopener noreferrer" : undefined;
 
-  // Track click for Flow A (direct to dealer)
   const handleClick = () => {
     if (isDirect) {
-      // Fire Facebook Pixel Purchase event
       trackPurchase();
-
-      // Track click with keepalive for reliable tracking when opening new tab
-      fetch("/api/track-click", {
+      fetchWithRetry("/api/track-click", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -65,7 +74,11 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
           ...getUtmParams(),
         }),
         keepalive: true,
-      }).catch((err) => console.error("Failed to track click:", err));
+      }).catch((err) => {
+        if (process.env.NODE_ENV !== "production") {
+          console.error("Failed to track click after retries:", err);
+        }
+      });
     }
   };
 
@@ -75,10 +88,11 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
       target={linkTarget}
       rel={linkRel}
       onClick={handleClick}
-      className="group bg-background rounded-lg border border-border overflow-hidden hover:shadow-xl dark:hover:shadow-brand/20 transition-all duration-200 flex flex-col h-full"
+      aria-label={`Check availability for ${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+      className="group bg-trust-card border border-border hover:border-foreground/30 transition-colors rounded-lg overflow-hidden flex flex-col h-full outline-none focus-visible:ring-2 focus-visible:ring-trust-blue"
     >
-      {/* Image - Fixed height */}
-      <div className="relative h-48 bg-muted overflow-hidden shrink-0">
+      {/* Image Section */}
+      <div className="relative h-48 bg-gray-100 overflow-hidden shrink-0">
         <img
           src={
             (vehicle.primary_image_url && vehicle.primary_image_url.trim()) ||
@@ -90,82 +104,46 @@ export default function VehicleCard({ vehicle }: VehicleCardProps) {
             e.currentTarget.src = "/placeholder-vehicle.svg";
           }}
         />
-        {vehicle.condition && (
-          <Badge variant="brand" className="absolute top-2 left-2">
-            {vehicle.condition}
-          </Badge>
-        )}
+        
         {vehicle.total_photos && (
-          <div className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 bg-black/75 text-white text-xs font-medium rounded">
+          <div className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 bg-black/50 text-white text-xs font-medium rounded-sm backdrop-blur-sm">
             <Camera className="w-3 h-3" />
             {vehicle.total_photos}
           </div>
         )}
       </div>
 
-      {/* Content - Flex grow to fill remaining space */}
-      <div className="p-4 flex flex-col grow">
-        {/* Title - Fixed height with line clamp */}
-        <div className="mb-2 min-h-12">
-          <h3 className="text-base font-bold text-foreground group-hover:text-brand transition-colors line-clamp-1">
-            {vehicle.year} {vehicle.make} {vehicle.model}
-          </h3>
-          {vehicle.trim && (
+      {/* Content Section */}
+      <div className="p-5 flex flex-col grow">
+        <div className="flex justify-between items-start mb-2">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900 line-clamp-1">
+              {vehicle.year} {vehicle.make} {vehicle.model}
+            </h3>
             <p className="text-sm text-muted-foreground line-clamp-1">
               {vehicle.trim}
             </p>
-          )}
+          </div>
         </div>
 
-        {/* Price */}
-        <p className="text-xl font-bold text-foreground mb-3">
-          {formattedPrice}
-        </p>
-
-        {/* Details - Single line */}
-        <div className="text-sm text-muted-foreground mb-3 space-y-1">
-          {formattedMileage && <div>{formattedMileage} miles</div>}
-          {vehicle.transmission && <div>{vehicle.transmission}</div>}
+        <div className="mb-4">
+          <p className="text-2xl font-extrabold tracking-tight text-trust-text">
+            {formattedPrice}
+          </p>
+          <div className="text-xs font-medium text-muted-foreground mt-1">
+            {formattedMileage && <span>{formattedMileage} mi</span>}
+            {vehicle.transmission && <span> • {vehicle.transmission}</span>}
+          </div>
         </div>
 
-        {/* Spacer to push location and button to bottom */}
         <div className="grow"></div>
 
-        {/* Location */}
-        <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
-          <div className="flex items-center gap-1">
-            <MapPin className="w-3.5 h-3.5 shrink-0" />
-            <span className="line-clamp-1">
-              {vehicle.dealer_city}, {vehicle.dealer_state}
-            </span>
-          </div>
-          {vehicle.distance_miles !== undefined &&
-            vehicle.distance_miles !== Infinity && (
-              <span className="text-brand font-semibold ml-2 shrink-0">
-                {Math.round(vehicle.distance_miles)} mi
-              </span>
-            )}
-        </div>
-
-        {/* CTA */}
-        <Button
-          variant="primary"
-          className="w-full hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] gap-2"
+        <div
+          className="w-full inline-flex items-center justify-center rounded-md font-semibold shadow-sm transition-all duration-300 outline-none bg-trust-blue text-white px-6 py-3 text-base pointer-events-none"
         >
-          {isDirect ? (
-            <>
-              <ExternalLink className="w-4 h-4" />
-              View at Dealer
-              <ChevronRight className="w-5 h-5" />
-            </>
-          ) : (
-            <>
-              <Camera className="w-4 h-4" />
-              See Full Photo Gallery
-              <ChevronRight className="w-5 h-5" />
-            </>
-          )}
-        </Button>
+          Check Availability
+          <ChevronRight className="ml-1 w-5 h-5" />
+        </div>
       </div>
     </Link>
   );

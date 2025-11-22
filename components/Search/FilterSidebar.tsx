@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { X, SlidersHorizontal } from "lucide-react";
 import { Input, Badge, Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { FilterControls } from "./FilterControls";
 
 interface FilterSidebarProps {
   makes: string[];
@@ -20,10 +21,10 @@ interface FilterSidebarProps {
     minYear?: string;
     maxYear?: string;
     bodyStyle?: string;
+    sortBy?: string;
   };
 }
 
-// Extracted reusable active filter badge component
 const ActiveFilterBadge = ({
   label,
   onRemove,
@@ -37,225 +38,12 @@ const ActiveFilterBadge = ({
       onClick={onRemove}
       variant="ghost"
       size="icon"
-      className="hover:bg-muted dark:hover:bg-muted/50 rounded-full"
+      className="hover:bg-gray-100 rounded-full h-4 w-4"
       aria-label={`Remove ${label} filter`}
     >
       <X className="w-3 h-3" />
     </Button>
   </Badge>
-);
-
-// Filter content component extracted to avoid React anti-pattern
-const FilterContent = ({
-  currentFilters,
-  isUpdating,
-  updateFilter,
-  clearFilters,
-  hasActiveFilters,
-  makes,
-  conditions,
-  bodyStyles,
-  years,
-  minPrice,
-  maxPrice,
-  handleMinPriceChange,
-  handleMaxPriceChange,
-}: {
-  currentFilters: FilterSidebarProps["currentFilters"];
-  isUpdating: boolean;
-  updateFilter: (key: string, value: string) => void;
-  clearFilters: () => void;
-  hasActiveFilters: boolean;
-  makes: string[];
-  conditions: string[];
-  bodyStyles: string[];
-  years: number[];
-  minPrice: string;
-  maxPrice: string;
-  handleMinPriceChange: (value: string) => void;
-  handleMaxPriceChange: (value: string) => void;
-}) => (
-  <>
-    <div className="flex items-center justify-between mb-6">
-      <div className="flex items-center gap-2">
-        <h2 className="text-lg font-bold text-foreground">Filters</h2>
-        {isUpdating && (
-          <div className="w-4 h-4 border-2 border-brand border-t-transparent rounded-full animate-spin"></div>
-        )}
-      </div>
-      {hasActiveFilters && (
-        <Button
-          onClick={clearFilters}
-          variant="ghost"
-          size="sm"
-          aria-label="Clear all filters"
-        >
-          <X className="w-4 h-4" />
-          Clear
-        </Button>
-      )}
-    </div>
-
-    <div className="space-y-6">
-      {/* Make */}
-      <div>
-        <label
-          htmlFor="filter-make"
-          className="block text-sm font-semibold text-foreground mb-2"
-        >
-          Make
-        </label>
-        <select
-          id="filter-make"
-          value={currentFilters.make || ""}
-          onChange={(e) => updateFilter("make", e.target.value)}
-          className="w-full px-3 py-2 bg-background border border-border rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand text-foreground"
-        >
-          <option value="">All Makes</option>
-          {makes.map((make) => (
-            <option key={make} value={make}>
-              {make}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Condition */}
-      <div>
-        <label
-          htmlFor="filter-condition"
-          className="block text-sm font-semibold text-foreground mb-2"
-        >
-          Condition
-        </label>
-        <select
-          id="filter-condition"
-          value={currentFilters.condition || ""}
-          onChange={(e) => updateFilter("condition", e.target.value)}
-          className="w-full px-3 py-2 bg-background border border-border rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand text-foreground"
-        >
-          <option value="">All Conditions</option>
-          {conditions.map((condition) => (
-            <option key={condition} value={condition}>
-              {condition}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Body Style */}
-      <div>
-        <label
-          htmlFor="filter-body-style"
-          className="block text-sm font-semibold text-foreground mb-2"
-        >
-          Body Style
-        </label>
-        <select
-          id="filter-body-style"
-          value={currentFilters.bodyStyle || ""}
-          onChange={(e) => updateFilter("bodyStyle", e.target.value)}
-          className="w-full px-3 py-2 bg-background border border-border rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand text-foreground"
-        >
-          <option value="">All Body Styles</option>
-          {bodyStyles.map((style) => (
-            <option key={style} value={style}>
-              {style}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Year Range */}
-      <div>
-        <label className="block text-sm font-semibold text-foreground mb-2">
-          Year
-        </label>
-        <div className="grid grid-cols-2 gap-3">
-          <select
-            value={currentFilters.minYear || ""}
-            onChange={(e) => updateFilter("minYear", e.target.value)}
-            aria-label="Minimum year"
-            className="px-3 py-2 bg-background border border-border rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand text-sm text-foreground"
-          >
-            <option value="">Min</option>
-            {years.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
-          <select
-            value={currentFilters.maxYear || ""}
-            onChange={(e) => updateFilter("maxYear", e.target.value)}
-            aria-label="Maximum year"
-            className="px-3 py-2 bg-background border border-border rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand text-sm text-foreground"
-          >
-            <option value="">Max</option>
-            {years.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {/* Price Range */}
-      <div>
-        <label className="block text-sm font-semibold text-foreground mb-2">
-          Price
-        </label>
-        <div className="grid grid-cols-2 gap-3">
-          <Input
-            type="number"
-            placeholder="Min"
-            value={minPrice}
-            onChange={(e) => handleMinPriceChange(e.target.value)}
-            aria-label="Minimum price"
-            className="text-sm py-2"
-          />
-          <Input
-            type="number"
-            placeholder="Max"
-            value={maxPrice}
-            onChange={(e) => handleMaxPriceChange(e.target.value)}
-            aria-label="Maximum price"
-            className="text-sm py-2"
-          />
-        </div>
-      </div>
-    </div>
-
-    {/* Active Filters */}
-    {hasActiveFilters && (
-      <div className="mt-6 pt-6 border-t border-border">
-        <h3 className="text-sm font-semibold text-foreground mb-3">
-          Active Filters
-        </h3>
-        <div className="flex flex-wrap gap-2">
-          {currentFilters.make && (
-            <ActiveFilterBadge
-              label={currentFilters.make}
-              onRemove={() => updateFilter("make", "")}
-            />
-          )}
-          {currentFilters.condition && (
-            <ActiveFilterBadge
-              label={currentFilters.condition}
-              onRemove={() => updateFilter("condition", "")}
-            />
-          )}
-          {currentFilters.bodyStyle && (
-            <ActiveFilterBadge
-              label={currentFilters.bodyStyle}
-              onRemove={() => updateFilter("bodyStyle", "")}
-            />
-          )}
-        </div>
-      </div>
-    )}
-  </>
 );
 
 export default function FilterSidebar({
@@ -266,166 +54,139 @@ export default function FilterSidebar({
   currentFilters,
 }: FilterSidebarProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [minPrice, setMinPrice] = useState(currentFilters.minPrice || "");
   const [maxPrice, setMaxPrice] = useState(currentFilters.maxPrice || "");
-  const [isUpdating, setIsUpdating] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    if (isMobileDrawerOpen) {
+      document.body.style.overflow = 'hidden';
+      
+      const handleEsc = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') setIsMobileDrawerOpen(false);
+      };
+      window.addEventListener('keydown', handleEsc);
+      
+      return () => {
+        document.body.style.overflow = 'unset';
+        window.removeEventListener('keydown', handleEsc);
+      };
+    }
+  }, [isMobileDrawerOpen]);
 
   const updateFilter = useCallback(
     (key: string, value: string) => {
-      const params = new URLSearchParams(window.location.search);
-
-      // Update or delete the changed filter
+      const params = new URLSearchParams(searchParams.toString());
       if (value) {
         params.set(key, value);
       } else {
         params.delete(key);
       }
-
-      // Reset to page 1 when filtering
-      params.delete("page");
-
-      // Flow parameter is automatically preserved since we're using window.location.search
+      params.delete("page"); // Reset pagination
       router.push(`/search?${params.toString()}`);
     },
-    [router]
+    [router, searchParams]
   );
 
-  // Debounce minPrice updates
+  const updateSort = (sortBy: string) => {
+    updateFilter("sortBy", sortBy);
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => {
       if (minPrice !== (currentFilters.minPrice || "")) {
         updateFilter("minPrice", minPrice);
-        setIsUpdating(false);
       }
     }, 800);
     return () => clearTimeout(timer);
   }, [minPrice, currentFilters.minPrice, updateFilter]);
 
-  // Debounce maxPrice updates
   useEffect(() => {
     const timer = setTimeout(() => {
       if (maxPrice !== (currentFilters.maxPrice || "")) {
         updateFilter("maxPrice", maxPrice);
-        setIsUpdating(false);
       }
     }, 800);
     return () => clearTimeout(timer);
   }, [maxPrice, currentFilters.maxPrice, updateFilter]);
 
-  // Handle price input changes
-  const handleMinPriceChange = (value: string) => {
-    setMinPrice(value);
-    setIsUpdating(true);
-  };
-
-  const handleMaxPriceChange = (value: string) => {
-    setMaxPrice(value);
-    setIsUpdating(true);
-  };
-
   const clearFilters = () => {
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(searchParams.toString());
     const flow = params.get("flow");
-
-    // Clear all filters but preserve flow
-    if (flow) {
-      router.push(`/search?flow=${flow}`);
-    } else {
-      router.push("/search");
-    }
+    router.push(flow ? `/search?flow=${flow}` : "/search");
   };
 
-  const hasActiveFilters = Object.keys(currentFilters).length > 0;
-  const activeFilterCount = [
-    currentFilters.make,
-    currentFilters.model,
-    currentFilters.condition,
-    currentFilters.bodyStyle,
-    currentFilters.minPrice,
-    currentFilters.maxPrice,
-    currentFilters.minYear,
-    currentFilters.maxYear,
-  ].filter(Boolean).length;
+  const hasActiveFilters = Object.keys(currentFilters).some(
+    (key) => key !== "sortBy" && key !== "page" && key !== "lat" && key !== "lon" && currentFilters[key as keyof typeof currentFilters]
+  );
 
-  // Lock body scroll when mobile drawer is open
-  useEffect(() => {
-    if (isMobileDrawerOpen) {
-      document.body.classList.add("overflow-hidden");
-      return () => {
-        document.body.classList.remove("overflow-hidden");
-      };
-    }
-  }, [isMobileDrawerOpen]);
-
-  // Handle Escape key to close drawer
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isMobileDrawerOpen) {
-        setIsMobileDrawerOpen(false);
-      }
-    };
-
-    document.addEventListener("keydown", handleEscape);
-    return () => {
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [isMobileDrawerOpen]);
-
-  // Props for FilterContent component
-  const filterContentProps = {
-    currentFilters,
-    isUpdating,
-    updateFilter,
-    clearFilters,
-    hasActiveFilters,
+  // Prepare shared props for FilterControls
+  const filterControlProps = {
     makes,
-    conditions,
     bodyStyles,
+    conditions,
     years,
+    currentFilters,
+    updateFilter,
     minPrice,
     maxPrice,
-    handleMinPriceChange,
-    handleMaxPriceChange,
+    setMinPrice,
+    setMaxPrice,
   };
 
   return (
     <>
-      {/* Mobile Filter Button - Fixed at bottom on mobile */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-background border-t border-border shadow-lg p-4">
+      {/* Mobile Sticky Header */}
+      <div className="lg:hidden sticky top-0 z-30 bg-background border-b p-3 flex gap-2 items-center shadow-sm">
         <Button
           onClick={() => setIsMobileDrawerOpen(true)}
-          variant="brand"
-          className="w-full gap-2"
+          variant="outline"
+          className="flex-1 gap-2 bg-white border-gray-300 text-trust-text font-medium"
         >
-          <SlidersHorizontal className="w-5 h-5" />
+          <SlidersHorizontal className="w-4 h-4" />
           Filters
-          {activeFilterCount > 0 && (
-            <Badge variant="secondary" className="bg-background">
-              {activeFilterCount}
-            </Badge>
-          )}
+          {hasActiveFilters && <div className="w-2 h-2 bg-trust-blue rounded-full" />}
         </Button>
+        
+        <div className="flex-1 relative">
+          <select
+            value={currentFilters.sortBy || "relevance"}
+            onChange={(e) => updateSort(e.target.value)}
+            aria-label="Sort vehicles"
+            className="w-full appearance-none bg-white border border-gray-300 text-trust-text py-2 px-3 pr-8 rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-trust-blue focus:border-trust-blue text-sm h-10 cursor-pointer"
+          >
+            <option value="relevance">Sort: Relevance</option>
+            <option value="price_asc">Sort: Price Low-High</option>
+            <option value="price_desc">Sort: Price High-Low</option>
+            <option value="year_desc">Sort: Newest</option>
+            <option value="mileage_asc">Sort: Lowest Mileage</option>
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+            <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
+              <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+            </svg>
+          </div>
+        </div>
       </div>
 
       {/* Mobile Drawer Overlay */}
       {isMobileDrawerOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 dark:bg-black/70 z-50 animate-fade-in"
+          className="lg:hidden fixed inset-0 bg-black/50 z-50 animate-fade-in"
           onClick={() => setIsMobileDrawerOpen(false)}
-          aria-hidden="true"
         />
       )}
 
       {/* Mobile Drawer */}
       <div
         className={cn(
-          "lg:hidden fixed top-0 left-0 bottom-0 w-full max-w-sm bg-background z-60 overflow-y-auto transition-transform duration-300 ease-in-out shadow-2xl",
+          "lg:hidden fixed top-0 left-0 bottom-0 w-full max-w-xs bg-white z-50 overflow-y-auto transition-transform duration-300 ease-in-out shadow-2xl",
           isMobileDrawerOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="sticky top-0 bg-background border-b border-border p-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-foreground">Filters</h2>
+        <div className="sticky top-0 bg-white border-b p-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-trust-text">Filters</h2>
           <Button
             onClick={() => setIsMobileDrawerOpen(false)}
             variant="ghost"
@@ -435,14 +196,35 @@ export default function FilterSidebar({
             <X className="w-5 h-5" />
           </Button>
         </div>
-        <div className="p-6">
-          <FilterContent {...filterContentProps} />
+        <div className="p-6 space-y-6">
+          <FilterControls {...filterControlProps} />
+
+          {hasActiveFilters && (
+            <Button 
+              onClick={clearFilters} 
+              className="w-full bg-gray-100 text-gray-700 hover:bg-gray-200"
+            >
+              Clear All Filters
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* Desktop Sidebar - Hidden on mobile */}
-      <div className="hidden lg:block bg-background rounded-xl border border-border p-6 sticky top-8">
-        <FilterContent {...filterContentProps} />
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:block bg-white rounded-lg border border-border p-6 sticky top-4">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-bold text-trust-text">Filters</h2>
+          {hasActiveFilters && (
+            <button 
+              onClick={clearFilters}
+              className="text-xs text-trust-blue font-semibold hover:underline cursor-pointer"
+            >
+              Reset
+            </button>
+          )}
+        </div>
+        
+        <FilterControls {...filterControlProps} />
       </div>
     </>
   );

@@ -38,7 +38,7 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
       year: vehicle.year,
       price: vehicle.price,
     });
-  }, [vehicle, flow]);
+  }, [vehicle.id, vehicle.vin, vehicle.make, vehicle.model, vehicle.year, vehicle.price, flow]);
 
   useEffect(() => {
     const handleScroll = () => {

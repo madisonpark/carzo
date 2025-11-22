@@ -45,19 +45,6 @@ export function useClickTracking() {
     const utmParams = getUtmParams();
     const flow = getFlowFromUrl();
 
-    // Track to GA4 (before API call, so it fires even if API fails)
-    gtag.trackDealerClick({
-      dealerId,
-      vehicleId,
-      vehicleVin,
-      isBillable: true, // Will be updated after API response
-      ctaClicked,
-      flow,
-      utmSource: utmParams.source,
-      utmMedium: utmParams.medium,
-      utmCampaign: utmParams.campaign,
-    });
-
     if (!userId || !sessionId) {
       console.warn('User ID or session ID not initialized');
       return {
@@ -88,9 +75,38 @@ export function useClickTracking() {
       }
 
       const data = await response.json();
+
+      // Track to GA4 (after API confirmation for accurate billable status)
+      gtag.trackDealerClick({
+        dealerId,
+        vehicleId,
+        vehicleVin,
+        isBillable: data.billable,
+        ctaClicked,
+        flow,
+        utmSource: utmParams.source,
+        utmMedium: utmParams.medium,
+        utmCampaign: utmParams.campaign,
+      });
+
       return data;
     } catch (error) {
       console.error('Error tracking click:', error);
+      
+      // Still track to GA4 even if internal API fails, but mark as potentially non-billable or unknown
+      // We use a best-effort approach here
+      gtag.trackDealerClick({
+        dealerId,
+        vehicleId,
+        vehicleVin,
+        isBillable: true, // Default assumption if API fails
+        ctaClicked,
+        flow,
+        utmSource: utmParams.source,
+        utmMedium: utmParams.medium,
+        utmCampaign: utmParams.campaign,
+      });
+
       return {
         success: false,
         billable: false,

@@ -12,8 +12,7 @@ import { getFlowFromUrl } from "@/lib/flow-detection";
 const DEBOUNCE_MS = 300;
 const RESULTS_PER_PAGE = 24;
 
-// Helper to validate numeric inputs
-const parseAndValidateNumber = (value: string | undefined | null, min?: number, max?: number): number | null => {
+export const parseAndValidateNumber = (value: string | undefined | null, min?: number, max?: number): number | null => {
   if (!value) return null;
   const parsed = parseFloat(value);
   if (isNaN(parsed)) return null;
@@ -60,10 +59,10 @@ export default function SearchResults({
       model: currentFilters.model,
       condition: currentFilters.condition,
       bodyStyle: currentFilters.bodyStyle,
-      minPrice: currentFilters.minPrice ? Number(currentFilters.minPrice) : undefined,
-      maxPrice: currentFilters.maxPrice ? Number(currentFilters.maxPrice) : undefined,
-      minYear: currentFilters.minYear ? Number(currentFilters.minYear) : undefined,
-      maxYear: currentFilters.maxYear ? Number(currentFilters.maxYear) : undefined,
+      minPrice: parseAndValidateNumber(currentFilters.minPrice) || undefined,
+      maxPrice: parseAndValidateNumber(currentFilters.maxPrice) || undefined,
+      minYear: parseAndValidateNumber(currentFilters.minYear) || undefined,
+      maxYear: parseAndValidateNumber(currentFilters.maxYear) || undefined,
       // We don't have direct access to zipCode here (it's in cookies/session), but lat/lon is in params
       // implicit location tracking happens via trackLocationDetected in ZipCodeInput
       flow: flow,

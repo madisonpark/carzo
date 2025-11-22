@@ -6,7 +6,7 @@ type GTagEvent = {
   [key: string]: any;
 };
 
-export const GA_MEASUREMENT_ID = 'G-FC4SWNKECE';
+export const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
 export const sendEvent = ({ action, category, label, value, ...rest }: GTagEvent) => {
   if (typeof window !== 'undefined' && (window as any).gtag) {
@@ -198,10 +198,16 @@ export const trackRelatedVehiclesView = (vehicleId: string, count: number) => {
 
 // 6. Error Events
 export const trackNoResults = (searchParams: SearchParams) => {
+  // Create readable label string like "make:Toyota, model:Camry"
+  const label = Object.entries(searchParams)
+    .filter(([_, value]) => value !== undefined && value !== null)
+    .map(([key, value]) => `${key}:${value}`)
+    .join(', ');
+
   sendEvent({
     action: 'no_results',
     category: 'error',
-    label: JSON.stringify(searchParams),
+    label: label || 'empty_search',
     ...searchParams,
   });
 };

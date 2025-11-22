@@ -20,16 +20,23 @@ The `GoogleAnalytics` component needs to be added to the root layout of the appl
     ```typescript
     import { GoogleAnalytics } from "@next/third-parties/google";
     ```
-2.  **Component Placement:** Place the `<GoogleAnalytics />` component just before the closing `</html>` tag, after the `</body>` tag. Replace `G-XXXXXXXXXX` with the actual `GA_MEASUREMENT_ID` (G-FC4SWNKECE for Carzo).
+2.  **Component Placement:** Place the `<GoogleAnalytics />` component just before the closing `</html>` tag, after the `</body>` tag. Use the environment variable `NEXT_PUBLIC_GA_MEASUREMENT_ID`.
     ```typescript
           </body>
-          <GoogleAnalytics gaId="G-FC4SWNKECE" />
+          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || ""} />
         </html>
     ```
 
+**Environment Variable:**
+Ensure `NEXT_PUBLIC_GA_MEASUREMENT_ID` is set in your `.env.local` and Vercel project settings.
+
+```bash
+NEXT_PUBLIC_GA_MEASUREMENT_ID=G-FC4SWNKECE
+```
+
 ## 3. Event Tracking Library
 
-All custom event tracking logic resides in `lib/google-analytics.ts`. This file exports a `sendEvent` function, which acts as a wrapper around the global `gtag()` function, ensuring events are sent only when `gtag` is available.
+All custom event tracking logic resides in `lib/google-analytics.ts`. This file exports a `sendEvent` function, which acts as a wrapper around the global `gtag()` function. It also uses the environment variable `NEXT_PUBLIC_GA_MEASUREMENT_ID`.
 
 Refer to `docs/reference/google-analytics-events.md` for a comprehensive list of all custom events tracked.
 

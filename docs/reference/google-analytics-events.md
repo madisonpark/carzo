@@ -2,7 +2,7 @@
 
 This document provides a comprehensive reference for all custom Google Analytics 4 (GA4) events implemented in the Carzo project. These events are tracked using the `lib/google-analytics.ts` library.
 
-**Measurement ID:** `G-FC4SWNKECE`
+**Measurement ID:** Configured via `NEXT_PUBLIC_GA_MEASUREMENT_ID` (e.g., `G-FC4SWNKECE`)
 
 All events are sent via the `sendEvent` wrapper function in `lib/google-analytics.ts`, which ensures `gtag()` is available before attempting to send data.
 

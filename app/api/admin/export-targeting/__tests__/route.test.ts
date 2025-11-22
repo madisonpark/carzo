@@ -99,23 +99,43 @@ function createMockRequest(params: Record<string, string>): NextRequest {
 
 
 
-        // Configure the global mocks for each test
+            // Configure the global mocks for each test
 
 
 
-        vi.mocked(adminAuthModule).validateAdminAuth.mockResolvedValue({ authorized: true, response: null });
+            vi.mocked(adminAuthModule).validateAdminAuth.mockResolvedValue({ authorized: true, response: null });
 
 
 
-        vi.mocked(rateLimitModule).checkMultipleRateLimits.mockResolvedValue({ status: 200, body: null });
+            vi.mocked(rateLimitModule).checkMultipleRateLimits.mockResolvedValue({ 
 
 
 
-    
+              allowed: true, 
 
 
 
-        // CSV mocks are handled by vi.doMock above, no need to re-mock implementation here
+              limit: 100, 
+
+
+
+              remaining: 99, 
+
+
+
+              reset: Date.now() + 60000 
+
+
+
+            });
+
+
+
+        
+
+
+
+            // CSV mocks are handled by vi.doMock above, no need to re-mock implementation here
 
 
 
@@ -509,49 +529,14 @@ function createMockRequest(params: Record<string, string>): NextRequest {
     });
   });
 
-  describe('Metro Parsing', () => {
-    it('should parse metro with comma separator', async () => {
-      mockRpc.mockResolvedValueOnce({ data: [{ zip_code: '33601' }], error: null });
-
-      const request = createMockRequest({
-        metro: 'Tampa, FL',
-        platform: 'google',
-      });
-
-      await GET(request);
-
-      expect(mockRpc).toHaveBeenCalledWith(
-        'get_zips_for_metro',
-        expect.objectContaining({
-          p_city: 'Tampa',
-          p_state: 'FL',
-        })
-      );
-    });
-
-    it('should handle metro without spaces after comma', async () => {
-      mockRpc.mockResolvedValueOnce({ data: [{ zip_code: '33601' }], error: null });
-
-      const request = createMockRequest({
-        metro: 'Tampa,FL',
-        platform: 'google',
-      });
-
-      await GET(request);
-
-      expect(mockRpc).toHaveBeenCalledWith(
-        'get_zips_for_metro',
-        expect.objectContaining({
-          p_city: 'Tampa',
-          p_state: 'FL',
-        })
-      );
-    });
-  });
-
   describe('Rate Limiting', () => {
     it('should return 429 if rate limit is exceeded', async () => {
-      vi.spyOn(rateLimitModule, 'checkMultipleRateLimits').mockResolvedValueOnce({ status: 429, body: { error: 'Too Many Requests' } });
+      vi.spyOn(rateLimitModule, 'checkMultipleRateLimits').mockResolvedValueOnce({ 
+        allowed: false,
+        limit: 100,
+        remaining: 0,
+        reset: Date.now() + 60000,
+      });
 
       // Ensure mockRpc returns data so the request proceeds past inventory checks
       mockRpc.mockResolvedValueOnce({
@@ -568,7 +553,41 @@ function createMockRequest(params: Record<string, string>): NextRequest {
       const data = await response.json();
 
       expect(response.status).toBe(429);
-      expect(data.error).toBe('Too Many Requests');
-      expect(rateLimitModule.checkMultipleRateLimits).toHaveBeenCalledTimes(1);
-      });
+      expect(data.error).toBe('Rate limit exceeded');
+      expect(rateLimitModule.checkMultipleRateLimits).toHaveBeenCalled();
     });
+  });
+
+  describe('Metro Parsing', () => {
+    it('should return 400 for invalid metro format', async () => {
+      const request = createMockRequest({
+        metro: 'Tampa', // Missing comma
+        platform: 'google',
+      });
+
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.error).toContain('metro parameter must be in format "City, ST"');
+    });
+
+    it('should handle metro with extra spaces', async () => {
+      mockRpc.mockResolvedValueOnce({ data: [{ zip_code: '33601' }], error: null });
+
+      const request = createMockRequest({
+        metro: 'Tampa, FL ',
+        platform: 'google',
+      });
+
+      await GET(request);
+
+      expect(mockRpc).toHaveBeenCalledWith(
+        'get_zips_for_metro',
+        expect.objectContaining({
+          p_city: 'Tampa',
+          p_state: 'FL',
+        })
+      );
+    });
+  });

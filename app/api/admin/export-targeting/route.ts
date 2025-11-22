@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { validateAdminAuth } from '@/lib/admin-auth';
 import { sanitizeCsvField, generateCsv } from '@/lib/csv';
-import { checkMultipleRateLimits } from '@/lib/rate-limit';
+import { checkMultipleRateLimits, getClientIdentifier, RATE_LIMITS } from '@/lib/rate-limit';
 
 
 export const dynamic = 'force-dynamic';
@@ -50,6 +50,31 @@ export async function GET(request: NextRequest) {
   const authResult = await validateAdminAuth(request);
   if (!authResult.authorized) {
     return authResult.response!;
+  }
+
+  const identifier = getClientIdentifier(request);
+  const rateLimitResult = await checkMultipleRateLimits(identifier, [
+    { endpoint: 'export_targeting', ...RATE_LIMITS.SEARCH_VEHICLES },
+    { endpoint: 'export_targeting_burst', ...RATE_LIMITS.BURST },
+  ]);
+
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      { 
+        error: 'Rate limit exceeded',
+        limit: rateLimitResult.limit,
+        remaining: rateLimitResult.remaining,
+        reset: new Date(rateLimitResult.reset).toISOString(),
+      },
+      { 
+        status: 429,
+        headers: {
+          'X-RateLimit-Limit': String(rateLimitResult.limit),
+          'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+          'X-RateLimit-Reset': String(rateLimitResult.reset),
+        }
+      }
+    );
   }
 
   const { searchParams } = new URL(request.url);
@@ -109,13 +134,14 @@ export async function GET(request: NextRequest) {
 
   try {
     // Parse metro into city and state
-    const [city, state] = metro.split(',').map(s => s.trim());
-
-    // Add rate limiting for admin endpoint
-    const rateLimitResult = await checkMultipleRateLimits(request);
-    if (rateLimitResult.status !== 200) {
-      return NextResponse.json(rateLimitResult.body, { status: rateLimitResult.status });
+    const parts = metro.split(',').map(s => s.trim());
+    if (parts.length !== 2 || !parts[0] || !parts[1]) {
+      return NextResponse.json(
+        { error: 'metro parameter must be in format "City, ST" (e.g., "Tampa, FL")' },
+        { status: 400 }
+      );
     }
+    const [city, state] = parts;
 
     if (platform === 'facebook') {
       // Export lat/long radius targeting for Facebook

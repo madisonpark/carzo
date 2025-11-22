@@ -96,7 +96,7 @@ export async function getInventorySnapshot(): Promise<InventorySnapshot> {
  */
 export const getCachedInventorySnapshot = unstable_cache(
   getInventorySnapshot,
-  ['inventory-snapshot'],
+  ['admin-data', 'inventory-snapshot'],
   { revalidate: 300 } // 5 minutes
 );
 

@@ -1,13 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { validateAdminAuth } from '@/lib/admin-auth';
-import { sanitizeCsvField, generateCsv } from '@/lib/csv';
+import { sanitizeCsvField } from '@/lib/csv';
 
 export const dynamic = 'force-dynamic';
 
 // Input validation limits (prevent DoS via large inputs)
 const MAX_METRO_LENGTH = 100;
 const MAX_FILTER_LENGTH = 50;
+
+/**
+ * Generate destination URL for the campaign landing page
+ */
+function generateDestinationUrl(make: string | null, bodyStyle: string | null): string {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://carzo.net';
+  const searchPath = '/search';
+  const url = new URL(searchPath, baseUrl);
+
+  if (make) {
+    url.searchParams.set('make', make);
+  }
+  
+  if (bodyStyle) {
+    url.searchParams.set('body_style', bodyStyle);
+  }
+
+  return url.toString();
+}
 
 /**
  * Export geographic targeting lists for ad platforms
@@ -135,19 +154,22 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      const destinationUrl = generateDestinationUrl(make, bodyStyle);
+
       const rows = Array.from(dealerData.values()).map(dealer => ({
         latitude: dealer.latitude,
         longitude: dealer.longitude,
         radius_miles: 25,
         dealer_name: dealer.dealer_name,
         vehicle_count: dealer.vehicle_count,
+        destination_url: destinationUrl
       }));
 
       if (format === 'csv') {
         const csv = [
-          'latitude,longitude,radius_miles,dealer_name,vehicle_count',
+          'latitude,longitude,radius_miles,dealer_name,vehicle_count,destination_url',
           ...rows.map(
-            r => `${r.latitude},${r.longitude},${r.radius_miles},${sanitizeCsvField(r.dealer_name)},${r.vehicle_count}`
+            r => `${r.latitude},${r.longitude},${r.radius_miles},${sanitizeCsvField(r.dealer_name)},${r.vehicle_count},${r.destination_url}`
           ),
         ].join('\n');
 
@@ -187,10 +209,18 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      const rows = (zipCodes || []).map((z: ZipResult) => [z.zip_code]);
+      const destinationUrl = generateDestinationUrl(make, bodyStyle);
+
+      const rows = (zipCodes || []).map((z: ZipResult) => ({
+        zip_code: z.zip_code,
+        destination_url: destinationUrl
+      }));
 
       if (format === 'csv') {
-        const csv = generateCsv(['zip_code'], rows);
+        const csv = [
+          'zip_code,destination_url',
+          ...rows.map(r => `${r.zip_code},${r.destination_url}`)
+        ].join('\n');
 
         return new NextResponse(csv, {
           headers: {
@@ -203,10 +233,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(rows);
     } else if (platform === 'tiktok') {
       // Export DMA (will work once DMA column is added)
-      const rows = [{ dma: metro }]; // Placeholder: use city, state for now
+      const destinationUrl = generateDestinationUrl(make, bodyStyle);
+      const rows = [{ dma: metro, destination_url: destinationUrl }]; 
 
       if (format === 'csv') {
-        const csv = ['dma', metro].join('\n');
+        const csv = ['dma,destination_url', `${metro},${destinationUrl}`].join('\n');
 
         return new NextResponse(csv, {
           headers: {

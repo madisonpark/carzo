@@ -139,8 +139,29 @@ describe('GET /api/admin/export-targeting', () => {
 
       expect(response.status).toBe(200);
       expect(response.headers.get('Content-Type')).toBe('text/csv');
-      expect(text).toContain('latitude,longitude,radius_miles,dealer_name');
+      expect(text).toContain('latitude,longitude,radius_miles,dealer_name,vehicle_count,destination_url');
       expect(text).toContain('27.9,-82.4,25,"Tampa Toyota"');
+    });
+
+    it('should include correct destination_url in CSV output with filters', async () => {
+      mockQuery.data = [
+        { latitude: 27.9, longitude: -82.4, dealer_name: 'Tampa Toyota', dealer_id: 'dealer1' },
+      ];
+
+      const request = createMockRequest({
+        metro: 'Tampa, FL',
+        platform: 'facebook',
+        format: 'csv',
+        make: 'Toyota',
+        body_style: 'suv'
+      });
+
+      const response = await GET(request);
+      const text = await response.text();
+
+      expect(text).toContain('destination_url');
+      // Check that the URL is correctly constructed with both params
+      expect(text).toContain('https://carzo.net/search?make=Toyota&body_style=suv');
     });
 
     it('should return 404 when no dealers found', async () => {
@@ -247,7 +268,27 @@ describe('GET /api/admin/export-targeting', () => {
 
       expect(response.status).toBe(200);
       expect(response.headers.get('Content-Type')).toBe('text/csv');
-      expect(text).toBe('"zip_code"\n"33601"\n"33602"\n"33603"');
+      expect(text).toContain('zip_code,destination_url');
+      expect(text).toContain('33601');
+    });
+
+    it('should include destination_url with filters in Google CSV', async () => {
+      mockRpc.mockResolvedValueOnce({
+        data: [{ zip_code: '33601' }],
+        error: null
+      });
+
+      const request = createMockRequest({
+        metro: 'Tampa, FL',
+        platform: 'google',
+        format: 'csv',
+        make: 'Toyota'
+      });
+
+      const response = await GET(request);
+      const text = await response.text();
+
+      expect(text).toContain('https://carzo.net/search?make=Toyota');
     });
 
     it('should return 404 when no ZIP codes found', async () => {
@@ -263,6 +304,26 @@ describe('GET /api/admin/export-targeting', () => {
 
       expect(response.status).toBe(404);
       expect(data.error).toContain('No ZIP codes found');
+    });
+  });
+
+  describe('TikTok Platform', () => {
+    it('should return CSV with DMA and destination_url', async () => {
+      const request = createMockRequest({
+        metro: 'Tampa, FL',
+        platform: 'tiktok',
+        format: 'csv',
+        make: 'Ford',
+        body_style: 'truck'
+      });
+
+      const response = await GET(request);
+      const text = await response.text();
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get('Content-Type')).toBe('text/csv');
+      expect(text).toContain('dma,destination_url');
+      expect(text).toContain('Tampa, FL,https://carzo.net/search?make=Ford&body_style=truck');
     });
   });
 

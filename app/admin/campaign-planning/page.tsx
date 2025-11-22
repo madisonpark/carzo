@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { CampaignPlanningDashboard } from "./components/Dashboard";
+import { getCachedInventorySnapshot, getCachedCombinations } from "@/lib/admin-data";
 
 export const dynamic = "force-dynamic";
 
@@ -10,43 +11,12 @@ export const metadata = {
 };
 
 async function fetchInventoryData() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-
   try {
-    const [snapshotResponse, combinationsResponse] = await Promise.all([
-      fetch(`${baseUrl}/api/admin/inventory-snapshot`, {
-        headers: { Authorization: `Bearer ${process.env.ADMIN_PASSWORD}` },
-        cache: "no-store",
-      }),
-      fetch(`${baseUrl}/api/admin/combinations`, {
-        headers: { Authorization: `Bearer ${process.env.ADMIN_PASSWORD}` },
-        cache: "no-store",
-      }),
+    // Fetch data directly from database (server-side)
+    const [snapshot, combinations] = await Promise.all([
+      getCachedInventorySnapshot(),
+      getCachedCombinations(),
     ]);
-
-    // Handle Snapshot Response
-    let snapshot = { total_vehicles: 0, by_body_style: {}, by_make: {} };
-    if (snapshotResponse.ok) {
-      snapshot = await snapshotResponse.json();
-    } else {
-      console.error(
-        "Failed to fetch inventory snapshot:",
-        snapshotResponse.status,
-        await snapshotResponse.text()
-      );
-    }
-
-    // Handle Combinations Response
-    let combinations = { make_bodystyle: [], make_model: [] };
-    if (combinationsResponse.ok) {
-      combinations = await combinationsResponse.json();
-    } else {
-      console.error(
-        "Failed to fetch combinations:",
-        combinationsResponse.status,
-        await combinationsResponse.text()
-      );
-    }
 
     return { snapshot, combinations };
   } catch (error) {
@@ -55,8 +25,11 @@ async function fetchInventoryData() {
     return {
       snapshot: {
         total_vehicles: 0,
+        total_dealers: 0,
+        by_metro: {},
         by_body_style: {},
-        by_make: {}
+        by_make: {},
+        updated_at: new Date().toISOString()
       },
       combinations: {
         make_bodystyle: [],

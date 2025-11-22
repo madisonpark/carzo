@@ -17,9 +17,14 @@ if (!supabaseAnonKey) {
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Server-side Supabase client (uses service role key for admin operations)
+// Throws an error if SUPABASE_SERVICE_ROLE_KEY is not provided, as admin operations
+// should not silently fall back to anon key.
+if (!supabaseServiceKey) {
+  throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY environment variable. This is required for supabaseAdmin.');
+}
 export const supabaseAdmin = createClient(
   supabaseUrl,
-  supabaseServiceKey || supabaseAnonKey, // Fallback to anon key if service key not available
+  supabaseServiceKey,
   {
     auth: {
       autoRefreshToken: false,

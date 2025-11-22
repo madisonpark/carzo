@@ -1,6 +1,9 @@
 import { supabaseAdmin } from '@/lib/supabase';
 import { unstable_cache } from 'next/cache';
 
+const MAX_METRO_RESULTS = 10;
+const MAX_MAKE_RESULTS = 15;
+
 export interface InventoryCount {
   body_style?: string;
   make?: string;
@@ -56,7 +59,9 @@ export async function getInventorySnapshot(): Promise<InventorySnapshot> {
 
     // Format by_metro as simple object
     const byMetro = Object.fromEntries(
-      ((metroResult.data as InventoryCount[] | null) || []).slice(0, 10).map((m: InventoryCount) => [m.metro || 'Unknown', Number(m.vehicle_count)])
+      ((metroResult.data as InventoryCount[] | null) || [])
+        .slice(0, MAX_METRO_RESULTS)
+        .map((m: InventoryCount) => [m.metro || 'Unknown', Number(m.vehicle_count)])
     );
 
     // Format by_body_style
@@ -66,7 +71,9 @@ export async function getInventorySnapshot(): Promise<InventorySnapshot> {
 
     // Format by_make (top 15)
     const byMake = Object.fromEntries(
-      ((makeResult.data as InventoryCount[] | null) || []).slice(0, 15).map((m: InventoryCount) => [m.make || 'Unknown', Number(m.vehicle_count)])
+      ((makeResult.data as InventoryCount[] | null) || [])
+        .slice(0, MAX_MAKE_RESULTS)
+        .map((m: InventoryCount) => [m.make || 'Unknown', Number(m.vehicle_count)])
     );
 
     return {
@@ -115,3 +122,13 @@ export async function getCombinations(): Promise<CombinationsData> {
     throw error;
   }
 }
+
+/**
+ * Cached version of getCombinations.
+ * Caches the result for 5 minutes to reduce database load.
+ */
+export const getCachedCombinations = unstable_cache(
+  getCombinations,
+  ['admin-data', 'combinations'],
+  { revalidate: 300 } // 5 minutes
+);

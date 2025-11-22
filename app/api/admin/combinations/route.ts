@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateAdminAuth } from '@/lib/admin-auth';
-import { getCombinations } from '@/lib/admin-data';
+import { getCachedCombinations } from '@/lib/admin-data';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const combinations = await getCombinations();
+    const combinations = await getCachedCombinations();
     return NextResponse.json(combinations);
   } catch (error: unknown) {
     console.error('Error fetching combinations:', error);

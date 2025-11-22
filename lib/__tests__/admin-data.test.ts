@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getInventorySnapshot, getCombinations } from '../admin-data';
+import { getInventorySnapshot, getCombinations, getCachedInventorySnapshot, getCachedCombinations } from '../admin-data';
 import { supabaseAdmin } from '@/lib/supabase';
 
 // Mock the supabase module
@@ -144,6 +144,20 @@ describe('lib/admin-data', () => {
       });
 
       await expect(getCombinations()).rejects.toEqual({ message: 'Combos failed' });
+    });
+  });
+
+  describe('Caching Configuration', () => {
+    it('should export cached version of inventory snapshot', () => {
+      expect(getCachedInventorySnapshot).toBeDefined();
+      // Note: unstable_cache returns a function, but specific properties depend on Next.js internal implementation.
+      // We check it's a function and assume Next.js handles the wrapping correctly as this is a unit test of our module structure.
+      expect(typeof getCachedInventorySnapshot).toBe('function');
+    });
+
+    it('should export cached version of combinations', () => {
+      expect(getCachedCombinations).toBeDefined();
+      expect(typeof getCachedCombinations).toBe('function');
     });
   });
 });

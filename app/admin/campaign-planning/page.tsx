@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { CampaignPlanningDashboard } from "./components/Dashboard";
-import { getCachedInventorySnapshot, getCombinations } from "@/lib/admin-data";
+import { getCachedInventorySnapshot, getCachedCombinations } from "@/lib/admin-data";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +15,7 @@ async function fetchInventoryData() {
     // Fetch data directly from database (server-side)
     const [snapshot, combinations] = await Promise.all([
       getCachedInventorySnapshot(),
-      getCombinations(),
+      getCachedCombinations(),
     ]);
 
     return { snapshot, combinations };

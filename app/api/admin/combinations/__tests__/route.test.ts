@@ -2,14 +2,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET } from '../route';
 import { NextRequest } from 'next/server';
 import * as adminAuth from '@/lib/admin-auth';
-import { getCombinations } from '@/lib/admin-data';
+import { getCachedCombinations } from '@/lib/admin-data';
 
 // Mock admin auth
 vi.mock('@/lib/admin-auth');
 
 // Mock admin-data
 vi.mock('@/lib/admin-data', () => ({
-  getCombinations: vi.fn(),
+  getCachedCombinations: vi.fn(),
 }));
 
 describe('GET /api/admin/combinations', () => {
@@ -22,7 +22,7 @@ describe('GET /api/admin/combinations', () => {
     });
 
     // Default: combinations succeeds
-    vi.mocked(getCombinations).mockResolvedValue({
+    vi.mocked(getCachedCombinations).mockResolvedValue({
       make_bodystyle: [
         { combo_name: 'Kia suv', vehicle_count: 9400 },
         { combo_name: 'Jeep suv', vehicle_count: 5471 },
@@ -61,7 +61,7 @@ describe('GET /api/admin/combinations', () => {
   });
 
   it('should handle errors gracefully', async () => {
-    vi.mocked(getCombinations).mockRejectedValue(new Error('DB error'));
+    vi.mocked(getCachedCombinations).mockRejectedValue(new Error('DB error'));
 
     const request = new NextRequest('http://localhost/api/admin/combinations');
     const response = await GET(request);

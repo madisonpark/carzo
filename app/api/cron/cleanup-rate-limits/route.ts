@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 
+export const maxDuration = 60; // 1 minute (cleanup is fast)
+export const dynamic = 'force-dynamic';
+
+/**
+ * Cron endpoint for rate limit cleanup
+ * Vercel Cron: Runs hourly at :00 minutes
+ *
+ * To test manually:
+ * curl http://localhost:3000/api/cron/cleanup-rate-limits \
+ *   -H "Authorization: Bearer YOUR_CRON_SECRET"
+ */
 export async function GET(request: NextRequest) {
   // Verify cron secret
   const authHeader = request.headers.get('authorization');
@@ -12,8 +23,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Call cleanup function
-    const { data, error } = await supabase.rpc('cleanup_rate_limits');
+    // Call cleanup function (requires admin privileges)
+    const { data, error } = await supabaseAdmin.rpc('cleanup_rate_limits');
 
     if (error) {
       throw error;

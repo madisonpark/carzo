@@ -79,15 +79,15 @@ curl "https://carzo.net/api/cron/cleanup-rate-limits" \
 ### Database Function
 
 ```sql
--- Function: Delete rate limit records older than 24 hours
+-- Function: Delete rate limit records older than 1 hour
 CREATE FUNCTION cleanup_rate_limits()
 RETURNS INTEGER AS $$
 DECLARE
   deleted_count INTEGER;
 BEGIN
-  -- Delete records older than 24 hours
+  -- Delete records older than 1 hour
   DELETE FROM rate_limits
-  WHERE created_at < NOW() - INTERVAL '24 hours';
+  WHERE created_at < NOW() - INTERVAL '1 hour';
 
   GET DIAGNOSTICS deleted_count = ROW_COUNT;
   RETURN deleted_count;
@@ -155,19 +155,19 @@ export async function GET(request: NextRequest) {
 - Table size remains constant (~1-2 GB)
 - Fast queries (smaller table)
 - Lower storage costs
-- Only recent data retained (last 24 hours)
+- Only recent data retained (last 1 hour)
 
 ### Retention Policy
 
-**24-Hour Window:**
+**1-Hour Window:**
 - Rate limits reset in 1 hour max (longest window)
-- Keep 24 hours for debugging/analytics
-- Balance between insights and storage
+- Keeps table size minimal for maximum performance
+- Sufficient for enforcing limits
 
 **Alternative Retention Periods:**
-- 1 hour: Too short (no debugging history)
+- 24 hours: Good for debugging but increased storage
 - 7 days: Too long (unnecessary storage)
-- 24 hours: Sweet spot
+- 1 hour: Optimal for performance
 
 ## Vercel Cron Configuration
 
@@ -208,7 +208,7 @@ CREATE INDEX idx_rate_limits_created
 
 -- Query plan uses index
 EXPLAIN DELETE FROM rate_limits
-WHERE created_at < NOW() - INTERVAL '24 hours';
+WHERE created_at < NOW() - INTERVAL '1 hour';
 
 -- Index Scan using idx_rate_limits_created (fast)
 ```
@@ -280,7 +280,7 @@ WHERE created_at < NOW() - INTERVAL '24 hours'
 GROUP BY hour, endpoint;
 
 -- Then delete raw records
-DELETE FROM rate_limits WHERE created_at < NOW() - INTERVAL '24 hours';
+DELETE FROM rate_limits WHERE created_at < NOW() - INTERVAL '1 hour';
 ```
 
 **Benefits:**
@@ -434,7 +434,7 @@ describe('GET /api/cron/cleanup-rate-limits', () => {
 
 ```bash
 # Verify old records are deleted
-psql $DATABASE_URL -c "SELECT COUNT(*) FROM rate_limits WHERE created_at < NOW() - INTERVAL '24 hours';"
+psql $DATABASE_URL -c "SELECT COUNT(*) FROM rate_limits WHERE created_at < NOW() - INTERVAL '1 hour';"
 # Should return 0 after cleanup
 ```
 

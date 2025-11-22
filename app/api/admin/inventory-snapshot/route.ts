@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateAdminAuth } from '@/lib/admin-auth';
-import { getInventorySnapshot } from '@/lib/admin-data';
+import { getCachedInventorySnapshot } from '@/lib/admin-data';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const snapshot = await getInventorySnapshot();
+    const snapshot = await getCachedInventorySnapshot();
     return NextResponse.json(snapshot);
   } catch (error: unknown) {
     console.error('Error fetching inventory snapshot:', error);

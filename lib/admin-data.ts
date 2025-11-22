@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase';
+import { unstable_cache } from 'next/cache';
 
 export interface InventoryCount {
   body_style?: string;
@@ -81,6 +82,16 @@ export async function getInventorySnapshot(): Promise<InventorySnapshot> {
     throw error;
   }
 }
+
+/**
+ * Cached version of getInventorySnapshot.
+ * Caches the result for 5 minutes to reduce database load.
+ */
+export const getCachedInventorySnapshot = unstable_cache(
+  getInventorySnapshot,
+  ['inventory-snapshot'],
+  { revalidate: 300 } // 5 minutes
+);
 
 /**
  * Fetches the combinations data using the admin Supabase client.

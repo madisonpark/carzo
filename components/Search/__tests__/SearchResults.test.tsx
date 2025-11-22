@@ -192,7 +192,7 @@ describe('SearchResults', () => {
     // Second call succeeds
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ data: [{ id: '3', make: 'Ford', model: 'Focus' }] }),
+      json: async () => ({ data: [{ id: '3', make: 'Ford', model: 'Focus', dealer_id: 'd3' }] }),
     });
 
     const user = userEvent.setup();
@@ -212,6 +212,9 @@ describe('SearchResults', () => {
     await waitFor(() => {
       expect(screen.getAllByText(/Failed to load more vehicles/)[0]).toBeInTheDocument();
     });
+
+    // Wait for debounce/throttle (300ms) to expire
+    await new Promise(resolve => setTimeout(resolve, 350));
 
     const retryBtn = screen.getByRole('button', { name: /Retry/i });
     await user.click(retryBtn);

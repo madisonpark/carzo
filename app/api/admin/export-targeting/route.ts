@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { validateAdminAuth } from '@/lib/admin-auth';
 import { sanitizeCsvField, generateCsv } from '@/lib/csv';
+import { checkMultipleRateLimits } from '@/lib/rate-limit';
 
 
 export const dynamic = 'force-dynamic';
@@ -108,7 +109,13 @@ export async function GET(request: NextRequest) {
 
   try {
     // Parse metro into city and state
-    const [city, state] = metro.split(', ');
+    const [city, state] = metro.split(',').map(s => s.trim());
+
+    // Add rate limiting for admin endpoint
+    const rateLimitResult = await checkMultipleRateLimits(request);
+    if (rateLimitResult.status !== 200) {
+      return NextResponse.json(rateLimitResult.body, { status: rateLimitResult.status });
+    }
 
     if (platform === 'facebook') {
       // Export lat/long radius targeting for Facebook

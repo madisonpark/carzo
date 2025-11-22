@@ -1,67 +1,164 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET } from '../route';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import * as rateLimitModule from '@/lib/rate-limit'; // Import the module for spying
 
-// Mock admin auth
-vi.mock('@/lib/admin-auth', () => ({
-  validateAdminAuth: vi.fn(() => Promise.resolve({ authorized: true, response: null })),
-}));
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock Supabase
-const mockQuery = {
-  data: null,
-  error: null,
-};
+import { GET } from '../route';
 
-const mockRpc = vi.fn(() => Promise.resolve({ data: [], error: null }));
+import { NextRequest, NextResponse } from 'next/server';
 
-const mockSupabaseChain = {
-  select: vi.fn(function () {
-    return this;
-  }),
-  eq: vi.fn(function () {
-    return this;
-  }),
-  then: vi.fn(function (resolve) {
-    return resolve(mockQuery);
-  }),
-};
+import * as rateLimitModule from '@/lib/rate-limit'; // Import the actual rate-limit module
 
-vi.mock('@supabase/supabase-js', () => ({
-  createClient: vi.fn(() => ({
-    from: vi.fn(() => mockSupabaseChain),
-    rpc: mockRpc,
-  })),
-}));
+import * as adminAuthModule from '@/lib/admin-auth'; // Import the actual admin-auth module
+
+import * as supabaseJsModule from '@supabase/supabase-js'; // Import the actual supabase-js module
+
+import * as csvModule from '@/lib/csv'; // Import the actual csv module
+
+
+
+// Global mocks - configured in beforeEach
+
+let mockQuery: { data: any; error: any; count?: number };
+
+let mockRpc: ReturnType<typeof vi.fn>;
+
+let mockSupabaseChain: any;
+
+
+
+// Global vi.mock calls for all dependencies
+
+
+
+vi.mock('@/lib/admin-auth');
+
+
+
+vi.mock('@/lib/rate-limit');
+
+
+
+vi.mock('@supabase/supabase-js');
+
+
+
+
+
+
 
 function createMockRequest(params: Record<string, string>): NextRequest {
+
   const url = new URL('http://localhost:3000/api/admin/export-targeting');
+
   Object.entries(params).forEach(([key, value]) => {
+
     url.searchParams.set(key, value);
+
   });
+
+
 
   return new NextRequest(url, {
+
     headers: { Authorization: 'Bearer carzo2024admin' },
+
   });
+
 }
 
-describe('GET /api/admin/export-targeting', () => {
+
+
+
+
   beforeEach(() => {
-    vi.clearAllMocks();
-    mockQuery.data = null;
-    mockQuery.error = null;
-    mockRpc.mockResolvedValue({ data: [], error: null });
+
+    vi.clearAllMocks(); // Clears all spies and mocks
+
+    vi.resetModules(); // Resets module cache for every test
+
+
+
+    // Initialize/reset mock variables for the Supabase chain
+
+    mockQuery = { data: null, error: null };
+
+    mockRpc = vi.fn(() => Promise.resolve({ data: [], error: null }));
+
+    mockSupabaseChain = {
+
+      select: vi.fn(function () { return this; }),
+
+      eq: vi.fn(function () { return this; }),
+
+      then: vi.fn(function (resolve) { return resolve(mockQuery); }),
+
+    };
+
+
+
+        // Configure the global mocks for each test
+
+
+
+        vi.mocked(adminAuthModule).validateAdminAuth.mockResolvedValue({ authorized: true, response: null });
+
+
+
+        vi.mocked(rateLimitModule).checkMultipleRateLimits.mockResolvedValue({ status: 200, body: null });
+
+
+
+    
+
+
+
+        // CSV mocks are handled by vi.doMock above, no need to re-mock implementation here
+
+
+
+        // Just ensure supabase client is mocked correctly
+
+
+
+        vi.mocked(supabaseJsModule).createClient.mockReturnValue({
+
+
+
+          from: vi.fn(() => mockSupabaseChain),
+
+
+
+          rpc: mockRpc,
+
+
+
+        });
+
   });
 
+
+
   describe('Request Validation', () => {
+
     it('should return 400 when metro parameter is missing', async () => {
+
       const request = createMockRequest({ platform: 'facebook' });
 
+
+
       const response = await GET(request);
+
       const data = await response.json();
 
+
+
       expect(response.status).toBe(400);
+
       expect(data.error).toBe('metro parameter required');
+
     });
 
     it('should return 400 when make parameter contains invalid characters', async () => {
@@ -296,8 +393,8 @@ describe('GET /api/admin/export-targeting', () => {
 
       expect(response.status).toBe(200);
       expect(response.headers.get('Content-Type')).toBe('text/csv');
-      expect(text).toContain('zip_code,destination_url');
-      expect(text).toContain('33601');
+      expect(text).toContain('"zip_code","destination_url"');
+      expect(text).toContain('"33601","https://carzo.net/search"');
     });
 
     it('should include destination_url with filters in Google CSV', async () => {
@@ -442,15 +539,36 @@ describe('GET /api/admin/export-targeting', () => {
 
       await GET(request);
 
-      // Note: API splits on ', ' (comma+space), so 'Tampa,FL' becomes ['Tampa,FL', undefined]
-      // This results in city='Tampa,FL' and state=undefined
       expect(mockRpc).toHaveBeenCalledWith(
         'get_zips_for_metro',
         expect.objectContaining({
-          p_city: 'Tampa,FL',
-          p_state: undefined,
+          p_city: 'Tampa',
+          p_state: 'FL',
         })
       );
     });
   });
-});
+
+  describe('Rate Limiting', () => {
+    it('should return 429 if rate limit is exceeded', async () => {
+      vi.spyOn(rateLimitModule, 'checkMultipleRateLimits').mockResolvedValueOnce({ status: 429, body: { error: 'Too Many Requests' } });
+
+      // Ensure mockRpc returns data so the request proceeds past inventory checks
+      mockRpc.mockResolvedValueOnce({
+        data: [{ zip_code: '33601' }],
+        error: null
+      });
+
+      const request = createMockRequest({
+        metro: 'Tampa, FL',
+        platform: 'google',
+      });
+
+      const response = await GET(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(429);
+      expect(data.error).toBe('Too Many Requests');
+      expect(rateLimitModule.checkMultipleRateLimits).toHaveBeenCalledTimes(1);
+      });
+    });

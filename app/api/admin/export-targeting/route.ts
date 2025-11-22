@@ -239,10 +239,9 @@ export async function GET(request: NextRequest) {
       }));
 
       if (format === 'csv') {
-        const csv = [
-          'zip_code,destination_url',
-          ...rows.map(r => `${r.zip_code},${r.destination_url}`)
-        ].join('\n');
+        const header = ['zip_code', 'destination_url'];
+        const csvRows = rows.map(r => [r.zip_code, r.destination_url]);
+        const csv = generateCsv(header, csvRows);
 
         return new NextResponse(csv, {
           headers: {

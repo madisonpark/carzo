@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { validateAdminAuth } from '@/lib/admin-auth';
+import { getCombinations } from '@/lib/admin-data';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,24 +16,9 @@ export async function GET(request: NextRequest) {
     return authResult.response!;
   }
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-
   try {
-    const [makeBodyStyleResult, makeModelResult] = await Promise.all([
-      supabase.rpc('get_make_bodystyle_combos'),
-      supabase.rpc('get_make_model_combos'),
-    ]);
-
-    if (makeBodyStyleResult.error) throw makeBodyStyleResult.error;
-    if (makeModelResult.error) throw makeModelResult.error;
-
-    return NextResponse.json({
-      make_bodystyle: makeBodyStyleResult.data || [],
-      make_model: makeModelResult.data || [],
-    });
+    const combinations = await getCombinations();
+    return NextResponse.json(combinations);
   } catch (error: unknown) {
     console.error('Error fetching combinations:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';

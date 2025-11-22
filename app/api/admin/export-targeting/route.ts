@@ -184,12 +184,16 @@ export async function GET(request: NextRequest) {
       }));
 
       if (format === 'csv') {
-        const csv = [
-          'latitude,longitude,radius_miles,dealer_name,vehicle_count,destination_url',
-          ...rows.map(
-            r => `${r.latitude},${r.longitude},${r.radius_miles},${sanitizeCsvField(r.dealer_name)},${r.vehicle_count},${r.destination_url}`
-          ),
-        ].join('\n');
+        const header = ['latitude', 'longitude', 'radius_miles', 'dealer_name', 'vehicle_count', 'destination_url'];
+        const csvRows = rows.map(r => [
+          r.latitude,
+          r.longitude,
+          r.radius_miles,
+          r.dealer_name,
+          r.vehicle_count,
+          r.destination_url
+        ]);
+        const csv = generateCsv(header, csvRows);
 
         return new NextResponse(csv, {
           headers: {

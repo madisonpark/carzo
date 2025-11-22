@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MapPin, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui';
+import * as gtag from '@/lib/google-analytics';
 
 interface ZipCodeInputProps {
   placeholder?: string;
@@ -51,6 +52,14 @@ export default function ZipCodeInput({ placeholder = '98112', className = '', on
         latitude,
         longitude,
       }));
+
+      // Track to GA4
+      gtag.trackLocationDetected({
+        zipCode: zipCode,
+        city,
+        state,
+        method: 'manual',
+      });
 
       // Call callback if provided
       if (onLocationChange) {

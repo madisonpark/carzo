@@ -3,10 +3,13 @@
 import { useEffect, useState } from 'react';
 import { getUserId, getSessionId, getUtmParams } from '@/lib/user-tracking';
 import { trackPurchase } from '@/lib/facebook-pixel';
+import * as gtag from '@/lib/google-analytics';
+import { getFlowFromUrl } from '@/lib/flow-detection';
 
 interface TrackClickOptions {
   vehicleId: string;
   dealerId: string;
+  vehicleVin?: string;
   ctaClicked?: 'primary' | 'history' | 'payment' | 'photos';
 }
 
@@ -33,10 +36,14 @@ export function useClickTracking() {
   const trackClick = async ({
     vehicleId,
     dealerId,
+    vehicleVin,
     ctaClicked = 'primary',
   }: TrackClickOptions): Promise<TrackClickResponse> => {
     // Fire Facebook Pixel Purchase event immediately (client-side)
     trackPurchase();
+
+    const utmParams = getUtmParams();
+    const flow = getFlowFromUrl();
 
     if (!userId || !sessionId) {
       console.warn('User ID or session ID not initialized');
@@ -46,8 +53,6 @@ export function useClickTracking() {
         message: 'User ID not initialized',
       };
     }
-
-    const utmParams = getUtmParams();
 
     try {
       const response = await fetch('/api/track-click', {
@@ -70,9 +75,38 @@ export function useClickTracking() {
       }
 
       const data = await response.json();
+
+      // Track to GA4 (after API confirmation for accurate billable status)
+      gtag.trackDealerClick({
+        dealerId,
+        vehicleId,
+        vehicleVin,
+        isBillable: data.billable,
+        ctaClicked,
+        flow,
+        utmSource: utmParams.source,
+        utmMedium: utmParams.medium,
+        utmCampaign: utmParams.campaign,
+      });
+
       return data;
     } catch (error) {
       console.error('Error tracking click:', error);
+      
+      // Still track to GA4 even if internal API fails, but mark as potentially non-billable or unknown
+      // We use a best-effort approach here
+      gtag.trackDealerClick({
+        dealerId,
+        vehicleId,
+        vehicleVin,
+        isBillable: true, // Default assumption if API fails
+        ctaClicked,
+        flow,
+        utmSource: utmParams.source,
+        utmMedium: utmParams.medium,
+        utmCampaign: utmParams.campaign,
+      });
+
       return {
         success: false,
         billable: false,

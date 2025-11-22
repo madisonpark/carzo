@@ -6,12 +6,13 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui";
 import { diversifyByDealer } from "@/lib/dealer-diversity";
+import * as gtag from "@/lib/google-analytics";
+import { getFlowFromUrl } from "@/lib/flow-detection";
 
 const DEBOUNCE_MS = 300;
 const RESULTS_PER_PAGE = 24;
 
-// Helper to validate numeric inputs
-const parseAndValidateNumber = (value: string | undefined | null, min?: number, max?: number): number | null => {
+export const parseAndValidateNumber = (value: string | undefined | null, min?: number, max?: number): number | null => {
   if (!value) return null;
   const parsed = parseFloat(value);
   if (isNaN(parsed)) return null;
@@ -49,7 +50,32 @@ export default function SearchResults({
     setPage(1);
     setHasMore(initialVehicles.length < total);
     setError(null);
-  }, [initialVehicles, total]); 
+
+    const flow = getFlowFromUrl();
+    
+    // Track search query
+    gtag.trackSearch({
+      make: currentFilters.make,
+      model: currentFilters.model,
+      condition: currentFilters.condition,
+      bodyStyle: currentFilters.bodyStyle,
+      minPrice: parseAndValidateNumber(currentFilters.minPrice) || undefined,
+      maxPrice: parseAndValidateNumber(currentFilters.maxPrice) || undefined,
+      minYear: parseAndValidateNumber(currentFilters.minYear) || undefined,
+      maxYear: parseAndValidateNumber(currentFilters.maxYear) || undefined,
+      // We don't have direct access to zipCode here (it's in cookies/session), but lat/lon is in params
+      // implicit location tracking happens via trackLocationDetected in ZipCodeInput
+      flow: flow,
+    });
+
+    // Track results view
+    gtag.trackSearchResults({
+      resultCount: total,
+      make: currentFilters.make,
+      model: currentFilters.model,
+      flow: flow,
+    });
+  }, [initialVehicles, total]); // Removed currentFilters from dependency array to avoid double tracking if initialVehicles updates with filters 
 
   const loadMoreVehicles = async () => {
     const now = Date.now();

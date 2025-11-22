@@ -6,6 +6,7 @@ import { X, SlidersHorizontal } from "lucide-react";
 import { Input, Badge, Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { FilterControls } from "./FilterControls";
+import * as gtag from "@/lib/google-analytics";
 
 interface FilterSidebarProps {
   makes: string[];
@@ -80,6 +81,27 @@ export default function FilterSidebar({
       const params = new URLSearchParams(searchParams.toString());
       if (value) {
         params.set(key, value);
+        
+        // Map URL keys to GA filter types
+        const filterTypeMap: Record<string, 'make' | 'model' | 'body_style' | 'condition' | 'price' | 'year' | 'sort'> = {
+          make: 'make',
+          model: 'model',
+          bodyStyle: 'body_style',
+          condition: 'condition',
+          minPrice: 'price',
+          maxPrice: 'price',
+          minYear: 'year',
+          maxYear: 'year',
+          sortBy: 'sort'
+        };
+
+        // Track filter change if it's a tracked filter type
+        if (key in filterTypeMap) {
+          gtag.trackFilterChange({
+            filterType: filterTypeMap[key],
+            filterValue: value,
+          });
+        }
       } else {
         params.delete(key);
       }

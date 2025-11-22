@@ -3,10 +3,13 @@
 import { useEffect, useState } from 'react';
 import { getUserId, getSessionId, getUtmParams } from '@/lib/user-tracking';
 import { trackPurchase } from '@/lib/facebook-pixel';
+import * as gtag from '@/lib/google-analytics';
+import { getFlowFromUrl } from '@/lib/flow-detection';
 
 interface TrackClickOptions {
   vehicleId: string;
   dealerId: string;
+  vehicleVin?: string;
   ctaClicked?: 'primary' | 'history' | 'payment' | 'photos';
 }
 
@@ -33,10 +36,27 @@ export function useClickTracking() {
   const trackClick = async ({
     vehicleId,
     dealerId,
+    vehicleVin,
     ctaClicked = 'primary',
   }: TrackClickOptions): Promise<TrackClickResponse> => {
     // Fire Facebook Pixel Purchase event immediately (client-side)
     trackPurchase();
+
+    const utmParams = getUtmParams();
+    const flow = getFlowFromUrl();
+
+    // Track to GA4 (before API call, so it fires even if API fails)
+    gtag.trackDealerClick({
+      dealerId,
+      vehicleId,
+      vehicleVin,
+      isBillable: true, // Will be updated after API response
+      ctaClicked,
+      flow,
+      utmSource: utmParams.source,
+      utmMedium: utmParams.medium,
+      utmCampaign: utmParams.campaign,
+    });
 
     if (!userId || !sessionId) {
       console.warn('User ID or session ID not initialized');
@@ -46,8 +66,6 @@ export function useClickTracking() {
         message: 'User ID not initialized',
       };
     }
-
-    const utmParams = getUtmParams();
 
     try {
       const response = await fetch('/api/track-click', {

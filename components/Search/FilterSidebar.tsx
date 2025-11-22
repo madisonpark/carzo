@@ -6,6 +6,7 @@ import { X, SlidersHorizontal } from "lucide-react";
 import { Input, Badge, Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { FilterControls } from "./FilterControls";
+import * as gtag from "@/lib/google-analytics";
 
 interface FilterSidebarProps {
   makes: string[];
@@ -80,6 +81,12 @@ export default function FilterSidebar({
       const params = new URLSearchParams(searchParams.toString());
       if (value) {
         params.set(key, value);
+        
+        // Track filter change
+        gtag.trackFilterChange({
+          filterType: key as any,
+          filterValue: value,
+        });
       } else {
         params.delete(key);
       }

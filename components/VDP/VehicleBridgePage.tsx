@@ -8,6 +8,7 @@ import { Badge, Button } from '@/components/ui';
 import { isVDPOnlyFlow, UserFlow } from '@/lib/flow-detection';
 import { getUserId, getSessionId, getUtmParams } from '@/lib/user-tracking';
 import { trackPurchase } from '@/lib/facebook-pixel';
+import * as gtag from '@/lib/google-analytics';
 
 interface VehicleBridgePageProps {
   vehicle: Vehicle;
@@ -21,6 +22,23 @@ export default function VehicleBridgePage({ vehicle, flow = 'full' }: VehicleBri
   }
   const [showStickyBar, setShowStickyBar] = useState(false);
   const { createClickHandler } = useClickTracking();
+
+  useEffect(() => {
+    // Track flow variant
+    gtag.trackFlowVariant(flow);
+
+    // Track impression
+    gtag.trackVehicleImpression({
+      vehicleId: vehicle.id,
+      vehicleVin: vehicle.vin,
+      pageType: 'vdp',
+      flow,
+      make: vehicle.make,
+      model: vehicle.model,
+      year: vehicle.year,
+      price: vehicle.price,
+    });
+  }, [vehicle, flow]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -487,6 +505,13 @@ function VDPRedirect({ vehicle }: { vehicle: Vehicle }) {
       }),
       keepalive: true,
     }).catch((err) => console.error('Failed to track click:', err));
+
+    // Track to GA4
+    gtag.trackAutoRedirect({
+      vehicleId: vehicle.id,
+      dealerId: vehicle.dealer_id,
+      delayMs: 1500,
+    });
 
     // Redirect after delay
     const timer = setTimeout(() => {

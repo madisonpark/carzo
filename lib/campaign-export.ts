@@ -104,9 +104,9 @@ export function generateCsvContent(
   destinationUrl: string
 ): string {
   const isFacebook = platform === 'facebook';
-  const header = isFacebook
-    ? 'name,lat,long,radius,distance_unit,destination_url,vehicle_count,dealer_count'
-    : 'Target Location,Latitude,Longitude,Radius,Unit,Destination URL,Vehicle Count,Dealer Count';
+  const header = csvRow(isFacebook
+    ? ['name', 'lat', 'long', 'radius', 'distance_unit', 'destination_url', 'vehicle_count', 'dealer_count']
+    : ['Target Location', 'Latitude', 'Longitude', 'Radius', 'Unit', 'Destination URL', 'Vehicle Count', 'Dealer Count']);
   const distanceUnit = isFacebook ? 'mile' : 'mi';
 
   const rows = locations.map((m) =>

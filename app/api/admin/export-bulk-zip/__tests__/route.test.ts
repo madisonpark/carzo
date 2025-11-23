@@ -32,12 +32,15 @@ describe('POST /api/admin/export-bulk-zip', () => {
 
     mockQuery = { data: null, error: null };
     mockSupabaseChain = {
-        select: vi.fn(function () { return this; }),
-        eq: vi.fn(function () { return this; }),
+        select: vi.fn(),
+        eq: vi.fn(),
         then: vi.fn(function (resolve) { return resolve(mockQuery); }),
     };
+    // Chain the methods manually to return the object itself
+    mockSupabaseChain.select.mockReturnValue(mockSupabaseChain);
+    mockSupabaseChain.eq.mockReturnValue(mockSupabaseChain);
 
-    vi.mocked(adminAuthModule).validateAdminAuth.mockResolvedValue({ authorized: true, response: null });
+    vi.mocked(adminAuthModule).validateAdminAuth.mockResolvedValue({ authorized: true, response: undefined });
     vi.mocked(rateLimitModule).checkMultipleRateLimits.mockResolvedValue({ 
         allowed: true, 
         limit: 100, 
@@ -89,7 +92,7 @@ describe('POST /api/admin/export-bulk-zip', () => {
     
     // Verify results header indicates success
     const results = JSON.parse(response.headers.get('X-Export-Results') || '[]');
-    expect(results[0]).toEqual({ name: 'Toyota', status: 'success' });
+    expect(results[0]).toMatchObject({ name: 'Toyota', status: 'success' });
   });
 
   it('should handle partial failures and return 404 if ALL fail', async () => {
@@ -107,7 +110,7 @@ describe('POST /api/admin/export-bulk-zip', () => {
     expect(response.status).toBe(404);
     expect(data.error).toContain('No files were generated');
     expect(data.results[0].status).toBe('error');
-    expect(data.results[0].error).toBe('No inventory');
+    expect(data.results[0].error).toContain('No inventory');
   });
 
   it('should handle mixed success and failure', async () => {

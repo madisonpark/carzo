@@ -176,7 +176,7 @@ export async function POST(request: NextRequest) {
     
     const zipFilename = `${platform}_bulk_export_${timestamp}.zip`;
 
-    return new NextResponse(zipBuffer as unknown as BodyInit, {
+    return new NextResponse(new Uint8Array(zipBuffer), {
       headers: {
         'Content-Type': 'application/zip',
         'Content-Disposition': `attachment; filename="${zipFilename}"`,

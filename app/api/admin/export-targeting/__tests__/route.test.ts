@@ -169,7 +169,7 @@ describe('GET /api/admin/export-targeting', () => {
       expect(response.status).toBe(200);
       expect(response.headers.get('Content-Type')).toBe('text/csv');
       expect(text).toContain('"latitude","longitude","radius_miles","dealer_name","vehicle_count","destination_url"');
-      expect(text).toContain('"27.9","\'-82.4","25","Tampa Toyota","1","https://carzo.net/search"');
+      expect(text).toContain('"27.9","-82.4","25","Tampa Toyota","1","https://carzo.net/search"');
     });
 
     it('should include correct destination_url in CSV output with filters', async () => {

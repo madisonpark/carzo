@@ -38,9 +38,17 @@ interface Campaign {
   campaignValue: string;
 }
 
+// Generate timestamp for filename: YYYY_MM_DD_HH-MM-SS
+const getFormattedTimestamp = () => {
+  const now = new Date();
+  const pad = (num: number) => num.toString().padStart(2, '0');
+  return `${now.getFullYear()}_${pad(now.getMonth() + 1)}_${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+};
+
 export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
   const [selectedPlatform, setSelectedPlatform] = useState<'facebook' | 'google'>('facebook');
   const [downloading, setDownloading] = useState<string | null>(null); // 'bulk' or campaign ID
+  const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
   
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -143,18 +151,23 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
     setSelectedItems(next);
   };
 
-  // Generate timestamp for filename: YYYY_MM_DD_HH-MM-SS
-  const getFormattedTimestamp = () => {
-    const now = new Date();
-    const pad = (num: number) => num.toString().padStart(2, '0');
-    return `${now.getFullYear()}_${pad(now.getMonth() + 1)}_${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
-  };
-
   // Download Logic
   const processDownload = async (campaign: Campaign) => {
     const url = `/api/admin/export-targeting-combined?campaign_type=${campaign.campaignType}&campaign_value=${encodeURIComponent(campaign.campaignValue)}&platform=${selectedPlatform}&min_vehicles=6`;
     const response = await fetch(url);
-    if (!response.ok) throw new Error(`Failed: ${response.statusText}`);
+    
+    if (!response.ok) {
+      // Try to get specific error message
+      let message = `Request failed with status ${response.status}`;
+      try {
+        const data = await response.json();
+        if (data.error) message = data.error;
+      } catch {
+        // Fallback to status text if JSON parsing fails
+        message = response.statusText || message;
+      }
+      throw new Error(message);
+    }
     
     const blob = await response.blob();
     const downloadUrl = window.URL.createObjectURL(blob);
@@ -179,7 +192,7 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
       await processDownload(campaign);
     } catch (error) {
       console.error('Download error:', error);
-      alert('Download failed. Please try again.');
+      alert(`Download failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setDownloading(null);
     }
@@ -188,24 +201,36 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
   const handleBulkDownload = async () => {
     const campaignsToDownload = allCampaigns.filter(c => selectedItems.has(c.id));
     setDownloading('bulk');
+    setProgress({ current: 0, total: campaignsToDownload.length });
     
-    let successCount = 0;
+    const failed: string[] = [];
+    
     // Sequential download to avoid browser blocking
     for (const campaign of campaignsToDownload) {
       try {
         await processDownload(campaign);
-        successCount++;
-        // Small delay between downloads to ensure unique timestamps and prevent browser blocking
-        await new Promise(resolve => setTimeout(resolve, 800));
       } catch (e) {
         console.error(`Failed to download ${campaign.name}`, e);
+        failed.push(campaign.name);
       }
+      
+      // Update progress
+      setProgress(prev => prev ? { ...prev, current: prev.current + 1 } : null);
+      
+      // Small delay between downloads to ensure unique timestamps and prevent browser blocking
+      await new Promise(resolve => setTimeout(resolve, 800));
     }
     
-    if (successCount < campaignsToDownload.length) {
-      alert(`Completed with errors: ${successCount}/${campaignsToDownload.length} downloaded.`);
+    if (failed.length > 0) {
+      const maxShown = 5;
+      const list = failed.slice(0, maxShown).map(n => `• ${n}`).join('\n');
+      const remaining = failed.length - maxShown;
+      const footer = remaining > 0 ? `\n...and ${remaining} more` : '';
+      alert(`Bulk download completed with ${failed.length} errors:\n\n${list}${footer}`);
     }
+    
     setDownloading(null);
+    setProgress(null);
     setSelectedItems(new Set()); // Clear selection after download
   };
 
@@ -247,7 +272,7 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input 
-                placeholder="Search campaigns..." 
+                placeholder="Search campaigns..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -419,7 +444,7 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
                 )}
               >
                 {downloading === 'bulk' ? (
-                  <>Downloading...</>
+                  <>Downloading {progress ? `(${progress.current}/${progress.total})` : '...'}</>
                 ) : (
                   <>
                     <ArrowDownToLine className="w-4 h-4" />

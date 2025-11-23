@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { validateAdminAuth } from '@/lib/admin-auth';
+import { checkMultipleRateLimits, getClientIdentifier } from '@/lib/rate-limit';
 import {
   calculateMetroLocations,
   generateDestinationUrl,
@@ -33,6 +34,26 @@ export async function GET(request: NextRequest) {
   const authResult = await validateAdminAuth(request);
   if (!authResult.authorized) {
     return authResult.response!;
+  }
+
+  // Rate Limiting (Admin endpoints also need protection)
+  const identifier = getClientIdentifier(request);
+  const rateLimitResult = await checkMultipleRateLimits(identifier, [
+    { endpoint: 'admin_export_combined', limit: 20, windowSeconds: 60 },
+  ]);
+
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded' },
+      {
+        status: 429,
+        headers: {
+          'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+          'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+          'X-RateLimit-Reset': rateLimitResult.reset.toString(),
+        },
+      }
+    );
   }
 
   const { searchParams } = new URL(request.url);

@@ -155,6 +155,9 @@ export async function POST(request: NextRequest) {
     }));
 
     // Add successful results to ZIP
+    // Note: All content is currently held in memory. 
+    // For typical usage (20 campaigns x 100 metros x 500 bytes = ~1MB), this is fine.
+    // If limits increase significantly (>50MB), consider streaming ZIP generation.
     results.forEach(result => {
       if (result.status === 'success') {
         zip.addFile(result.filename, Buffer.from(result.content, 'utf8'));

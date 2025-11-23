@@ -199,7 +199,20 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
   };
 
   const handleBulkDownload = async () => {
-    const campaignsToDownload = allCampaigns.filter(c => selectedItems.has(c.id));
+    // If items are selected manually, download those.
+    // If NONE are selected, download ALL currently filtered items (implicit "Download All").
+    let campaignsToDownload = selectedItems.size > 0 
+      ? allCampaigns.filter(c => selectedItems.has(c.id))
+      : filteredCampaigns;
+
+    // Safety check for implicit "Download All"
+    if (selectedItems.size === 0 && campaignsToDownload.length > 20) {
+      const confirmed = window.confirm(
+        `You are about to download targeting for ${campaignsToDownload.length} campaigns. This may take a few moments. Continue?`
+      );
+      if (!confirmed) return;
+    }
+
     setDownloading('bulk');
     
     try {
@@ -438,24 +451,28 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
       </div>
 
       {/* Bulk Action Floating Bar */}
-      {selectedItems.size > 0 && (
+      {(selectedItems.size > 0 || searchQuery || filterType !== 'all') && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-xl px-4 animate-in slide-in-from-bottom-4 duration-200">
           <div className="bg-slate-900 text-white p-4 rounded-xl shadow-2xl flex items-center justify-between border border-slate-800">
             <div className="flex items-center gap-3">
               <div className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">
-                {selectedItems.size}
+                {selectedItems.size > 0 ? selectedItems.size : filteredCampaigns.length}
               </div>
-              <span className="text-sm font-medium">Campaigns selected</span>
+              <span className="text-sm font-medium">
+                {selectedItems.size > 0 ? 'Campaigns selected' : 'Matching campaigns'}
+              </span>
             </div>
             <div className="flex items-center gap-3">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setSelectedItems(new Set())}
-                className="text-slate-400 hover:text-white hover:bg-slate-800"
-              >
-                Cancel
-              </Button>
+              {selectedItems.size > 0 && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setSelectedItems(new Set())}
+                  className="text-slate-400 hover:text-white hover:bg-slate-800"
+                >
+                  Clear Selection
+                </Button>
+              )}
               <Button 
                 size="sm"
                 onClick={handleBulkDownload}
@@ -470,7 +487,7 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
                 ) : (
                   <>
                     <ArrowDownToLine className="w-4 h-4" />
-                    Download ZIP
+                    {selectedItems.size > 0 ? 'Download Selected' : 'Download All Matches'}
                   </>
                 )}
               </Button>

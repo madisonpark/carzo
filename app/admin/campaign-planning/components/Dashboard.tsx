@@ -365,6 +365,7 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
                   <th className="py-3 px-6 w-12 text-center">
                     <input 
                       type="checkbox"
+                      aria-label="Select all campaigns"
                       className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4 cursor-pointer"
                       checked={filteredCampaigns.length > 0 && filteredCampaigns.every(c => selectedItems.has(c.id))}
                       onChange={toggleSelectAll}
@@ -388,6 +389,7 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
                     <td className="py-4 px-6 text-center">
                       <input 
                         type="checkbox"
+                        aria-label={`Select ${campaign.name}`}
                         className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4 cursor-pointer"
                         checked={selectedItems.has(campaign.id)}
                         onChange={() => toggleSelection(campaign.id)}

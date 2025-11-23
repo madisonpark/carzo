@@ -159,11 +159,16 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
     if (!response.ok) {
       // Try to get specific error message
       let message = `Request failed with status ${response.status}`;
+      const contentType = response.headers.get('content-type');
       try {
-        const data = await response.json();
-        if (data.error) message = data.error;
+        if (contentType?.includes('application/json')) {
+          const data = await response.json();
+          message = data.error || message;
+        } else {
+          message = response.statusText || message;
+        }
       } catch {
-        // Fallback to status text if JSON parsing fails
+        // Fallback to status text if parsing fails
         message = response.statusText || message;
       }
       throw new Error(message);
@@ -230,9 +235,14 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
 
       if (!response.ok) {
         let message = 'Bulk export failed';
+        const contentType = response.headers.get('content-type');
         try {
-          const data = await response.json();
-          if (data.error) message = data.error;
+          if (contentType?.includes('application/json')) {
+            const data = await response.json();
+            message = data.error || message;
+          } else {
+            message = response.statusText || message;
+          }
         } catch { /* ignore */ }
         throw new Error(message);
       }

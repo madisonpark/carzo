@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import AdmZip from 'adm-zip';
 import { validateAdminAuth } from '@/lib/admin-auth';
+import { checkMultipleRateLimits, getClientIdentifier } from '@/lib/rate-limit';
 import {
   calculateMetroLocations,
   generateDestinationUrl,
@@ -30,6 +31,26 @@ export async function POST(request: NextRequest) {
   const authResult = await validateAdminAuth(request);
   if (!authResult.authorized) {
     return authResult.response!;
+  }
+
+  // Rate Limiting
+  const identifier = getClientIdentifier(request);
+  const rateLimitResult = await checkMultipleRateLimits(identifier, [
+    { endpoint: 'admin_bulk_export', limit: 20, windowSeconds: 60 },
+  ]);
+  
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded' },
+      {
+        status: 429,
+        headers: {
+          'X-RateLimit-Limit': rateLimitResult.limit.toString(),
+          'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+          'X-RateLimit-Reset': rateLimitResult.reset.toString(),
+        },
+      }
+    );
   }
 
   try {
@@ -142,8 +163,12 @@ export async function POST(request: NextRequest) {
     }
 
     const zipBuffer = zip.toBuffer();
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const zipFilename = `${platform}-bulk-export-${timestamp}.zip`;
+    // Format: YYYY_MM_DD_HH-MM-SS to match frontend helper
+    const now = new Date();
+    const pad = (num: number) => num.toString().padStart(2, '0');
+    const timestamp = `${now.getFullYear()}_${pad(now.getMonth() + 1)}_${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+    
+    const zipFilename = `${platform}_bulk_export_${timestamp}.zip`;
 
     return new NextResponse(zipBuffer as unknown as BodyInit, {
       headers: {

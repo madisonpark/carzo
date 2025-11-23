@@ -197,26 +197,26 @@ The `/export-targeting-combined` endpoint supports campaign types for filtering 
 **Format:** One row per dealer location with radius targeting
 
 ```csv
-latitude,longitude,radius_miles,vehicles,dealers
-27.9506,-82.4572,25,87,1
-27.9234,-82.3456,25,42,1
+latitude,longitude,radius_miles,dealer_name,vehicle_count,destination_url
+27.9506,-82.4572,25,"Tampa Toyota",87,https://carzo.net/search?make=Toyota
+27.9234,-82.3456,25,"Tampa Honda",42,https://carzo.net/search?make=Toyota
 ```
 
 **Upload to Facebook:**
 1. Facebook Ads Manager → Create Campaign
 2. Ad Set → Locations → Bulk Locations
 3. Upload CSV
-4. Radius already set (25-30 miles per location)
+4. Radius already set (25 miles per location)
 
 ### Google CSV (ZIP Codes)
 
 **Format:** One row per ZIP code
 
 ```csv
-zip_code
-33602
-33603
-33604
+zip_code,destination_url
+33602,https://carzo.net/search?make=Toyota
+33603,https://carzo.net/search?make=Toyota
+33604,https://carzo.net/search?make=Toyota
 ```
 
 **Upload to Google Ads:**
@@ -229,9 +229,9 @@ zip_code
 **Format:** One row per metro with centroid + radius
 
 ```csv
-metro,latitude,longitude,radius_miles,vehicles,dealers
-"Tampa, FL",27.9506,-82.4572,30,1337,19
-"Miami, FL",25.7617,-80.1918,30,982,14
+metro,latitude,longitude,radius_miles,distance_unit,destination_url,vehicle_count,dealers
+"Tampa, FL",27.9506,-82.4572,30,mile,https://carzo.net/search?make=Toyota,1337,19
+"Miami, FL",25.7617,-80.1918,30,mile,https://carzo.net/search?make=Toyota,982,14
 ```
 
 **How centroids are calculated:**

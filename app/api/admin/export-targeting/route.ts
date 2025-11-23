@@ -2,12 +2,34 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { validateAdminAuth } from '@/lib/admin-auth';
 import { sanitizeCsvField, generateCsv } from '@/lib/csv';
+import { checkMultipleRateLimits, getClientIdentifier, RATE_LIMITS } from '@/lib/rate-limit';
+
 
 export const dynamic = 'force-dynamic';
 
 // Input validation limits (prevent DoS via large inputs)
 const MAX_METRO_LENGTH = 100;
 const MAX_FILTER_LENGTH = 50;
+const VALID_FILTER_REGEX = /^[a-zA-Z0-9\s-]+$/;
+
+/**
+ * Generate destination URL for the campaign landing page
+ */
+function generateDestinationUrl(make: string | null, bodyStyle: string | null): string {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://carzo.net';
+  const searchPath = '/search';
+  const url = new URL(searchPath, baseUrl);
+
+  if (make) {
+    url.searchParams.set('make', make);
+  }
+  
+  if (bodyStyle) {
+    url.searchParams.set('body_style', bodyStyle);
+  }
+
+  return url.toString();
+}
 
 /**
  * Export geographic targeting lists for ad platforms
@@ -30,6 +52,31 @@ export async function GET(request: NextRequest) {
     return authResult.response!;
   }
 
+  const identifier = getClientIdentifier(request);
+  const rateLimitResult = await checkMultipleRateLimits(identifier, [
+    { endpoint: 'export_targeting', ...RATE_LIMITS.SEARCH_VEHICLES },
+    { endpoint: 'export_targeting_burst', ...RATE_LIMITS.BURST },
+  ]);
+
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      { 
+        error: 'Rate limit exceeded',
+        limit: rateLimitResult.limit,
+        remaining: rateLimitResult.remaining,
+        reset: new Date(rateLimitResult.reset).toISOString(),
+      },
+      { 
+        status: 429,
+        headers: {
+          'X-RateLimit-Limit': String(rateLimitResult.limit),
+          'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+          'X-RateLimit-Reset': String(rateLimitResult.reset),
+        }
+      }
+    );
+  }
+
   const { searchParams } = new URL(request.url);
   const metro = searchParams.get('metro'); // e.g., "Tampa, FL"
   const platform = searchParams.get('platform') || 'facebook';
@@ -50,18 +97,34 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  if (make && make.length > MAX_FILTER_LENGTH) {
-    return NextResponse.json(
-      { error: `make parameter too long (max ${MAX_FILTER_LENGTH} characters)` },
-      { status: 400 }
-    );
+  if (make) {
+    if (make.length > MAX_FILTER_LENGTH) {
+      return NextResponse.json(
+        { error: `make parameter too long (max ${MAX_FILTER_LENGTH} characters)` },
+        { status: 400 }
+      );
+    }
+    if (!VALID_FILTER_REGEX.test(make)) {
+      return NextResponse.json(
+        { error: 'make parameter contains invalid characters' },
+        { status: 400 }
+      );
+    }
   }
 
-  if (bodyStyle && bodyStyle.length > MAX_FILTER_LENGTH) {
-    return NextResponse.json(
-      { error: `body_style parameter too long (max ${MAX_FILTER_LENGTH} characters)` },
-      { status: 400 }
-    );
+  if (bodyStyle) {
+    if (bodyStyle.length > MAX_FILTER_LENGTH) {
+      return NextResponse.json(
+        { error: `body_style parameter too long (max ${MAX_FILTER_LENGTH} characters)` },
+        { status: 400 }
+      );
+    }
+    if (!VALID_FILTER_REGEX.test(bodyStyle)) {
+      return NextResponse.json(
+        { error: 'body_style parameter contains invalid characters' },
+        { status: 400 }
+      );
+    }
   }
 
   const supabase = createClient(
@@ -71,7 +134,14 @@ export async function GET(request: NextRequest) {
 
   try {
     // Parse metro into city and state
-    const [city, state] = metro.split(', ');
+    const parts = metro.split(',').map(s => s.trim());
+    if (parts.length !== 2 || !parts[0] || !parts[1]) {
+      return NextResponse.json(
+        { error: 'metro parameter must be in format "City, ST" (e.g., "Tampa, FL")' },
+        { status: 400 }
+      );
+    }
+    const [city, state] = parts;
 
     if (platform === 'facebook') {
       // Export lat/long radius targeting for Facebook
@@ -135,21 +205,28 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      const destinationUrl = generateDestinationUrl(make, bodyStyle);
+
       const rows = Array.from(dealerData.values()).map(dealer => ({
         latitude: dealer.latitude,
         longitude: dealer.longitude,
         radius_miles: 25,
         dealer_name: dealer.dealer_name,
         vehicle_count: dealer.vehicle_count,
+        destination_url: destinationUrl
       }));
 
       if (format === 'csv') {
-        const csv = [
-          'latitude,longitude,radius_miles,dealer_name,vehicle_count',
-          ...rows.map(
-            r => `${r.latitude},${r.longitude},${r.radius_miles},${sanitizeCsvField(r.dealer_name)},${r.vehicle_count}`
-          ),
-        ].join('\n');
+        const header = ['latitude', 'longitude', 'radius_miles', 'dealer_name', 'vehicle_count', 'destination_url'];
+        const csvRows = rows.map(r => [
+          r.latitude,
+          r.longitude,
+          r.radius_miles,
+          r.dealer_name,
+          r.vehicle_count,
+          r.destination_url
+        ]);
+        const csv = generateCsv(header, csvRows);
 
         return new NextResponse(csv, {
           headers: {
@@ -187,10 +264,17 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      const rows = (zipCodes || []).map((z: ZipResult) => [z.zip_code]);
+      const destinationUrl = generateDestinationUrl(make, bodyStyle);
+
+      const rows = (zipCodes || []).map((z: ZipResult) => ({
+        zip_code: z.zip_code,
+        destination_url: destinationUrl
+      }));
 
       if (format === 'csv') {
-        const csv = generateCsv(['zip_code'], rows);
+        const header = ['zip_code', 'destination_url'];
+        const csvRows = rows.map(r => [r.zip_code, r.destination_url]);
+        const csv = generateCsv(header, csvRows);
 
         return new NextResponse(csv, {
           headers: {
@@ -202,11 +286,55 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json(rows);
     } else if (platform === 'tiktok') {
+      // Validate that matching inventory exists in this metro
+      let query = supabase
+        .from('vehicles')
+        .select('id', { count: 'exact', head: true })
+        .eq('dealer_city', city)
+        .eq('dealer_state', state)
+        .eq('is_active', true);
+
+      if (make) {
+        query = query.eq('make', make);
+      }
+
+      if (bodyStyle) {
+        query = query.eq('body_style', bodyStyle);
+      }
+
+      const { count, error } = await query;
+
+      if (error) throw error;
+
+      if (count === 0) {
+        const filters = [];
+        if (make) filters.push(`make: ${make}`);
+        if (bodyStyle) filters.push(`body_style: ${bodyStyle}`);
+
+        const filterContext = filters.length > 0
+          ? ` with filters (${filters.join(', ')})`
+          : '';
+
+        return NextResponse.json(
+          {
+            error: `No active dealers found for metro: ${metro}${filterContext}`,
+            suggestion: filters.length > 0
+              ? 'Try removing filters or choosing a different metro'
+              : 'Metro may have no active inventory'
+          },
+          { status: 404 }
+        );
+      }
+
       // Export DMA (will work once DMA column is added)
-      const rows = [{ dma: metro }]; // Placeholder: use city, state for now
+      const destinationUrl = generateDestinationUrl(make, bodyStyle);
+      const rows = [{ dma: metro, destination_url: destinationUrl }]; 
 
       if (format === 'csv') {
-        const csv = ['dma', metro].join('\n');
+        const csv = generateCsv(
+          ['dma', 'destination_url'], 
+          [[metro, destinationUrl]]
+        );
 
         return new NextResponse(csv, {
           headers: {

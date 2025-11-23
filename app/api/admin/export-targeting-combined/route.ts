@@ -1,150 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { validateAdminAuth } from '@/lib/admin-auth';
-import { sanitizeCsvField } from '@/lib/csv';
+import {
+  calculateMetroLocations,
+  generateDestinationUrl,
+  generateCsvContent,
+  VALID_CAMPAIGN_TYPES,
+  VALID_PLATFORMS,
+  CampaignType,
+  Platform,
+  Vehicle,
+} from '@/lib/campaign-export';
 
 export const dynamic = 'force-dynamic';
 
-const VALID_CAMPAIGN_TYPES = ['body_style', 'make', 'make_body_style', 'make_model'] as const;
-const VALID_PLATFORMS = ['facebook', 'google'] as const;
-const METRO_RADIUS_MILES = 30; // Default radius to cover all dealers in metro + surrounding area
-
 // Input validation limits (prevent DoS via large inputs)
 const MAX_CAMPAIGN_VALUE_LENGTH = 100;
-
-type CampaignType = typeof VALID_CAMPAIGN_TYPES[number];
-type Platform = typeof VALID_PLATFORMS[number];
-
-interface Vehicle {
-  id: string;
-  latitude: number;
-  longitude: number;
-  dealer_id: string;
-  dma?: string;
-  dealer_city?: string;
-  dealer_state?: string;
-  [key: string]: unknown; // Allow other fields from select('*')
-}
-
-interface MetroLocation {
-  metro: string;
-  latitude: number;
-  longitude: number;
-  radius_miles: number;
-  vehicles: number;
-  dealers: number;
-}
-
-/**
- * Calculate metro-level targeting locations from qualifying metros
- * Groups vehicles by metro and calculates centroid + stats for each metro
- */
-function calculateMetroLocations(
-  qualifyingMetros: Array<[string, Vehicle[]]>
-): MetroLocation[] {
-  return qualifyingMetros
-    .map(([metro, vehicles]) => {
-      // Calculate centroid of all dealers in this metro
-      // Use explicit null/undefined checks to avoid filtering out latitude/longitude = 0
-      const dealersInMetro = vehicles.filter((v) => v.latitude != null && v.longitude != null);
-
-      // Skip metros with no valid coordinates (prevent division by zero)
-      if (dealersInMetro.length === 0) {
-        return null;
-      }
-
-      const avgLat =
-        dealersInMetro.reduce((sum, v) => sum + v.latitude, 0) / dealersInMetro.length;
-      const avgLon =
-        dealersInMetro.reduce((sum, v) => sum + v.longitude, 0) / dealersInMetro.length;
-
-      return {
-        metro: metro,
-        latitude: avgLat,
-        longitude: avgLon,
-        radius_miles: METRO_RADIUS_MILES,
-        vehicles: vehicles.length,
-        dealers: new Set(vehicles.map((v: Vehicle) => v.dealer_id)).size,
-      };
-    })
-    .filter((m): m is MetroLocation => m !== null); // Remove nulls
-}
-
-/**
- * Generate destination URL for the campaign landing page
- * 
- * Examples:
- * - Body Style: https://carzo.net/search?body_style=SUV
- * - Make: https://carzo.net/search?make=Kia
- * - Make+Body: https://carzo.net/search?make=Kia&body_style=SUV
- * - Make+Model: https://carzo.net/search?make=Kia&model=Sorrento
- */
-function generateDestinationUrl(campaignType: CampaignType, campaignValue: string): string {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://carzo.net';
-  const searchPath = '/search';
-  const url = new URL(searchPath, baseUrl);
-
-  // Add campaign parameters
-  switch (campaignType) {
-    case 'body_style':
-      url.searchParams.set('body_style', campaignValue);
-      break;
-    case 'make':
-      url.searchParams.set('make', campaignValue);
-      break;
-    case 'make_body_style': {
-      const parts = campaignValue.split(' ');
-      if (parts.length >= 2) {
-        url.searchParams.set('make', parts[0]);
-        url.searchParams.set('body_style', parts.slice(1).join(' '));
-      }
-      break;
-    }
-    case 'make_model': {
-      const parts = campaignValue.split(' ');
-      if (parts.length >= 2) {
-        url.searchParams.set('make', parts[0]);
-        // Join the rest as model (e.g. "Grand Cherokee")
-        url.searchParams.set('model', parts.slice(1).join(' '));
-      }
-      break;
-    }
-  }
-
-  return url.toString();
-}
-
-/**
- * Generate CSV content with platform-specific headers
- */
-function generateCsvContent(
-  platform: Platform,
-  locations: MetroLocation[],
-  destinationUrl: string
-): string {
-  const isFacebook = platform === 'facebook';
-  const header = isFacebook
-    ? 'name,lat,long,radius,distance_unit,destination_url,vehicle_count,dealer_count'
-    : 'Target Location,Latitude,Longitude,Radius,Unit,Destination URL,Vehicle Count,Dealer Count';
-  const distanceUnit = isFacebook ? 'mile' : 'mi';
-
-  const rows = locations.map((m) =>
-    [
-      m.metro,
-      m.latitude.toFixed(4),
-      m.longitude.toFixed(4),
-      m.radius_miles,
-      distanceUnit,
-      destinationUrl,
-      m.vehicles,
-      m.dealers,
-    ]
-      .map((v) => sanitizeCsvField(v))
-      .join(',')
-  );
-
-  return [header, ...rows].join('\n');
-}
 
 /**
  * Export combined multi-metro targeting for a campaign type

@@ -201,37 +201,59 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
   const handleBulkDownload = async () => {
     const campaignsToDownload = allCampaigns.filter(c => selectedItems.has(c.id));
     setDownloading('bulk');
-    setProgress({ current: 0, total: campaignsToDownload.length });
     
-    const failed: string[] = [];
-    
-    // Sequential download to avoid browser blocking
-    for (const campaign of campaignsToDownload) {
-      try {
-        await processDownload(campaign);
-      } catch (e) {
-        console.error(`Failed to download ${campaign.name}`, e);
-        failed.push(campaign.name);
+    try {
+      const response = await fetch('/api/admin/export-bulk-zip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          platform: selectedPlatform,
+          items: campaignsToDownload.map(c => ({
+            campaignType: c.campaignType,
+            campaignValue: c.campaignValue
+          }))
+        })
+      });
+
+      if (!response.ok) {
+        let message = 'Bulk export failed';
+        try {
+          const data = await response.json();
+          if (data.error) message = data.error;
+        } catch { /* ignore */ }
+        throw new Error(message);
       }
-      
-      // Update progress
-      setProgress(prev => prev ? { ...prev, current: prev.current + 1 } : null);
-      
-      // Small delay between downloads to ensure unique timestamps and prevent browser blocking
-      await new Promise(resolve => setTimeout(resolve, 800));
+
+      // Check for partial failures in headers
+      const resultsHeader = response.headers.get('X-Export-Results');
+      if (resultsHeader) {
+        const results = JSON.parse(resultsHeader);
+        const failures = results.filter((r: any) => r.status === 'error');
+        if (failures.length > 0) {
+          const maxShown = 5;
+          const list = failures.slice(0, maxShown).map((f: any) => `• ${f.name}: ${f.error}`).join('\n');
+          const remaining = failures.length - maxShown;
+          alert(`ZIP created but some items failed:\n\n${list}${remaining > 0 ? `\n...and ${remaining} more` : ''}`);
+        }
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${selectedPlatform}-bulk-export-${getFormattedTimestamp()}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+    } catch (error) {
+      console.error('Bulk download error:', error);
+      alert(`Bulk download failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setDownloading(null);
+      setSelectedItems(new Set());
     }
-    
-    if (failed.length > 0) {
-      const maxShown = 5;
-      const list = failed.slice(0, maxShown).map(n => `• ${n}`).join('\n');
-      const remaining = failed.length - maxShown;
-      const footer = remaining > 0 ? `\n...and ${remaining} more` : '';
-      alert(`Bulk download completed with ${failed.length} errors:\n\n${list}${footer}`);
-    }
-    
-    setDownloading(null);
-    setProgress(null);
-    setSelectedItems(new Set()); // Clear selection after download
   };
 
   return (
@@ -444,11 +466,11 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
                 )}
               >
                 {downloading === 'bulk' ? (
-                  <>Downloading {progress ? `(${progress.current}/${progress.total})` : '...'}</>
+                  <>Creating ZIP...</>
                 ) : (
                   <>
                     <ArrowDownToLine className="w-4 h-4" />
-                    Download All
+                    Download ZIP
                   </>
                 )}
               </Button>

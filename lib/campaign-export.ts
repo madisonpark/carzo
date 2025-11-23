@@ -1,4 +1,4 @@
-import { sanitizeCsvField } from '@/lib/csv';
+import { csvRow } from '@/lib/csv';
 
 const METRO_RADIUS_MILES = 30;
 
@@ -110,7 +110,7 @@ export function generateCsvContent(
   const distanceUnit = isFacebook ? 'mile' : 'mi';
 
   const rows = locations.map((m) =>
-    [
+    csvRow([
       m.metro,
       m.latitude.toFixed(4),
       m.longitude.toFixed(4),
@@ -119,9 +119,7 @@ export function generateCsvContent(
       destinationUrl,
       m.vehicles,
       m.dealers,
-    ]
-      .map((v) => sanitizeCsvField(v))
-      .join(',')
+    ])
   );
 
   return [header, ...rows].join('\n');

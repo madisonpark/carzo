@@ -35,8 +35,10 @@ export async function POST(request: NextRequest) {
 
   // Rate Limiting
   const identifier = getClientIdentifier(request);
+  const BULK_EXPORT_LIMIT = { limit: 20, windowSeconds: 60 };
+  
   const rateLimitResult = await checkMultipleRateLimits(identifier, [
-    { endpoint: 'admin_bulk_export', limit: 20, windowSeconds: 60 },
+    { endpoint: 'admin_bulk_export', ...BULK_EXPORT_LIMIT },
   ]);
   
   if (!rateLimitResult.allowed) {
@@ -80,15 +82,14 @@ export async function POST(request: NextRequest) {
 
     // Create ZIP
     const zip = new AdmZip();
-    const results: { name: string; status: 'success' | 'error'; error?: string }[] = [];
-
-    // Process items (sequentially to manage db load)
-    for (const item of items) {
+    
+    // Process items in parallel to avoid timeouts
+    const results = await Promise.all(items.map(async (item) => {
       const minVehicles = item.minVehicles || 6;
       const trimmedCampaignValue = item.campaignValue.trim();
       
       try {
-        // Build query based on campaign type (Reusing logic from single export)
+        // Build query based on campaign type
         let query = supabase.from('vehicles').select('*').eq('is_active', true);
 
         if (item.campaignType === 'body_style') {
@@ -111,8 +112,7 @@ export async function POST(request: NextRequest) {
         const vehicles: Vehicle[] = vehiclesData || [];
 
         if (vehicles.length === 0) {
-          results.push({ name: trimmedCampaignValue, status: 'error', error: 'No inventory' });
-          continue;
+          return { name: trimmedCampaignValue, status: 'error', error: 'No inventory found (0 vehicles)' } as const;
         }
 
         // Group and Filter Metros
@@ -129,8 +129,7 @@ export async function POST(request: NextRequest) {
           .slice(0, maxMetros);
 
         if (qualifyingMetros.length === 0) {
-          results.push({ name: trimmedCampaignValue, status: 'error', error: 'No qualifying metros' });
-          continue;
+          return { name: trimmedCampaignValue, status: 'error', error: `Found ${vehicles.length} vehicles but no metros with ${minVehicles}+ vehicles` } as const;
         }
 
         // Generate CSV content
@@ -138,22 +137,29 @@ export async function POST(request: NextRequest) {
         const destinationUrl = generateDestinationUrl(item.campaignType, trimmedCampaignValue);
         const csvContent = generateCsvContent(platform, metroLocations, destinationUrl);
 
-        // Add to ZIP
-        const safeName = trimmedCampaignValue.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-        const filename = `${platform}-targeting-${safeName}.csv`;
-        zip.addFile(filename, Buffer.from(csvContent, 'utf8'));
-        
-        results.push({ name: trimmedCampaignValue, status: 'success' });
+        return { 
+          name: trimmedCampaignValue, 
+          status: 'success', 
+          filename: `${platform}-targeting-${trimmedCampaignValue.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.csv`,
+          content: csvContent 
+        } as const;
 
       } catch (error) {
         console.error(`Error processing ${trimmedCampaignValue}:`, error);
-        results.push({ 
+        return { 
           name: trimmedCampaignValue, 
           status: 'error', 
           error: error instanceof Error ? error.message : 'Unknown error' 
-        });
+        } as const;
       }
-    }
+    }));
+
+    // Add successful results to ZIP
+    results.forEach(result => {
+      if (result.status === 'success') {
+        zip.addFile(result.filename, Buffer.from(result.content, 'utf8'));
+      }
+    });
 
     if (zip.getEntries().length === 0) {
       return NextResponse.json(

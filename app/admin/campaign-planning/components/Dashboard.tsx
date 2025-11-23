@@ -132,11 +132,15 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
   };
 
   const toggleSelectAll = () => {
-    if (selectedItems.size === filteredCampaigns.length) {
-      setSelectedItems(new Set());
+    const allFilteredSelected = filteredCampaigns.length > 0 && filteredCampaigns.every(c => selectedItems.has(c.id));
+    const next = new Set(selectedItems);
+
+    if (allFilteredSelected) {
+      filteredCampaigns.forEach(c => next.delete(c.id));
     } else {
-      setSelectedItems(new Set(filteredCampaigns.map(c => c.id)));
+      filteredCampaigns.forEach(c => next.add(c.id));
     }
+    setSelectedItems(next);
   };
 
   // Generate timestamp for filename: YYYY_MM_DD_HH-MM-SS
@@ -156,9 +160,9 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
     const downloadUrl = window.URL.createObjectURL(blob);
     
     // Format: [platform]_geotargeted_[subject]_[date]_[time].csv
-    // Example: facebook_geotargeted_[Kia-Sorrento]_2025_11_10_17-33-23.csv
+    // Example: facebook_geotargeted_Kia-Sorrento_2025_11_10_17-33-23.csv
     const subject = campaign.campaignValue.replace(/[^a-z0-9]/gi, '-');
-    const filename = `${selectedPlatform}_geotargeted_[${subject}]_${getFormattedTimestamp()}.csv`;
+    const filename = `${selectedPlatform}_geotargeted_${subject}_${getFormattedTimestamp()}.csv`;
     
     const a = document.createElement('a');
     a.href = downloadUrl;
@@ -302,7 +306,7 @@ export function CampaignPlanningDashboard({ initialData }: DashboardProps) {
                     <input 
                       type="checkbox"
                       className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4 cursor-pointer"
-                      checked={filteredCampaigns.length > 0 && selectedItems.size === filteredCampaigns.length}
+                      checked={filteredCampaigns.length > 0 && filteredCampaigns.every(c => selectedItems.has(c.id))}
                       onChange={toggleSelectAll}
                     />
                   </th>

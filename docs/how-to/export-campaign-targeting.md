@@ -21,6 +21,17 @@ Export targeting files (location data) for Facebook Ads, Google Ads, and other p
 
 ## Quick Start
 
+### Option 1: Dashboard UI (Recommended)
+
+The easiest way to export targeting is via the **Campaign Planning Dashboard**:
+1. Go to `/admin/campaign-planning`.
+2. Use the **Platform Toggle** to select Facebook or Google.
+3. **Search** or **Filter** to find your campaign (e.g., "Toyota").
+4. Use checkboxes to select multiple campaigns.
+5. Click **Download All** in the floating bar.
+
+### Option 2: CLI / API
+
 ### Single Metro Export
 
 **Scenario:** You want to run a "Toyota" campaign in Tampa, FL
